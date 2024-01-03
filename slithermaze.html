@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Slithermaze</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="style.css">
+  </head>
+  
+  <body onload="InitGame();">
+	  <div class="main-container">
+	  
+		  <!-- LEADERBOARD AREA -->
+		  <!-- will need to be updated later to be dynamic -->
+		  <div class="leaderboard-container">
+			<center><strong>LEADERBOARD</strong></center>
+			<div>USR1 00:31</div>
+			<div>USR2 2:14</div>
+		  </div>
+		  
+		  <div>
+			<!-- GAME AREA -->
+			<!-- canvas size may have to be adjusted in the future for dif grid sizes -->
+			<canvas id="game-area" width="600" height="600">
+			  Your browser does not support HTML5, sorry!
+			</canvas>
+		  </div>
+		
+		  <!-- RIGHT BUTTONS -->
+		  <div class="left-buttons-container">
+			<button>SUBMIT</button>
+			<button>HINT</button>
+			<button>SOLUTION</button>
+			<button>PRINT</button>
+			<button>RESTART</button>
+		  </div>
+		  
+		  <!-- JS SCRIPTING -->
+		  <script src="slithermaze.js"></script>
+	  </div>
+	  
+	  <center>
+	  <div class="bottom-buttons-container">
+		<button>TUTORIAL</button>
+		<button>NEW PUZZLE</button>
+	  </div>
+	  </center>
+	  
+  </body>
+  
+</html>

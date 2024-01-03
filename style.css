@@ -1,0 +1,66 @@
+
+body {
+    color: darkslategray;
+	background-color: antiquewhite;
+}
+
+/* container that holds the leaderboard, game area, and left buttons */
+.main-container {
+	display: flex;
+    align-items: flex;
+	justify-content: center;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+/* leaderboard area */
+.leaderboard-container {
+    background-color: #ffffff;
+    padding: 10px;
+    margin: 0 50px;
+    font-size: 0.8em;
+    height: 50px;
+	width: 200px;
+  }
+
+/* buttons left of gameplay area */ 
+.left-buttons-container {
+    margin: 0 50px;
+    font-size: 0.8em;
+    height: 50px;
+	width: 200px;
+  }
+
+.left-buttons-container button {
+    background-color: #ddd;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    margin-bottom: 5px;
+    width: 100%;
+  }
+  
+.left-buttons-container button:hover {
+    background-color: #ccc;
+  }
+  
+/* buttons below gameplay area */
+.bottom-buttons-container {
+
+	margin: 0 50px;
+    font-size: 0.8em;
+    height: 50px;
+	width: 200px;
+  }
+
+ .bottom-buttons-container button {
+	background-color: #ddd;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    margin-bottom: 5px;
+    width: 100%;
+  }
+  .bottom-buttons-container button:hover {
+    background-color: #ccc;
+  }
