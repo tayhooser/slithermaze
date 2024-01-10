@@ -4,47 +4,82 @@
     <title>Slithermaze</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/png" href="favicon.png"/>
 	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   </head>
   
   <body onload="InitGame();">
-	  <div class="main-container">
+	  <div class="title-container">
+	    SLITHERMAZE<br>
+	  </div> 
 	  
-		  <!-- LEADERBOARD AREA -->
-		  <!-- will need to be updated later to be dynamic -->
-		  <div class="leaderboard-container">
-			<center><strong>LEADERBOARD</strong></center>
-			<div>USR1 00:31</div>
-			<div>USR2 2:14</div>
-		  </div>
+	  <div class="puzzle-title">
+	    PUZZLE #0
+	  </div>
+	  
+		<div class="main-container">
+
+		  <!-- LEFT CONTAINER -->
+			<div class="l-container">
+			  <center>
+				<button><i class="fa fa-undo"></i></button><button><i class="fa fa-repeat"></i></button>
+				<button><i class="fa fa-search"></i></button><button><i class="fa fa-wrench"></i></button>
+			  </center>
+			
+			  <!-- TODO: add dynamic data -->
+			  <div class="timer">
+				<center>00:00</center>
+			  </div>
+			
+			  <div class="leaderboard">
+				<center>LEADERBOARD</center>
+				  <table width="100%">
+				    <tr>
+					  <td>USR1</td>
+					  <td align="right">1:32</td>
+				    </tr>
+				    <tr>
+					  <td>USR2</td>
+					  <td align="right">3:49</td>
+				    </tr>
+				  </table>
+				</div>
+			</div>
 		  
-		  <div>
-			<!-- GAME AREA -->
-			<!-- canvas size may have to be adjusted in the future for dif grid sizes -->
-			<canvas id="game-area" width="600" height="600">
-			  Your browser does not support HTML5, sorry!
-			</canvas>
-		  </div>
+		    <!-- GAME AREA -->
+			<div class="canvas-container">
+			  <!-- if theres issues about game content being cut off, remove the canvas container class from div -->
+			  <!-- TODO: add slider to dynamically change size of canvas -- helps with accessability and screen sizes -->
+			  <canvas id="game-area" width="600" height="600">
+				Your browser does not support HTML5, sorry!
+			  </canvas>
+			</div>
 		
-		  <!-- RIGHT BUTTONS -->
-		  <div class="left-buttons-container">
-			<button>SUBMIT</button>
-			<button>HINT</button>
-			<button>SOLUTION</button>
-			<button>PRINT</button>
-			<button>RESTART</button>
-		  </div>
+		  <!-- RIGHT CONTAINER -->
+			<div class="r-container">
+			  <button>HINT</button>
+			  <button>SOLUTION</button>
+			  <button>RESTART</button>
+			  <button>PRINT</button>
+			  <button>TUTORIAL</button>
+		    </div>
 		  
-		  <!-- JS SCRIPTING -->
-		  <script src="slithermaze.js"></script>
-	  </div>
+			<!-- JS SCRIPTING -->
+			<script src="slithermaze.js"></script>
+		</div>
 	  
-	  <center>
-	  <div class="bottom-buttons-container">
-		<button>TUTORIAL</button>
-		<button>NEW PUZZLE</button>
-	  </div>
-	  </center>
+	    <!-- BOTTOM CONTAINER -->
+	    <div class="b-container">
+		  <button class="icon-button"><i class="fa fa-floppy-o"></i></button> <button class="icon-button">1</button>
+		  <button class="lb-button">SUBMIT</button>
+		  <button class="lb-button">NEW PUZZLE</button>
+	    </div>
+	  
+	    <div class="about">
+	      CSUB Senior Project 2024<br>
+		  Keith Lappin, Conner Estes, Taylor Hooser, Daniel Lopez
+	    </div>
 	  
   </body>
   

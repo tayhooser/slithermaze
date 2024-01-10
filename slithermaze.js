@@ -20,7 +20,7 @@ var fragmentShaderText =
 "",
 "void main()",
 "{",
-" gl_FragColor = vec4(0.185, 0.31, 0.31, 1.0);",
+" gl_FragColor = vec4(0.439, 0.329, 0.302, 1.0);",
 "}"
 ].join("\n");
 
@@ -120,7 +120,7 @@ var InitGame = function(){
 	// main render loop --------------------------------------------------------------------
 	
 	gl.useProgram(program);
-	gl.drawArrays(gl.TRIANGLES, 0, 4);
+	gl.drawArrays(gl.TRIANGLES, 0, 4); // supposed to be a square lol
 	
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
 	// https://www.npmjs.com/package/polyline-normals
