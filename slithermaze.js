@@ -31,12 +31,12 @@ var B = 1.0;
 
 var lineWidth = 5;
 
-// init
+// initializes openGL
 var InitGame = function(){
 	console.log("InitGame() started");
 	
 	var canvas = document.getElementById("game-area");
-	var gl = canvas.getContext("webgl");
+	var gl = canvas.getContext("webgl", {preserveDrawingBuffer: true});
 	
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
@@ -125,4 +125,87 @@ var InitGame = function(){
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
 	// https://www.npmjs.com/package/polyline-normals
 	
+};
+
+// called when user hits undo button, HTML side
+var undo = function(){
+	console.log("Undo pressed.");
+	return;
+};
+
+// called when user hits redo button, HTML side
+var redo = function(){
+	console.log("Redo pressed.");
+	return;
+};
+
+// called when user hits save button, HTML side
+var save = function(){
+	console.log("Save pressed");
+	
+	if (testCookie != "") { // cookie already exists, load data
+		
+		console.log("Cookie exists! Value =");
+	} else {
+		console.log("Creating cookie...");
+		document.cookie = `testCookie=${encodeURIComponent('Test Yay')}; max-age=${7*24*60*60}` // expires in 7 days
+	}
+};
+
+// called when user hits a savestate button, HTML side
+var load = function(state){
+	state = state || 0;
+	console.log("Loaded state " + state);
+	return;
+};
+
+// called when user hits hint button, HTML side
+// shows either 1 possible cross or line, depends on current state and puzzle
+var hint = function(){
+	console.log("Redo pressed.");
+	return;
+};
+
+// called when user hits solution button, HTML side
+// should complete a solution step by step, like an animation
+var solution = function(){
+	console.log("Solution pressed.");
+	return;
+};
+
+// called when user hits restart button, HTML side
+// wipes all lines and crosses from screen
+var restart = function(){
+	console.log("Restart pressed.");
+	return;
+};
+
+// called when user hits print button, HTML side
+// opens new tab with blank puzzle for printing
+// TODO: wipe puzzle state before printing
+var printPuzzle = function(){
+	console.log("Print pressed.");
+	const canvas = document.getElementById('game-area')	
+	const dataUrl = canvas.toDataURL();
+
+	let windowContent = '<!DOCTYPE html>';
+	windowContent += '<html>';
+	windowContent += '<head><title>Print canvas</title></head>';
+	windowContent += '<body><center><img src="' + dataUrl + '"></center></body>';
+	windowContent += '</html>';
+
+	const printWin = window.open('', '', 'width=' + (screen.availWidth - 500) + ',height=' + (screen.availHeight - 300));
+	printWin.document.open();
+	printWin.document.write(windowContent);
+	printWin.focus();
+    printWin.print();
+	printWin.close();
+	return;
+};
+
+// called when user hits tutorial button, HTML side
+// loads simple puzzle(s) for user to solve as well as tutorial text on screen
+var tutorial = function(){
+	console.log("Tutorial pressed.");
+	return;
 };

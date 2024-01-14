@@ -23,7 +23,7 @@
 		  <!-- LEFT CONTAINER -->
 			<div class="l-container">
 			  <center>
-				<button><i class="fa fa-undo"></i></button><button><i class="fa fa-repeat"></i></button>
+				<button onclick="undo();"><i class="fa fa-undo"></i></button><button onclick="redo();"><i class="fa fa-repeat"></i></button>
 				<button><i class="fa fa-search"></i></button><button><i class="fa fa-wrench"></i></button>
 			  </center>
 			
@@ -58,11 +58,11 @@
 		
 		  <!-- RIGHT CONTAINER -->
 			<div class="r-container">
-			  <button>HINT</button>
-			  <button>SOLUTION</button>
-			  <button>RESTART</button>
-			  <button>PRINT</button>
-			  <button>TUTORIAL</button>
+			  <button onclick="hint();">HINT</button>
+			  <button onclick="solution();">SOLUTION</button>
+			  <button onclick="restart();">RESTART</button>
+			  <button onclick="printPuzzle();">PRINT</button>
+			  <button onclick="tutorial();">TUTORIAL</button>
 		    </div>
 		  
 			<!-- JS SCRIPTING -->
@@ -71,7 +71,7 @@
 	  
 	    <!-- BOTTOM CONTAINER -->
 	    <div class="b-container">
-		  <button class="icon-button"><i class="fa fa-floppy-o"></i></button> <button class="icon-button">1</button>
+		  <button class="icon-button" onclick="save();"><i class="fa fa-floppy-o"></i></button> <button class="icon-button">1</button>
 		  <button class="lb-button">SUBMIT</button>
 		  <button class="lb-button">NEW PUZZLE</button>
 	    </div>
