@@ -23,13 +23,13 @@
 		  <!-- LEFT CONTAINER -->
 			<div class="l-container">
 			  <center>
-				<button onclick="undo();"><i class="fa fa-undo"></i></button><button onclick="redo();"><i class="fa fa-repeat"></i></button>
+				<button onclick="Undo();"><i class="fa fa-undo"></i></button><button onclick="Redo();"><i class="fa fa-repeat"></i></button>
 				<button><i class="fa fa-search"></i></button><button><i class="fa fa-wrench"></i></button>
 			  </center>
 			
 			  <!-- TODO: add dynamic data -->
-			  <div class="timer">
-				<center>00:00</center>
+			  <div id="timer" class="timer">
+				<span id="hr">00</span>:<span id="min">00</span>:<span id="sec">00</span>
 			  </div>
 			
 			  <div class="leaderboard">
@@ -58,11 +58,11 @@
 		
 		  <!-- RIGHT CONTAINER -->
 			<div class="r-container">
-			  <button onclick="hint();">HINT</button>
-			  <button onclick="solution();">SOLUTION</button>
-			  <button onclick="restart();">RESTART</button>
-			  <button onclick="printPuzzle();">PRINT</button>
-			  <button onclick="tutorial();">TUTORIAL</button>
+			  <button onclick="Hint();">HINT</button>
+			  <button onclick="Solution();">SOLUTION</button>
+			  <button onclick="Restart();">RESTART</button>
+			  <button onclick="PrintPuzzle();">PRINT</button>
+			  <button onclick="Tutorial();">TUTORIAL</button>
 		    </div>
 		  
 			<!-- JS SCRIPTING -->
@@ -71,9 +71,11 @@
 	  
 	    <!-- BOTTOM CONTAINER -->
 	    <div class="b-container">
-		  <button class="icon-button" onclick="save();"><i class="fa fa-floppy-o"></i></button> <button class="icon-button">1</button>
-		  <button class="lb-button">SUBMIT</button>
-		  <button class="lb-button">NEW PUZZLE</button>
+		  <div id="save-container">
+			<button class="save-button" onclick="Save();"><i class="fa fa-floppy-o"></i></button>
+		  </div>
+		  <button class="lb-button" onclick="Submit();">SUBMIT</button>
+		  <button class="lb-button" onclick="NewPuzzle();">NEW PUZZLE</button>
 	    </div>
 	  
 	    <div class="about">

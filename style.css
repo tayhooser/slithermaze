@@ -74,6 +74,9 @@ body {
 	font-size: 30px;
 	font-family: Arial;
 	padding: 10px;
+	display: flex;
+    align-items: flex;
+	justify-content: center;
 }
 
 .leaderboard {
@@ -135,7 +138,7 @@ body {
 	width: 100%;
 }
 
-.icon-button {
+.save-button {
 	background-color: #70544D;
 	color: white;
 	font-weight: bold;
@@ -146,7 +149,7 @@ body {
 	display: inline;
 	cursor: pointer;
 	margin: 5px;
-	width: 10%;
+	width: 10.6%;
 	aspect-ratio: 1 / 1;
 }
   

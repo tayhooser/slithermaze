@@ -29,11 +29,17 @@ var R = 1.0;
 var G = 1.0;
 var B = 1.0;
 
-var lineWidth = 5;
+var saveCounter = 0; // number of savestates
+
+var timer = true; // true: timer is running. false: timer has stopped
+var hour = 00; 
+var minute = 00; 
+var second = 00; 
 
 // initializes openGL
 var InitGame = function(){
 	console.log("InitGame() started");
+	Timer();
 	
 	var canvas = document.getElementById("game-area");
 	var gl = canvas.getContext("webgl", {preserveDrawingBuffer: true});
@@ -127,22 +133,68 @@ var InitGame = function(){
 	
 };
 
+// runs the timer
+var Timer = function(){
+	//console.log("Timer started.");
+	
+	if (timer){
+        if (second == 60) { 
+            minute++; 
+            second = 0; 
+        } 
+        if (minute == 60) { 
+            hour++; 
+            minute = 0; 
+            second = 0; 
+        } 
+ 
+        let hrString = hour; 
+        let minString = minute; 
+        let secString = second;  
+  
+        if (hour < 10) { 
+            hrString = "0" + hrString; 
+        } 
+  
+        if (minute < 10) { 
+            minString = "0" + minString; 
+        } 
+  
+        if (second < 10) { 
+            secString = "0" + secString; 
+        } 
+  
+        document.getElementById('hr').innerHTML = hrString; 
+        document.getElementById('min').innerHTML = minString; 
+        document.getElementById('sec').innerHTML = secString;
+		
+		second++;
+		setTimeout(Timer, 1000); // calls Timer() after 1 second
+	}
+}
+
 // called when user hits undo button, HTML side
-var undo = function(){
+var Undo = function(){
 	console.log("Undo pressed.");
 	return;
 };
 
 // called when user hits redo button, HTML side
-var redo = function(){
+var Redo = function(){
 	console.log("Redo pressed.");
 	return;
 };
 
-// called when user hits save button, HTML side
-var save = function(){
+// creates new savestate + button
+var Save = function(){
 	console.log("Save pressed");
 	
+    // make new savestate button
+	saveCounter += 1;
+	document.getElementById("save-container").
+            innerHTML += ("<button class=\"save-button\" onclick=\"Load(" + saveCounter + ");\">" + saveCounter + "</button>");
+	
+	/*
 	if (testCookie != "") { // cookie already exists, load data
 		
 		console.log("Cookie exists! Value =");
@@ -150,10 +202,11 @@ var save = function(){
 		console.log("Creating cookie...");
 		document.cookie = `testCookie=${encodeURIComponent('Test Yay')}; max-age=${7*24*60*60}` // expires in 7 days
 	}
+	*/
 };
 
 // called when user hits a savestate button, HTML side
-var load = function(state){
+var Load = function(state){
 	state = state || 0;
 	console.log("Loaded state " + state);
 	return;
@@ -161,29 +214,41 @@ var load = function(state){
 
 // called when user hits hint button, HTML side
 // shows either 1 possible cross or line, depends on current state and puzzle
-var hint = function(){
+var Hint = function(){
 	console.log("Redo pressed.");
 	return;
 };
 
 // called when user hits solution button, HTML side
 // should complete a solution step by step, like an animation
-var solution = function(){
+var Solution = function(){
 	console.log("Solution pressed.");
 	return;
 };
 
 // called when user hits restart button, HTML side
 // wipes all lines and crosses from screen
-var restart = function(){
+var Restart = function(){
 	console.log("Restart pressed.");
+	
+	// restart puzzle
+	
+	// restart timer
+	hour = 00; 
+	minute = 00; 
+	second = 00;
+	document.getElementById('hr').innerHTML = "00";
+    document.getElementById('min').innerHTML = "00"; 
+    document.getElementById('sec').innerHTML = "00";
+	timer = true;
+	Timer();
+	
 	return;
 };
 
-// called when user hits print button, HTML side
 // opens new tab with blank puzzle for printing
 // TODO: wipe puzzle state before printing
-var printPuzzle = function(){
+var PrintPuzzle = function(){
 	console.log("Print pressed.");
 	const canvas = document.getElementById('game-area')	
 	const dataUrl = canvas.toDataURL();
@@ -205,7 +270,20 @@ var printPuzzle = function(){
 
 // called when user hits tutorial button, HTML side
 // loads simple puzzle(s) for user to solve as well as tutorial text on screen
-var tutorial = function(){
+var Tutorial = function(){
 	console.log("Tutorial pressed.");
+	return;
+};
+
+// stops timer, checks answer
+var Submit = function(){
+	console.log("Submit pressed.");
+	timer = false; // stop timer
+	return;
+};
+
+// generate new puzzle or select from premade puzzles
+var NewPuzzle = function(){
+	console.log("New Puzzle pressed.");
 	return;
 };
