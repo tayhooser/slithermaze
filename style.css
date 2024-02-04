@@ -1,3 +1,8 @@
+/* 
+BROWN:	#70544D
+TAN:	#EAD6C6
+PINK:	#DE9894
+*/
 
 body {
     color: #70544D;
@@ -5,7 +10,7 @@ body {
 	margin: 0;
 }
 
-/* TITLE BAR --------------------*/
+/* TITLE BAR --------------------------------------------------------*/
 .title-container {
 	color: white;
 	background-color: #70544D;
@@ -19,13 +24,14 @@ body {
 	font-family: Arial;
 }
 
-/* MAIN AREA --------------------*/
+/* MAIN AREA --------------------------------------------------------*/
 .main-container {
 	display: flex;
     align-items: flex;
 	justify-content: center;
 }
 
+/* title above canvas */
 .puzzle-title {
 	display: flex;
     align-items: flex;
@@ -36,6 +42,7 @@ body {
 	font-family: Arial;
 }
 
+/*holds canvas, only used for making canvas have round corners */
 .canvas-container{
 	border: 1px solid #fff;
 	border-radius: 15px;
@@ -43,13 +50,13 @@ body {
 	aspect-ratio: 1 / 1;
 }
 
-/* LEFT AREA --------------------*/
+/* LEFT AREA --------------------------------------------------------*/
 .l-container{
 	margin: 0 20px;
 	height: 600px;
 	width: 150px;
 }
-
+ /*undo, redo, zoom, wrench */
 .l-container button {
 	background-color: #70544D;
 	color: white;
@@ -69,6 +76,151 @@ body {
 	background-color: #DE9894;
 }
 
+/*container for zoom slider */
+/* drop down animation*/
+.zoom {
+	display: block;
+	background-color: #ffffff;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	border-radius: 5px;
+	height: 0px;
+	margin-top: 10px;
+	transition: all 1s ease;
+}
+
+/*actual content within the zoom container */
+/* fade in animation*/
+.zoom-content {
+	display: flex;
+	padding: 10px;
+	opacity: 0;
+	transition: opacity 1s ease;
+}
+
+/*zoom slider*/
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 15px;
+  border-radius: 5px;  
+  background: #EAD6C6;
+  outline: none;
+}
+
+/*chrome, opera, safari, edge */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%; 
+  background: #70544D;
+  cursor: pointer;
+}
+
+/* firefox */
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #70544D;
+  cursor: pointer;
+}
+
+ /* container for settings */
+ /* drop down animation*/
+.settings {
+	display: block;
+	background-color: #ffffff;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	border-radius: 5px;
+	height: 0px;
+	margin-top: 0px;
+	transition: all 1s ease;
+}
+
+/*actual content within the settings container */
+/* fade in animation*/
+.settings-content {
+	display: block;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	padding: 10px;
+	opacity: 0;
+	transition: opacity .8s ease;
+}
+
+/* fancy checkbox for settings menu*/
+.checkContainer {
+	display: flex;
+}
+
+.checkReplacer {
+    appearance: none;
+    background-color: #EAD6C6;
+    border-radius: 72px;
+    border-style: none;
+    flex-shrink: 0;
+    height: 20px;
+    margin: 0;
+    position: relative;
+    width: 30px;
+}
+
+.checkReplacer::before {
+    bottom: -6px;
+    left: -6px;
+    position: absolute;
+    right: -6px;
+    top: -6px;
+}
+
+.checkReplacer, .checkReplacer::after {
+  transition: all 100ms ease-out;
+}
+
+.checkReplacer::after {
+    background-color: #fff;
+    border-radius: 50%;
+    content: "";
+    height: 14px;
+    left: 3px;
+    position: absolute;
+    top: 3px;
+    width: 14px;
+}
+
+input[type=checkbox] {
+    cursor: default;
+}
+
+.checkReplacer:hover {
+    cursor: pointer;
+}
+
+.checkReplacer:checked {
+    background-color: #70544D;
+}
+
+.checkReplacer:checked::after {
+    background-color: #fff;
+    left: 13px;
+}
+
+/* shift label up to line up with checkbox */
+label {
+	display: block;
+	position: relative;
+	margin-left: 10px;
+	margin-bottom: 10px;
+}
+
+/*timer under undo redo etc buttons */
 .timer {
 	font-weight: bold;
 	font-size: 30px;
@@ -79,6 +231,7 @@ body {
 	justify-content: center;
 }
 
+/* leaderboard under timer */
 .leaderboard {
 	background-color: #ffffff;
 	font-weight: bold;
@@ -88,13 +241,14 @@ body {
 	border-radius: 5px;
 }
 
-/* RIGHT AREA --------------------*/
+/* RIGHT AREA --------------------------------------------------------*/
 .r-container {
 	margin: 0 20px;
 	height: 600px;
 	width: 150px;
 }
 
+/*hint solution ... tutorial buttons */
 .r-container button {
 	background-color: #70544D;
 	color: white;
@@ -124,6 +278,7 @@ body {
 	justify-content: center;
 }
 
+/* submit and new puzzle buttons */
 .lb-button {
 	background-color: #70544D;
 	color: white;
@@ -138,6 +293,7 @@ body {
 	width: 100%;
 }
 
+ /* save/load buttons */
 .save-button {
 	background-color: #70544D;
 	color: white;
@@ -159,6 +315,7 @@ body {
 
 /* FOOTER --------------------*/  
 
+/*credit with everyones names in corner */
 .about {
 	position: fixed; 
 	bottom: 1%;
@@ -167,14 +324,4 @@ body {
 	color: #DE9894;
 	font-family: Arial;
 	font-size: 15px;
-}
-
-/* MENUS --------------------*/ 
-
-.zoom {
-	
-}
-
-.options {
-	
 }

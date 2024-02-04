@@ -24,8 +24,26 @@
 			<div class="l-container">
 			  <center>
 				<button onclick="Undo();"><i class="fa fa-undo"></i></button><button onclick="Redo();"><i class="fa fa-repeat"></i></button>
-				<button><i class="fa fa-search"></i></button><button><i class="fa fa-wrench"></i></button>
+				<button onclick="Zoom();"><i class="fa fa-search"></i></button><button onclick="Settings();"><i class="fa fa-wrench"></i></button>
 			  </center>
+			  
+			  <!-- dropdown zoom slider -->
+			  <div id="zoom" class="zoom">
+				<div id="zoom-content" class="zoom-content">
+					<input type="range" min="1" max="100" value="50" class="slider" id="zoomSlider">
+				</div>
+			  </div>
+			  
+			  <!-- dropdown settings menu -->
+			  <div id="settings" class="settings">
+				<div id="settings-content" class="settings-content">
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Auto-cross completed numbers</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Auto-cross intersections</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Auto-cross dead ends</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Auto-cross premature loops</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Highlight wrong moves</label></div>
+				</div>
+			  </div>
 			
 			  <!-- TODO: add dynamic data -->
 			  <div id="timer" class="timer">

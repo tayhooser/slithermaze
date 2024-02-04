@@ -36,6 +36,9 @@ var hour = 00;
 var minute = 00; 
 var second = 00; 
 
+var slider = document.getElementById("zoomSlider");
+var zoomLevel = 50;
+
 // initializes openGL
 var InitGame = function(){
 	console.log("InitGame() started");
@@ -182,6 +185,67 @@ var Undo = function(){
 // called when user hits redo button, HTML side
 var Redo = function(){
 	console.log("Redo pressed.");
+	return;
+};
+
+// toggles zoom slider to open/close
+var Zoom = function(){
+	//console.log("Zoom pressed.");
+	var zoom = document.getElementById('zoom');
+	var zoomContent = document.getElementById('zoom-content');
+	
+    if (zoom.style.height == '0px') { // show menu
+		 //console.log("showing");
+        zoom.style.height = '40px';
+		zoom.style.marginTop = '10px';
+		zoomContent.style.opacity = '1';
+		
+    } else if (zoom.style.height == '40px'){ // hide menu
+		//console.log("hiding");
+        zoom.style.height = '0px';
+		zoom.style.marginTop = '0px';
+		zoomContent.style.opacity = '0';
+		
+    } else { // always falls back to this else block on first click..... dont know why
+		//console.log("showing (else)");
+        zoom.style.height = '40px';
+		zoom.style.marginTop = '10px';
+		zoomContent.style.opacity = '1';
+	}
+	return;
+};
+
+// updates zoom level with slider value
+// default 50, range 1-100
+slider.oninput = function(){
+	zoomLevel = this.value;
+	//console.log("Slider value: " + zoomLevel);
+}
+
+// toggles settings menu to open/close
+var Settings = function(){
+	//console.log("Settings pressed.");
+	var settings = document.getElementById('settings');
+	var settingsContent = document.getElementById('settings-content');
+	
+    if (settings.style.height == '0px') { // show menu
+		//console.log("showing");
+        settings.style.height = '280px';
+		settings.style.marginTop = '10px';
+		settingsContent.style.opacity = '1';
+		
+    } else if (settings.style.height == '280px'){ // hide menu
+		//console.log("hiding");
+        settings.style.height = '0px';
+		settings.style.marginTop = '0px';
+		settingsContent.style.opacity = '0';
+		
+    } else { // always falls back to this else block on first click..... dont know why
+		//console.log("showing (else)");
+        settings.style.height = '280px';
+		settings.style.marginTop = '10px';
+		settingsContent.style.opacity = '1';
+	}
 	return;
 };
 
