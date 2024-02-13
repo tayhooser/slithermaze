@@ -37,32 +37,14 @@
 			  <!-- dropdown settings menu -->
 			  <div id="settings" class="settings">
 				<div id="settings-content" class="settings-content">
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Auto-cross completed numbers</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Auto-cross intersections</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Auto-cross dead ends</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Auto-cross premature loops</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="setting1"> <label for="setting1">Highlight wrong moves</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACnum" onclick="SettingsHandler('ACnum');"> <label for="ACnum">Auto-cross completed numbers</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACinter" onclick="SettingsHandler('ACinter');"> <label for="ACinter">Auto-cross intersections</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACdead" onclick="SettingsHandler('ACdead');"> <label for="ACdead">Auto-cross dead ends</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACloop" onclick="SettingsHandler('ACloop');"> <label for="ACloop">Auto-cross premature loops</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="highlight" onclick="SettingsHandler('AChighlight');"> <label for="highlight">Highlight wrong moves</label></div>
 				</div>
 			  </div>
 			
-			  <!-- TODO: add dynamic data -->
-			  <div id="timer" class="timer">
-				<span id="hr">00</span>:<span id="min">00</span>:<span id="sec">00</span>
-			  </div>
-			
-			  <div class="leaderboard">
-				<center>LEADERBOARD</center>
-				  <table width="100%">
-				    <tr>
-					  <td>USR1</td>
-					  <td align="right">1:32</td>
-				    </tr>
-				    <tr>
-					  <td>USR2</td>
-					  <td align="right">3:49</td>
-				    </tr>
-				  </table>
-				</div>
 			</div>
 		  
 		    <!-- GAME AREA -->
@@ -81,6 +63,26 @@
 			  <button onclick="Restart();">RESTART</button>
 			  <button onclick="PrintPuzzle();">PRINT</button>
 			  <button onclick="Tutorial();">TUTORIAL</button>
+			  
+			  <!-- TODO: add dynamic data -->
+			  <div id="timer" class="timer">
+				<span id="hr">00</span>:<span id="min">00</span>:<span id="sec">00</span>
+			  </div>
+			
+			  <div class="leaderboard">
+				<center>LEADERBOARD</center>
+				  <table width="100%">
+				    <tr>
+					  <td>USR1</td>
+					  <td align="right">1:32</td>
+				    </tr>
+				    <tr>
+					  <td>USR2</td>
+					  <td align="right">3:49</td>
+				    </tr>
+				  </table>
+				</div>
+			  
 		    </div>
 		  
 			<!-- JS SCRIPTING -->

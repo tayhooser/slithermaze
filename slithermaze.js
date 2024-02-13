@@ -31,13 +31,22 @@ var B = 1.0;
 
 var saveCounter = 0; // number of savestates
 
-var timer = true; // true: timer is running. false: timer has stopped
+// timer stuff
+var timer = true; // true = running
 var hour = 00; 
 var minute = 00; 
 var second = 00; 
 
+// zoom
 var slider = document.getElementById("zoomSlider");
 var zoomLevel = 50;
+
+// settings
+var ACnum = false;
+var ACinter = false;
+var ACdead = false;
+var ACloop = false;
+var highlight = false;
 
 // initializes openGL
 var InitGame = function(){
@@ -248,6 +257,32 @@ var Settings = function(){
 	}
 	return;
 };
+
+// handles settings congif
+var SettingsHandler = function(selection){
+	switch(selection){
+		case 'ACnum':
+			ACnum = document.getElementById('ACnum').checked;
+			//console.log(selection + " value = " + ACnum);
+			break;
+		case 'ACinter':
+			ACinter = document.getElementById('ACinter').checked;
+			//console.log(selection + " value = " + ACinter);
+			break;
+		case 'ACdead':
+			ACdead = document.getElementById('ACdead').checked;
+			//console.log(selection + " value = " + ACdead);
+			break;
+		case 'ACloop':
+			ACloop = document.getElementById('ACloop').checked;
+			//console.log(selection + " value = " + ACloop);
+			break;
+		case 'highlight':
+			highlight = document.getElementById('highlight').checked;
+			//console.log(selection + " value = " + AChighlight);
+			break;
+	}
+}
 
 // creates new savestate + button
 var Save = function(){
