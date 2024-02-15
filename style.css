@@ -152,7 +152,7 @@ body {
 	font-family: Arial;
 	padding: 10px;
 	opacity: 0;
-	transition: opacity .8s ease;
+	transition: opacity .5s ease;
 }
 
 /* fancy checkbox for settings menu*/
@@ -220,27 +220,6 @@ label {
 	margin-bottom: 10px;
 }
 
-/*timer under undo redo etc buttons */
-.timer {
-	font-weight: bold;
-	font-size: 30px;
-	font-family: Arial;
-	padding: 10px;
-	display: flex;
-    align-items: flex;
-	justify-content: center;
-}
-
-/* leaderboard under timer */
-.leaderboard {
-	background-color: #ffffff;
-	font-weight: bold;
-	font-size: 14px;
-	font-family: Arial;
-	padding: 10px;
-	border-radius: 5px;
-}
-
 /* RIGHT AREA --------------------------------------------------------*/
 .r-container {
 	margin: 0 20px;
@@ -265,6 +244,27 @@ label {
   
 .r-container button:hover {
 	background-color: #DE9894;
+}
+
+/*timer under tutorial buttons */
+.timer {
+	font-weight: bold;
+	font-size: 30px;
+	font-family: Arial;
+	margin-bottom: 10px;
+	display: flex;
+    align-items: flex;
+	justify-content: center;
+}
+
+/* leaderboard under timer */
+.leaderboard {
+	background-color: #ffffff;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	padding: 10px;
+	border-radius: 5px;
 }
 
 /* BELOW AREA --------------------*/  
