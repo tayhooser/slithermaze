@@ -12,8 +12,12 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
-});
+  }},
+    { useUnifiedTopology: true},
+    { useNewUrlParser: true},
+    { connectTimeoutMS: 30000},
+    { keepAlive: 1}
+);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,17 +25,21 @@ const PORT = process.env.PORT || 5000;
 
 async function run() {
   try {
+    await client.connect();
         const database = client.db('Slitherlake');
         const maps = database.collection('Maps');
   
         const query = { author: 'Taylor' };
         var map = await maps.findOne(query); 
-    } finally {
+  } finally {
+    console.log("Run is ending");
       await client.close();
     }
   return map;
   }
 
+
+  
 app.get('/', (req, res) => {
   run().then((results) => {
     res.json(results);
