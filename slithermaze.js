@@ -1,4 +1,4 @@
-
+//import * from 'graphics.js';
 
 // source for vertex shader
 var vertexShaderText =
@@ -51,7 +51,135 @@ var ACdead = false;
 var ACloop = false;
 var highlight = false;
 
-class circle {
+// webGL stuff
+var canvas = document.getElementById("game-area");
+var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
+var program = gl.createProgram();
+
+// PUZZLE LOGIC FUNCTIONS ----------------------------------------------------------------------------------------------
+
+// class for displayed puzzle
+class Puzzle {
+	h;
+	w;
+	cells;
+	nodes;
+	
+	constructor(h, w) {
+		this.h = h;
+		this.w = w;
+		// cells[h][w] = [num, shaded] 
+		this.cells = Array(h).fill().map(e =>
+					 Array(w).fill([-1, false]));
+		// nodes[h][w] = [[h+1, w, 0], [h, w+1, 1]]
+		// 0 = cross, 1 = line. up to 4 connections
+		//this.nodes = [...Array(h+1)].map(e => 
+		//			  Array(w+1).fill([]));
+		this.nodes = [...Array(h+1)].map(e => 
+					  Array(w+1).map(e =>
+					  Array(4)));
+	}
+}
+
+// debug only, prints puzzle state to console
+var logPuzzleState = function(puzzle) {
+	console.log("CELLS:");
+	for (let i = 0; i < puzzle.h; i++){ // row
+		temp = "";
+		for (let j = 0; j < puzzle.w; j++) { // col
+			if (puzzle.cells[i][j][0] != -1)
+				temp += " ";
+			temp += puzzle.cells[i][j][0];
+			temp += " ";
+		}
+		console.log(temp);
+	}
+	
+	console.log("NODE CONNECTIONS:");
+	for (let i = 0; i < puzzle.h + 1; i++){
+		for (let j = 0; j < puzzle.w + 1; j++) {
+			if (puzzle.nodes[i][j] && (puzzle.nodes[i][j].length > 0)){ // if connection data actually exists
+				console.log("(" + i + ", " + j + ") --> " + puzzle.nodes[i][j]);
+			}
+		}
+	}
+}
+
+// returns index of array within an array
+// used for searching nodes for existing connections
+// returns -1 if not found
+var connectionIndex = function(a, v){
+	var index = -1;
+	for (var i = 0; i < a.length; i++){
+		if (a[i] === v)
+			return i;
+		if ((v instanceof Array) && (a[i] instanceof Array) && (v.length == a[i].length)){
+			index = i;
+			for (var j = 0; j < v.length; j++){
+				if (v[j] !== a[i][j])
+					index = -1;
+			}
+		}
+		if (index > -1)
+			return index;
+	}
+	return index;
+}
+
+// creates line connection between 2 nodes
+// returns true if connection exists
+var placeLine = function(puzzle, x1, y1, x2, y2){
+	// must be 1 node away in either x or y direction, but not both
+	if ((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1)){
+		console.log("failed connection: too far");
+		return false;
+	}
+	if ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1)){
+		console.log("failed connection: diagonal");
+		return false;
+	}
+	
+	// check that connection doesnt already exists
+	if((puzzle.nodes[x1][y1]) && (connectionIndex(puzzle.nodes[x1][y1], [x2, y2, 1]) != -1)){
+		console.log("failed connection: already exists");
+		return true;
+	}
+	
+	// update connections. create element in node[i][j] then push to created element
+	if (puzzle.nodes[x1][y1]){ // if data exists, append
+	(puzzle.nodes[x1][y1][puzzle.nodes[x1][y1].length]=[]).push([x2, y2, 1]);
+	} else { // create empty list and append
+		(puzzle.nodes[x1][y1]=[]).push([x2, y2, 1]);
+	}
+	if (puzzle.nodes[x2][y2]){ // if data exists, append
+	(puzzle.nodes[x2][y2][puzzle.nodes[x2][y2].length]=[]).push([x1, y1, 1]);
+	} else { // create empty list and append
+		(puzzle.nodes[x2][y2]=[]).push([x1, y1, 1]);
+	}
+	
+	console.log("new connection: (" + x1 + ", " + y1 + ") --> (" + x2 + ", " + y2 + ")");
+	return true;
+}
+
+// convert puzzle from json to Puzzle class
+var convertPuzzle = function() {
+	
+}
+
+// generates a new puzzle
+var generatePuzzle = function(puzzle, d) {
+	
+}
+
+// returns true if puzzle was solved correctly
+var verifySolutiion = function(){
+	
+}
+
+// GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
+
+// dot graphic
+class Circle {
 	modelMatrix;
 	color;
 	vertices;
@@ -202,7 +330,8 @@ class circle {
 	}
 };
 
-class line {
+// line graphic
+class Line {
 	modelMatrix;
 	color;
 	vertices;
@@ -236,10 +365,10 @@ class line {
 };
 
 var getDot = function() {
-	var newDot = new circle();
+	var newDot = new Circle();
 
 	newDot.VAO = gl.createVertexArray();
-	console.log("here");
+	//console.log("here");
 	gl.bindVertexArray(newDot.VAO);
 	
 	// create and set active buffer
@@ -271,10 +400,10 @@ var getDot = function() {
 }
 
 var getLine = function() {
-	var newLine = new line();
+	var newLine = new Line();
 
 	newLine.VAO = gl.createVertexArray();
-	console.log("here");
+	//console.log("here");
 	gl.bindVertexArray(newLine.VAO);
 	
 	// create and set active buffer
@@ -305,14 +434,35 @@ var getLine = function() {
 	
 }
 
-var canvas = document.getElementById("game-area");
-var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
-var program = gl.createProgram();
-
-// initializes openGL
-var InitGame = function(){
+// initializes openGL and other functions
+var init = function(){
 	console.log("InitGame() started");
-	Timer();
+	timer();
+	curPuzzle = new Puzzle(5, 5);
+	
+	// TEMP: placeholder puzzle for testing algos
+	// see discord for visual solution
+	// puzzle: -1 -1 -1 -1 -1
+	//		   -1 -1  1 -1 -1
+	//		   -1 -1  2  1 -1
+	//		   -1 -1  2  2  2
+	//		    0  2  2  2 -1
+	
+	curPuzzle.cells[1][2] = [1, false];
+	curPuzzle.cells[2][2] = [2, false];
+	curPuzzle.cells[2][3] = [1, false];
+	curPuzzle.cells[3][2] = [2, false];
+	curPuzzle.cells[3][3] = [2, false];
+	curPuzzle.cells[3][4] = [2, false];
+	curPuzzle.cells[4][0] = [0, false];
+	curPuzzle.cells[4][1] = [2, false];
+	curPuzzle.cells[4][2] = [2, false];
+	curPuzzle.cells[4][3] = [2, false];
+	
+	placeLine(curPuzzle, 0, 0, 0, 1);
+	placeLine(curPuzzle, 0, 0, 0, 1);
+	
+	logPuzzleState(curPuzzle);
 
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
@@ -458,10 +608,11 @@ var InitGame = function(){
 	
 };
 
+// HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
+
 // runs the timer
-var Timer = function(){
+var timer = function(){
 	//console.log("Timer started.");
-	
 	if (timer){
         if (second == 60) { 
             minute++; 
@@ -494,24 +645,24 @@ var Timer = function(){
         document.getElementById('sec').innerHTML = secString;
 		
 		second++;
-		setTimeout(Timer, 1000); // calls Timer() after 1 second
+		setTimeout(timer, 1000); // calls Timer() after 1 second
 	}
 }
 
 // called when user hits undo button, HTML side
-var Undo = function(){
+var undo = function(){
 	console.log("Undo pressed.");
 	return;
 };
 
 // called when user hits redo button, HTML side
-var Redo = function(){
+var redo = function(){
 	console.log("Redo pressed.");
 	return;
 };
 
 // toggles zoom slider to open/close
-var Zoom = function(){
+var zoom = function(){
 	//console.log("Zoom pressed.");
 	var zoom = document.getElementById('zoom');
 	var zoomContent = document.getElementById('zoom-content');
@@ -545,7 +696,7 @@ slider.oninput = function(){
 }
 
 // toggles settings menu to open/close
-var Settings = function(){
+var settings = function(){
 	//console.log("Settings pressed.");
 	var settings = document.getElementById('settings');
 	var settingsContent = document.getElementById('settings-content');
@@ -572,7 +723,7 @@ var Settings = function(){
 };
 
 // handles settings congif
-var SettingsHandler = function(selection){
+var settingsHandler = function(selection){
 	switch(selection){
 		case 'ACnum':
 			ACnum = document.getElementById('ACnum').checked;
@@ -598,7 +749,7 @@ var SettingsHandler = function(selection){
 }
 
 // creates new savestate + button
-var Save = function(){
+var save = function(){
 	console.log("Save pressed");
 	
     // make new savestate button
@@ -618,7 +769,7 @@ var Save = function(){
 };
 
 // called when user hits a savestate button, HTML side
-var Load = function(state){
+var load = function(state){
 	state = state || 0;
 	console.log("Loaded state " + state);
 	return;
@@ -626,21 +777,21 @@ var Load = function(state){
 
 // called when user hits hint button, HTML side
 // shows either 1 possible cross or line, depends on current state and puzzle
-var Hint = function(){
+var hint = function(){
 	console.log("Redo pressed.");
 	return;
 };
 
 // called when user hits solution button, HTML side
 // should complete a solution step by step, like an animation
-var Solution = function(){
+var solution = function(){
 	console.log("Solution pressed.");
 	return;
 };
 
 // called when user hits restart button, HTML side
 // wipes all lines and crosses from screen
-var Restart = function(){
+var restart = function(){
 	console.log("Restart pressed.");
 	
 	// restart puzzle
@@ -660,7 +811,7 @@ var Restart = function(){
 
 // opens new tab with blank puzzle for printing
 // TODO: wipe puzzle state before printing
-var PrintPuzzle = function(){
+var printPuzzle = function(){
 	console.log("Print pressed.");
 	const canvas = document.getElementById('game-area')	
 	const dataUrl = canvas.toDataURL();
@@ -682,20 +833,20 @@ var PrintPuzzle = function(){
 
 // called when user hits tutorial button, HTML side
 // loads simple puzzle(s) for user to solve as well as tutorial text on screen
-var Tutorial = function(){
+var tutorial = function(){
 	console.log("Tutorial pressed.");
 	return;
 };
 
 // stops timer, checks answer
-var Submit = function(){
+var submit = function(){
 	console.log("Submit pressed.");
 	timer = false; // stop timer
 	return;
 };
 
 // generate new puzzle or select from premade puzzles
-var NewPuzzle = function(){
+var newPuzzle = function(){
 	console.log("New Puzzle pressed.");
 	return;
 };
