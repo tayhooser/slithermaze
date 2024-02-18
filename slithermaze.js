@@ -68,16 +68,13 @@ class Puzzle {
 	constructor(h, w) {
 		this.h = h;
 		this.w = w;
-		// cells[h][w] = [num, shaded] 
+		// cells[i][j] = [num, shaded] 
 		this.cells = Array(h).fill().map(e =>
 					 Array(w).fill([-1, false]));
-		// nodes[h][w] = [[h+1, w, 0], [h, w+1, 1]]
-		// 0 = cross, 1 = line. up to 4 connections
-		//this.nodes = [...Array(h+1)].map(e => 
-		//			  Array(w+1).fill([]));
-		this.nodes = [...Array(h+1)].map(e => 
-					  Array(w+1).map(e =>
-					  Array(4)));
+		// nodes[i][j] = undefined
+		// array created in pleaceLine and placeCross
+		this.nodes = Array(h+1).fill().map(e => 
+					  Array(w+1));
 	}
 }
 
@@ -99,15 +96,19 @@ var logPuzzleState = function(puzzle) {
 	for (let i = 0; i < puzzle.h + 1; i++){
 		for (let j = 0; j < puzzle.w + 1; j++) {
 			if (puzzle.nodes[i][j] && (puzzle.nodes[i][j].length > 0)){ // if connection data actually exists
-				console.log("(" + i + ", " + j + ") --> " + puzzle.nodes[i][j]);
+				tmp = "";
+				for (let k = 0; k < puzzle.nodes[i][j].length; k++){
+					tmp += "[" + puzzle.nodes[i][j][k] + "] ";
+				}
+				console.log("(" + i + ", " + j + ") --> " + tmp);
 			}
 		}
 	}
 }
 
-// returns index of array within an array
-// used for searching nodes for existing connections
+// returns index of array v found within array a
 // returns -1 if not found
+// used for finding index of node connection
 var connectionIndex = function(a, v){
 	var index = -1;
 	for (var i = 0; i < a.length; i++){
@@ -127,37 +128,103 @@ var connectionIndex = function(a, v){
 }
 
 // creates line connection between 2 nodes
-// returns true if connection exists
+// returns true if connection created successfully or already exists
 var placeLine = function(puzzle, x1, y1, x2, y2){
 	// must be 1 node away in either x or y direction, but not both
-	if ((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1)){
+	if (((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1))
+		 || ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1))){
 		console.log("failed connection: too far");
 		return false;
 	}
-	if ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1)){
-		console.log("failed connection: diagonal");
-		return false;
-	}
-	
+
 	// check that connection doesnt already exists
-	if((puzzle.nodes[x1][y1]) && (connectionIndex(puzzle.nodes[x1][y1], [x2, y2, 1]) != -1)){
-		console.log("failed connection: already exists");
-		return true;
+	if(puzzle.nodes[x1][y1]){
+		a = puzzle.nodes[x1][y1];
+		lloc = connectionIndex(a, [x2, y2, 1]);
+		xloc = connectionIndex(a, [x2, y2, 0]);
+		if (lloc != -1){ // line already exists, do nothing
+			console.log("failed connection: already exists");
+			return true;
+		} else if (xloc != -1){ // cross exists, remove and continue
+			console.log("calling removeLine for (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
+			removeLine(puzzle, x1, y1, x2, y2);
+		}
 	}
 	
 	// update connections. create element in node[i][j] then push to created element
-	if (puzzle.nodes[x1][y1]){ // if data exists, append
-	(puzzle.nodes[x1][y1][puzzle.nodes[x1][y1].length]=[]).push([x2, y2, 1]);
-	} else { // create empty list and append
+	if (puzzle.nodes[x1][y1]){
+		puzzle.nodes[x1][y1].push([x2, y2, 1]);
+	} else {
 		(puzzle.nodes[x1][y1]=[]).push([x2, y2, 1]);
 	}
-	if (puzzle.nodes[x2][y2]){ // if data exists, append
-	(puzzle.nodes[x2][y2][puzzle.nodes[x2][y2].length]=[]).push([x1, y1, 1]);
-	} else { // create empty list and append
+	if (puzzle.nodes[x2][y2]){
+		puzzle.nodes[x2][y2].push([x1, y1, 1]);
+	} else {
 		(puzzle.nodes[x2][y2]=[]).push([x1, y1, 1]);
 	}
 	
-	console.log("new connection: (" + x1 + ", " + y1 + ") --> (" + x2 + ", " + y2 + ")");
+	console.log("new connection LINE: (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
+	return true;
+}
+
+// same as create line, but places a cross instead
+var placeCross = function(puzzle, x1, y1, x2, y2){
+	// must be 1 node away in either x or y direction, but not both
+	if (((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1))
+		 || ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1))){
+		console.log("failed connection: too far");
+		return false;
+	}
+
+	// check that connection doesnt already exists
+	if(puzzle.nodes[x1][y1]){
+		a = puzzle.nodes[x1][y1];
+		lloc = connectionIndex(a, [x2, y2, 1]);
+		xloc = connectionIndex(a, [x2, y2, 0]);
+		if (xloc != -1){ // cross already exists, do nothing
+			console.log("failed connection: already exists");
+			return true;
+		} else if (lloc != -1){ // line exists, remove and continue
+			console.log("calling removeLine for (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
+			removeLine(puzzle, x1, y1, x2, y2);
+		}
+	}
+	
+	// update connections. create element in node[i][j] then push to created element
+	if (puzzle.nodes[x1][y1]){
+		puzzle.nodes[x1][y1].push([x2, y2, 0]);
+	} else {
+		(puzzle.nodes[x1][y1]=[]).push([x2, y2, 0]);
+	}
+	if (puzzle.nodes[x2][y2]){
+		puzzle.nodes[x2][y2].push([x1, y1, 0]);
+	} else {
+		(puzzle.nodes[x2][y2]=[]).push([x1, y1, 0]);
+	}
+	
+	console.log("new connection CROSS: (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
+	return true;
+}
+
+// removes a connection between two nodes (cross or line)
+// returns true if removed successfully or didnt already exist
+var removeLine = function(puzzle, x1, y1, x2, y2) {
+	if (!puzzle.nodes[x1][y1] || !puzzle.nodes[x2][y2]) // one or both nodes do not have any connections
+		return true;
+		
+	// find line/cross in node 1, then remove
+	loc1 = connectionIndex(puzzle.nodes[x1][y1], [x2, y2, 1]);
+	if (loc1 == -1)
+		loc1 = connectionIndex(puzzle.nodes[x1][y1], [x2, y2, 0]);
+	if (loc1 == -1)
+		return true;
+	puzzle.nodes[x1][y1].splice(loc1, 1);
+	
+	// find line/cross in node 1, then remove
+	loc2 = connectionIndex(puzzle.nodes[x2][y2], [x1, y1, 1]);
+	if (loc1 == -1)
+		loc1 = connectionIndex(puzzle.nodes[x2][y2], [x1, y1, 0]);
+	puzzle.nodes[x2][y2].splice(loc2, 1);
 	return true;
 }
 
@@ -436,7 +503,7 @@ var getLine = function() {
 
 // initializes openGL and other functions
 var init = function(){
-	console.log("InitGame() started");
+	console.log("init() started");
 	timer();
 	curPuzzle = new Puzzle(5, 5);
 	
@@ -459,8 +526,57 @@ var init = function(){
 	curPuzzle.cells[4][2] = [2, false];
 	curPuzzle.cells[4][3] = [2, false];
 	
+	/*
+	// test of line/cross placement
+	// expected result: no node connections
 	placeLine(curPuzzle, 0, 0, 0, 1);
+	placeLine(curPuzzle, 0, 0, 0, 1); // error: already exists
+	placeLine(curPuzzle, 0, 0, 0, 2); // error: too far
+	placeLine(curPuzzle, 0, 0, 1, 1); // error: too far
+	
+	placeCross(curPuzzle, 0, 0, 1, 0);
+	placeCross(curPuzzle, 0, 0, 1, 0); // error: already exists
+	placeCross(curPuzzle, 0, 0, 0, 2); // error: too far
+	placeCross(curPuzzle, 0, 0, 1, 1); // error: too far
+	
+	placeLine(curPuzzle, 0, 0, 1, 0); // remove cross and place line
+	placeCross(curPuzzle, 0, 0, 0, 1); // remove line and place cross
+	removeLine(curPuzzle, 0, 0, 1, 0); // removes cross
+	removeLine(curPuzzle, 0, 0, 0, 1); // removes line
+	*/
+
 	placeLine(curPuzzle, 0, 0, 0, 1);
+	placeLine(curPuzzle, 0, 1, 0, 2);
+	placeLine(curPuzzle, 0, 2, 0, 3);
+	placeLine(curPuzzle, 0, 3, 0, 4);
+	placeLine(curPuzzle, 0, 4, 0, 5);
+	placeLine(curPuzzle, 0, 5, 1, 5);
+	placeLine(curPuzzle, 1, 5, 2, 5);
+	placeLine(curPuzzle, 2, 5, 3, 5);
+	placeLine(curPuzzle, 3, 5, 3, 4);
+	placeLine(curPuzzle, 3, 4, 2, 4);
+	placeLine(curPuzzle, 2, 4, 1, 4);
+	placeLine(curPuzzle, 1, 4, 1, 3);
+	placeLine(curPuzzle, 1, 3, 1, 2);
+	placeLine(curPuzzle, 1, 2, 1, 1);
+	placeLine(curPuzzle, 1, 1, 2, 1);
+	placeLine(curPuzzle, 2, 1, 2, 2);
+	placeLine(curPuzzle, 2, 2, 3, 2);
+	placeLine(curPuzzle, 3, 2, 3, 3);
+	placeLine(curPuzzle, 3, 3, 4, 3);
+	placeLine(curPuzzle, 4, 3, 4, 4);
+	placeLine(curPuzzle, 4, 4, 4, 5);
+	placeLine(curPuzzle, 4, 5, 5, 5);
+	placeLine(curPuzzle, 5, 5, 5, 4);
+	placeLine(curPuzzle, 5, 4, 5, 3);
+	placeLine(curPuzzle, 5, 3, 5, 2);
+	placeLine(curPuzzle, 5, 2, 4, 2);
+	placeLine(curPuzzle, 4, 2, 4, 1);
+	placeLine(curPuzzle, 4, 1, 3, 1);
+	placeLine(curPuzzle, 3, 1, 3, 0);
+	placeLine(curPuzzle, 3, 0, 2, 0);
+	placeLine(curPuzzle, 2, 0, 1, 0);
+	placeLine(curPuzzle, 1, 0, 0, 0);
 	
 	logPuzzleState(curPuzzle);
 
@@ -697,24 +813,20 @@ slider.oninput = function(){
 
 // toggles settings menu to open/close
 var settings = function(){
-	//console.log("Settings pressed.");
 	var settings = document.getElementById('settings');
 	var settingsContent = document.getElementById('settings-content');
 	
     if (settings.style.height == '0px') { // show menu
-		//console.log("showing");
         settings.style.height = '280px';
 		settings.style.marginTop = '10px';
 		settingsContent.style.opacity = '1';
 		
     } else if (settings.style.height == '280px'){ // hide menu
-		//console.log("hiding");
         settings.style.height = '0px';
 		settings.style.marginTop = '0px';
 		settingsContent.style.opacity = '0';
 		
     } else { // always falls back to this else block on first click..... dont know why
-		//console.log("showing (else)");
         settings.style.height = '280px';
 		settings.style.marginTop = '10px';
 		settingsContent.style.opacity = '1';
