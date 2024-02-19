@@ -108,8 +108,9 @@ var logPuzzleState = function(puzzle) {
 
 // returns index of array v found within array a
 // returns -1 if not found
-// used for finding index of node connection
-var connectionIndex = function(a, v){
+var arrayIndexOf = function(a, v){
+	if (!a) // a is not an array/undefined
+		return -1;
 	var index = -1;
 	for (var i = 0; i < a.length; i++){
 		if (a[i] === v)
@@ -133,20 +134,18 @@ var placeLine = function(puzzle, x1, y1, x2, y2){
 	// must be 1 node away in either x or y direction, but not both
 	if (((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1))
 		 || ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1))){
-		console.log("failed connection: too far");
+		//console.log("failed connection: too far");
 		return false;
 	}
 
 	// check that connection doesnt already exists
 	if(puzzle.nodes[x1][y1]){
 		a = puzzle.nodes[x1][y1];
-		lloc = connectionIndex(a, [x2, y2, 1]);
-		xloc = connectionIndex(a, [x2, y2, 0]);
-		if (lloc != -1){ // line already exists, do nothing
-			console.log("failed connection: already exists");
+		if (arrayIndexOf(a, [x2, y2, 1]) != -1){ // line already exists, do nothing
+			//console.log("failed connection: already exists");
 			return true;
-		} else if (xloc != -1){ // cross exists, remove and continue
-			console.log("calling removeLine for (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
+		} else if (arrayIndexOf(a, [x2, y2, 0]) != -1){ // cross exists, remove and continue
+			//console.log("calling removeLine for (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
 			removeLine(puzzle, x1, y1, x2, y2);
 		}
 	}
@@ -163,7 +162,7 @@ var placeLine = function(puzzle, x1, y1, x2, y2){
 		(puzzle.nodes[x2][y2]=[]).push([x1, y1, 1]);
 	}
 	
-	console.log("new connection LINE: (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
+	//console.log("new connection LINE: (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
 	return true;
 }
 
@@ -172,20 +171,20 @@ var placeCross = function(puzzle, x1, y1, x2, y2){
 	// must be 1 node away in either x or y direction, but not both
 	if (((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1))
 		 || ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1))){
-		console.log("failed connection: too far");
+		//console.log("failed connection: too far");
 		return false;
 	}
 
 	// check that connection doesnt already exists
 	if(puzzle.nodes[x1][y1]){
 		a = puzzle.nodes[x1][y1];
-		lloc = connectionIndex(a, [x2, y2, 1]);
-		xloc = connectionIndex(a, [x2, y2, 0]);
+		lloc = arrayIndexOf(a, [x2, y2, 1]);
+		xloc = arrayIndexOf(a, [x2, y2, 0]);
 		if (xloc != -1){ // cross already exists, do nothing
-			console.log("failed connection: already exists");
+			//console.log("failed connection: already exists");
 			return true;
 		} else if (lloc != -1){ // line exists, remove and continue
-			console.log("calling removeLine for (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
+			//console.log("calling removeLine for (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
 			removeLine(puzzle, x1, y1, x2, y2);
 		}
 	}
@@ -202,7 +201,7 @@ var placeCross = function(puzzle, x1, y1, x2, y2){
 		(puzzle.nodes[x2][y2]=[]).push([x1, y1, 0]);
 	}
 	
-	console.log("new connection CROSS: (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
+	//console.log("new connection CROSS: (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
 	return true;
 }
 
@@ -213,17 +212,17 @@ var removeLine = function(puzzle, x1, y1, x2, y2) {
 		return true;
 		
 	// find line/cross in node 1, then remove
-	loc1 = connectionIndex(puzzle.nodes[x1][y1], [x2, y2, 1]);
+	loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 1]);
 	if (loc1 == -1)
-		loc1 = connectionIndex(puzzle.nodes[x1][y1], [x2, y2, 0]);
+		loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 0]);
 	if (loc1 == -1)
 		return true;
 	puzzle.nodes[x1][y1].splice(loc1, 1);
 	
 	// find line/cross in node 1, then remove
-	loc2 = connectionIndex(puzzle.nodes[x2][y2], [x1, y1, 1]);
+	loc2 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 1]);
 	if (loc1 == -1)
-		loc1 = connectionIndex(puzzle.nodes[x2][y2], [x1, y1, 0]);
+		loc1 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 0]);
 	puzzle.nodes[x2][y2].splice(loc2, 1);
 	return true;
 }
@@ -239,8 +238,87 @@ var generatePuzzle = function(puzzle, d) {
 }
 
 // returns true if puzzle was solved correctly
-var verifySolutiion = function(){
+var verifySolution = function(puzzle){
+	// check that all cells surrounded by correct num lines
+	for (let i = 0; i < puzzle.h; i++){
+		for (let j = 0; j < puzzle.w; j++) {
+			n = 0;
+			//console.log("checking cells[" + i + "][" + j + "]");
+			if (puzzle.cells[i][j][0] == -1) // unnumbered cell, skip
+				continue;
+			// nodes[i][j] is top left node of cells[i][j]
+			if (arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 1]) != -1) // top line
+				n++;
+			if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 1]) != -1) // right line
+				n++;
+			if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j, 1]) != -1) // bottom line
+				n++;
+			if (arrayIndexOf(puzzle.nodes[i+1][j], [i, j, 1]) != -1) // left line
+				n++;
+			//console.log("there are " + n + " lines around cells[" + i + "][" + j + "]");
+			if (n != puzzle.cells[i][j][0]){ // wrong num lines
+				console.log("INCORRECT SOLUTION: wrong num lines around cell (" + i + ", " + j + ")");
+				return false;
+			}
+		}
+	}
 	
+	// find start of loop
+	find_start:
+	for (let i = 0; i < puzzle.h + 1; i++){
+		for (let j = 0; j < puzzle.w + 1; j++) {
+			if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0)
+				continue;
+			start = [i, j];
+			prev = [i, j];
+			cur = [puzzle.nodes[i][j][0][0], puzzle.nodes[i][j][0][1]]; // store coords of 1st connection
+			visited = [prev];
+			break find_start;
+		}
+	}
+	// no starting nodes found. redundant but added just in case
+	if (!start){
+		console.log("INCORRECT SOLUTION: no lines placed");
+		return false;
+	}
+	
+	// follow path, ensure 1 loop without intersections or dead ends
+	while (cur.toString() != start.toString()){ // use toString() bc cant compare arrays the easy way in js
+		//console.log("visiting " + cur);
+		if (puzzle.nodes[cur[0]][cur[1]].length != 2){
+			console.log("INCORRECT SOLUTION: dead end or intersection found at nodes[" + cur[0] + "][" + cur[1] + "]");
+			return false;
+		}
+		visited.push([...cur]);
+		 // if first connection in list = prev, use second in list
+		if ((puzzle.nodes[cur[0]][cur[1]][0][0] == prev[0]) && (puzzle.nodes[cur[0]][cur[1]][0][1] == prev[1])){
+			prev = [...cur];
+			x = puzzle.nodes[cur[0]][cur[1]][1][0];
+			y = puzzle.nodes[cur[0]][cur[1]][1][1];
+			cur[0] = x;
+			cur[1] = y;
+		} else {
+			prev = [...cur];
+			x = puzzle.nodes[cur[0]][cur[1]][0][0];
+			y = puzzle.nodes[cur[0]][cur[1]][0][1];
+			cur[0] = x;
+			cur[1] = y;
+		}
+	}
+
+	// search for stray lines/subloops
+	for (let i = 0; i < puzzle.h + 1; i++){
+		for (let j = 0; j < puzzle.w + 1; j++) {
+			if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0) // not part of line
+				continue;
+			if (arrayIndexOf(visited, [i, j]) > -1) // part of main loop
+				continue;
+			console.log("INCORRECT SOLUTION: multiple loops/segments detected!");
+			return false; // else part of another line segment/subloop
+		}
+	}
+	console.log("CORRECT SOLUTION");
+	return true;
 }
 
 // GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
@@ -505,7 +583,6 @@ var getLine = function() {
 var init = function(){
 	console.log("init() started");
 	timer();
-	curPuzzle = new Puzzle(5, 5);
 	
 	// TEMP: placeholder puzzle for testing algos
 	// see discord for visual solution
@@ -514,7 +591,7 @@ var init = function(){
 	//		   -1 -1  2  1 -1
 	//		   -1 -1  2  2  2
 	//		    0  2  2  2 -1
-	
+	curPuzzle = new Puzzle(5, 5);
 	curPuzzle.cells[1][2] = [1, false];
 	curPuzzle.cells[2][2] = [2, false];
 	curPuzzle.cells[2][3] = [1, false];
@@ -528,7 +605,6 @@ var init = function(){
 	
 	/*
 	// test of line/cross placement
-	// expected result: no node connections
 	placeLine(curPuzzle, 0, 0, 0, 1);
 	placeLine(curPuzzle, 0, 0, 0, 1); // error: already exists
 	placeLine(curPuzzle, 0, 0, 0, 2); // error: too far
@@ -544,7 +620,7 @@ var init = function(){
 	removeLine(curPuzzle, 0, 0, 1, 0); // removes cross
 	removeLine(curPuzzle, 0, 0, 0, 1); // removes line
 	*/
-
+	
 	placeLine(curPuzzle, 0, 0, 0, 1);
 	placeLine(curPuzzle, 0, 1, 0, 2);
 	placeLine(curPuzzle, 0, 2, 0, 3);
@@ -577,9 +653,18 @@ var init = function(){
 	placeLine(curPuzzle, 3, 0, 2, 0);
 	placeLine(curPuzzle, 2, 0, 1, 0);
 	placeLine(curPuzzle, 1, 0, 0, 0);
+	//logPuzzleState(curPuzzle);
 	
-	logPuzzleState(curPuzzle);
-
+	verifySolution(curPuzzle); // correct solution
+	
+	placeLine(curPuzzle, 5, 0, 5, 1);
+	verifySolution(curPuzzle); // incorrect solution: wrong # lines around cell[4][0]
+	removeLine(curPuzzle, 5, 0, 5, 1);
+	
+	placeLine(curPuzzle, 0, 1, 1, 1);
+	verifySolution(curPuzzle); // incorrect solution: intersection around nodes[0][1]
+	removeLine(curPuzzle, 0, 1, 1, 1);
+	
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
 		console.log("WebGL not supported, falling back on experimental version.");
@@ -596,7 +681,7 @@ var init = function(){
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	// create andf compile shaders
+	// create and compile shaders
 	var vertexShader = gl.createShader(gl.VERTEX_SHADER);
 	var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
 	
