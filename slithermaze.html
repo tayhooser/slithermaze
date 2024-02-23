@@ -9,7 +9,7 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   </head>
   
-  <body onload="InitGame();">
+  <body onload="init();">
 	  <div class="title-container">
 	    SLITHERMAZE<br>
 	  </div> 
@@ -23,8 +23,8 @@
 		  <!-- LEFT CONTAINER -->
 			<div class="l-container">
 			  <center>
-				<button onclick="Undo();"><i class="fa fa-undo"></i></button><button onclick="Redo();"><i class="fa fa-repeat"></i></button>
-				<button onclick="Zoom();"><i class="fa fa-search"></i></button><button onclick="Settings();"><i class="fa fa-wrench"></i></button>
+				<button onclick="undo();"><i class="fa fa-undo"></i></button><button onclick="redo();"><i class="fa fa-repeat"></i></button>
+				<button onclick="zoom();"><i class="fa fa-search"></i></button><button onclick="settings();"><i class="fa fa-wrench"></i></button>
 			  </center>
 			  
 			  <!-- dropdown zoom slider -->
@@ -37,11 +37,11 @@
 			  <!-- dropdown settings menu -->
 			  <div id="settings" class="settings">
 				<div id="settings-content" class="settings-content">
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACnum" onclick="SettingsHandler('ACnum');"> <label for="ACnum">Auto-cross completed numbers</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACinter" onclick="SettingsHandler('ACinter');"> <label for="ACinter">Auto-cross intersections</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACdead" onclick="SettingsHandler('ACdead');"> <label for="ACdead">Auto-cross dead ends</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACloop" onclick="SettingsHandler('ACloop');"> <label for="ACloop">Auto-cross premature loops</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="highlight" onclick="SettingsHandler('AChighlight');"> <label for="highlight">Highlight wrong moves</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACnum" onclick="settingsHandler('ACnum');"> <label for="ACnum">Auto-cross completed numbers</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACinter" onclick="settingsHandler('ACinter');"> <label for="ACinter">Auto-cross intersections</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACdead" onclick="settingsHandler('ACdead');"> <label for="ACdead">Auto-cross dead ends</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACloop" onclick="settingsHandler('ACloop');"> <label for="ACloop">Auto-cross premature loops</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="highlight" onclick="settingsHandler('AChighlight');"> <label for="highlight">Highlight wrong moves</label></div>
 				</div>
 			  </div>
 			
@@ -58,11 +58,11 @@
 		
 		  <!-- RIGHT CONTAINER -->
 			<div class="r-container">
-			  <button onclick="Hint();">HINT</button>
-			  <button onclick="Solution();">SOLUTION</button>
-			  <button onclick="Restart();">RESTART</button>
-			  <button onclick="PrintPuzzle();">PRINT</button>
-			  <button onclick="Tutorial();">TUTORIAL</button>
+			  <button onclick="hint();">HINT</button>
+			  <button onclick="solution();">SOLUTION</button>
+			  <button onclick="restart();">RESTART</button>
+			  <button onclick="printPuzzle();">PRINT</button>
+			  <button onclick="tutorial();">TUTORIAL</button>
 			  
 			  <!-- TODO: add dynamic data -->
 			  <div id="timer" class="timer">
@@ -87,6 +87,7 @@
 		  
 			<!-- JS SCRIPTING -->
 			<script src="slithermaze.js"></script>
+			<script type="module" src="graphics.js"></script>
 			<script src="gl-matrix-min.js"></script>
 		</div>
 	  
@@ -95,8 +96,8 @@
 		  <div id="save-container">
 			<button class="save-button" onclick="Save();"><i class="fa fa-floppy-o"></i></button>
 		  </div>
-		  <button class="lb-button" onclick="Submit();">SUBMIT</button>
-		  <button class="lb-button" onclick="NewPuzzle();">NEW PUZZLE</button>
+		  <button class="lb-button" onclick="submit();">SUBMIT</button>
+		  <button class="lb-button" onclick="newPuzzle();">NEW PUZZLE</button>
 	    </div>
 	  
 	    <div class="about">
