@@ -233,25 +233,41 @@ var placeCross = function(puzzle, x1, y1, x2, y2){
 }
 
 // removes a connection between two nodes (cross or line)
-// returns true if removed successfully or didnt already exist
 var removeLine = function(puzzle, x1, y1, x2, y2) {
 	if (!puzzle.nodes[x1][y1] || !puzzle.nodes[x2][y2]) // one or both nodes do not have any connections
-		return true;
+		return;
 		
 	// find line/cross in node 1, then remove
 	loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 1]);
 	if (loc1 == -1)
 		loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 0]);
 	if (loc1 == -1)
-		return true;
+		return;
 	puzzle.nodes[x1][y1].splice(loc1, 1);
 	
-	// find line/cross in node 1, then remove
+	// find line/cross in node 2, then remove
 	loc2 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 1]);
-	if (loc1 == -1)
-		loc1 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 0]);
+	if (loc2 == -1)
+		loc2 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 0]);
 	puzzle.nodes[x2][y2].splice(loc2, 1);
-	return true;
+	return;
+}
+
+// clears puzzle of lines/crosses/shaded cells
+var clearPuzzle = function(puzzle) {
+	// clear shaded cell regions
+	for (let i = 0; i < puzzle.h; i++){
+		for (let j = 0; j < puzzle.w; j++) {
+			puzzle.cells[i][j][1] = false;
+		}	
+	}
+	
+	// remove all lines and crosses
+	for (let i = 0; i < puzzle.h + 1; i++){
+		for (let j = 0; j < puzzle.w + 1; j++) {
+			puzzle.nodes[i][j] = [];
+		}
+	}
 }
 
 // convert puzzle from json to Puzzle class
@@ -272,26 +288,29 @@ var generatePuzzle = function(puzzle, d) {
 	
 }
 
+// returns number of lines around a given cell
+var countLines = function(puzzle, x, y){
+	n = 0;
+	// nodes[i][j] is top left node of cells[i][j]
+	if (arrayIndexOf(puzzle.nodes[x][y], [x, y+1, 1]) != -1) // top line
+		n++;
+	if (arrayIndexOf(puzzle.nodes[x][y+1], [x+1, y+1, 1]) != -1) // right line
+		n++;
+	if (arrayIndexOf(puzzle.nodes[x+1][y+1], [x+1, y, 1]) != -1) // bottom line
+		n++;
+	if (arrayIndexOf(puzzle.nodes[x+1][y], [x, y, 1]) != -1) // left line
+		n++;
+	return n;
+}
+
 // returns true if puzzle was solved correctly
 var verifySolution = function(puzzle){
 	// check that all cells surrounded by correct num lines
 	for (let i = 0; i < puzzle.h; i++){
 		for (let j = 0; j < puzzle.w; j++) {
-			n = 0;
-			//console.log("checking cells[" + i + "][" + j + "]");
 			if (puzzle.cells[i][j][0] == -1) // unnumbered cell, skip
 				continue;
-			// nodes[i][j] is top left node of cells[i][j]
-			if (arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 1]) != -1) // top line
-				n++;
-			if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 1]) != -1) // right line
-				n++;
-			if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j, 1]) != -1) // bottom line
-				n++;
-			if (arrayIndexOf(puzzle.nodes[i+1][j], [i, j, 1]) != -1) // left line
-				n++;
-			//console.log("there are " + n + " lines around cells[" + i + "][" + j + "]");
-			if (n != puzzle.cells[i][j][0]){ // wrong num lines
+			if (countLines(puzzle, i, j) != puzzle.cells[i][j][0]){ // wrong num lines
 				console.log("INCORRECT SOLUTION: wrong num lines around cell (" + i + ", " + j + ")");
 				return false;
 			}
@@ -627,7 +646,7 @@ var init = function(){
 	//		   -1 -1  2  2  2
 	//		    0  2  2  2 -1
 	
-	/*
+
 	curPuzzle = new Puzzle(5, 5);
 	curPuzzle.cells[1][2] = [1, false];
 	curPuzzle.cells[2][2] = [2, false];
@@ -674,8 +693,11 @@ var init = function(){
 	placeLine(curPuzzle, 1, 0, 0, 0);
 	
 	verifySolution(curPuzzle); // correct solution
-	*/
+	//logPuzzleState(curPuzzle);
 	
+	clearPuzzle(curPuzzle); // clears all node connections and shaded regions
+	//logPuzzleState(curPuzzle);
+
 	// TEMP: placeholder json for testing converter function
 	const tmpjson = `{
 		 "name": "Mayflower",
@@ -699,7 +721,7 @@ var init = function(){
 		}
 	`
 	curPuzzle = convertPuzzle(tmpjson);
-	logPuzzleState(curPuzzle);
+	//logPuzzleState(curPuzzle);
 	
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
@@ -1028,6 +1050,7 @@ var restart = function(){
 	console.log("Restart pressed.");
 	
 	// restart puzzle
+	clearPuzzle(curPuzzle);
 	
 	// restart timer
 	hour = 00; 
@@ -1074,13 +1097,20 @@ var tutorial = function(){
 // stops timer, checks answer
 var submit = function(){
 	console.log("Submit pressed.");
-	timer = false; // stop timer
+	if (verifySolution(curPuzzle)){
+		timer = false;
+		// record current time and display message on screen
+	} else {
+		// keep timer going and display message on screen
+	}
 	return;
 };
 
 // generate new puzzle or select from premade puzzles
 var newPuzzle = function(){
 	console.log("New Puzzle pressed.");
-	// delete cookies
+	// delete save data
+	saveCounter = 0;
+	// delete all cookies
 	return;
 };
