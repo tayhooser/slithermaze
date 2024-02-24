@@ -56,6 +56,33 @@ var canvas = document.getElementById("game-area");
 var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
 var program = gl.createProgram();
 
+// SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
+//function must be async to give us access to await
+async function getMap(query = { author: 'Taylor' }) {
+    var params = query; 
+
+    //irrelevant to the promise issue, ignore this block
+    try {
+        var url = new URL('http://164.90.146.219:5000'), params;
+        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
+    } catch (error) {
+        console.error(error);
+        console.log("failed to bind parameters to URL. Make sure query is in correct format");
+
+    }
+
+    //await blocks the fetch() until its done, allowing us to actually print its value. Only possible because entire function is labelled "async"
+    //without async, wouldnt be able to remove data from the .then().
+    let returning = await fetch(url).then(res => res.json()).then(data => {
+        return data;
+    });
+
+    //prints okay, value removed from .then()
+    console.log(returning);
+    //because function is asyncronous, returns a promise instead of a value". 
+    return returning;
+}
+
 // PUZZLE LOGIC FUNCTIONS ----------------------------------------------------------------------------------------------
 
 // class for displayed puzzle
@@ -228,8 +255,16 @@ var removeLine = function(puzzle, x1, y1, x2, y2) {
 }
 
 // convert puzzle from json to Puzzle class
-var convertPuzzle = function() {
-	
+// currently just parses cell data
+var convertPuzzle = function(json) {
+	var data = JSON.parse(json);
+	puzzle = new Puzzle(data.size, data.size);
+	for (let i = 0; i < data.size; i++){
+		for (let j = 0; j < data.size; j++){
+			puzzle.cells[i][j] = [data.matrix.numbers[i][j], false];
+		}
+	}
+	return puzzle;
 }
 
 // generates a new puzzle
@@ -583,7 +618,7 @@ var getLine = function() {
 var init = function(){
 	console.log("init() started");
 	timer();
-	
+
 	// TEMP: placeholder puzzle for testing algos
 	// see discord for visual solution
 	// puzzle: -1 -1 -1 -1 -1
@@ -591,6 +626,8 @@ var init = function(){
 	//		   -1 -1  2  1 -1
 	//		   -1 -1  2  2  2
 	//		    0  2  2  2 -1
+	
+	/*
 	curPuzzle = new Puzzle(5, 5);
 	curPuzzle.cells[1][2] = [1, false];
 	curPuzzle.cells[2][2] = [2, false];
@@ -602,24 +639,6 @@ var init = function(){
 	curPuzzle.cells[4][1] = [2, false];
 	curPuzzle.cells[4][2] = [2, false];
 	curPuzzle.cells[4][3] = [2, false];
-	
-	/*
-	// test of line/cross placement
-	placeLine(curPuzzle, 0, 0, 0, 1);
-	placeLine(curPuzzle, 0, 0, 0, 1); // error: already exists
-	placeLine(curPuzzle, 0, 0, 0, 2); // error: too far
-	placeLine(curPuzzle, 0, 0, 1, 1); // error: too far
-	
-	placeCross(curPuzzle, 0, 0, 1, 0);
-	placeCross(curPuzzle, 0, 0, 1, 0); // error: already exists
-	placeCross(curPuzzle, 0, 0, 0, 2); // error: too far
-	placeCross(curPuzzle, 0, 0, 1, 1); // error: too far
-	
-	placeLine(curPuzzle, 0, 0, 1, 0); // remove cross and place line
-	placeCross(curPuzzle, 0, 0, 0, 1); // remove line and place cross
-	removeLine(curPuzzle, 0, 0, 1, 0); // removes cross
-	removeLine(curPuzzle, 0, 0, 0, 1); // removes line
-	*/
 	
 	placeLine(curPuzzle, 0, 0, 0, 1);
 	placeLine(curPuzzle, 0, 1, 0, 2);
@@ -653,17 +672,34 @@ var init = function(){
 	placeLine(curPuzzle, 3, 0, 2, 0);
 	placeLine(curPuzzle, 2, 0, 1, 0);
 	placeLine(curPuzzle, 1, 0, 0, 0);
-	//logPuzzleState(curPuzzle);
 	
 	verifySolution(curPuzzle); // correct solution
+	*/
 	
-	placeLine(curPuzzle, 5, 0, 5, 1);
-	verifySolution(curPuzzle); // incorrect solution: wrong # lines around cell[4][0]
-	removeLine(curPuzzle, 5, 0, 5, 1);
-	
-	placeLine(curPuzzle, 0, 1, 1, 1);
-	verifySolution(curPuzzle); // incorrect solution: intersection around nodes[0][1]
-	removeLine(curPuzzle, 0, 1, 1, 1);
+	// TEMP: placeholder json for testing converter function
+	const tmpjson = `{
+		 "name": "Mayflower",
+		 "author": "Taylor",
+		 "difficulty": "easy",
+		 "size": 3,
+		 "matrix": {
+			"map": [[1,1,0,2],
+					[1,0,1,0],
+					[0,0,1,2],
+					[1,0,0,1],
+					[1,0,1,2],
+					[0,1,1,0],
+					[0,1,0,2]
+			],
+			"numbers": [[2,-1,-1],
+						[-1,0,3],
+						[-1,3,-1]
+			]
+		 }
+		}
+	`
+	curPuzzle = convertPuzzle(tmpjson);
+	logPuzzleState(curPuzzle);
 	
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
@@ -952,7 +988,7 @@ var save = function(){
     // make new savestate button
 	saveCounter += 1;
 	document.getElementById("save-container").
-            innerHTML += ("<button class=\"save-button\" onclick=\"Load(" + saveCounter + ");\">" + saveCounter + "</button>");
+            innerHTML += ("<button class=\"save-button\" onclick=\"load(" + saveCounter + ");\">" + saveCounter + "</button>");
 	
 	/*
 	if (testCookie != "") { // cookie already exists, load data
@@ -1045,5 +1081,6 @@ var submit = function(){
 // generate new puzzle or select from premade puzzles
 var newPuzzle = function(){
 	console.log("New Puzzle pressed.");
+	// delete cookies
 	return;
 };
