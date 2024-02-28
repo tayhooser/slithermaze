@@ -51,17 +51,14 @@ var ACdead = false;
 var ACloop = false;
 var highlight = false;
 
+// only made once and reused to draw multiple circles
 class circleTemplate {
-	// modelMatrix;
-	// color;
 	vertices;
 	indices;
 	VAO;
 	VBO;
 	IBO;
 	constructor() {
-		// this.modelMatrix = glMatrix.mat4.create();
-		// this.color = [0.439, 0.329, 0.302];
 	this.vertices = [
 	 	0.0, 0.0, 0.0,
 	 	0.00000, -1.00000, 0.00000,
@@ -199,6 +196,7 @@ class circleTemplate {
 	}
 };
 
+// only made once and reused to draw multiple lines
 class lineTemplate {
 	vertices;
 	indices;
@@ -228,13 +226,15 @@ class lineTemplate {
 	}
 };
 
+// data for a single object. Can be a line, or circle, or later on can be numbers, or X's
 class puzzlePiece {
-	modelMatrix;
+	modelMatrix;		// matrix that holds transformation, rotation, and scale info
 	color;
 	type;				// 1 for dot, 2 for line/cross
-	display;			// 0 for nothing, 1 for line, 2 for X\
+	display;			// 0 for nothing, 1 for line, 2 for X
+	
 	xCoord;				//	coords in line array to determine if a 
-	yCoord;				// 	line should be drawn or not
+	yCoord;				// 		line should be drawn or not
 	constructor() {
 		this.modelMatrix = glMatrix.mat4.create();
 		this.color = [0.439, 0.329, 0.302];
@@ -244,6 +244,7 @@ class puzzlePiece {
 	}
 };
 
+// function that initializes and returns an instance of the dot template
 var getDot = function() {
 	var newDot = new circleTemplate();
 
@@ -251,15 +252,10 @@ var getDot = function() {
 	console.log("here");
 	gl.bindVertexArray(newDot.VAO);
 	
-	// create and set active buffer
-	//var lineVertexBufferObject = gl.createBuffer();
-	//gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexBufferObject);
-
 	newDot.VBO = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, newDot.VBO);
 
 	// new Float32Array(verticies) --> webGL expects 32 bit, JS encodes as 64 bit
-	// gl.STATIC_DRAW --> triangle shape will not change at all after being drawn
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newDot.vertices), gl.STATIC_DRAW);
 	
 	var posAttribLoc = gl.getAttribLocation(program, "vertPos");
@@ -271,14 +267,12 @@ var getDot = function() {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newDot.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newDot.indices), gl.STATIC_DRAW);
 
-	//gl.bindVertexArray();
-	
 	console.log("newDot has been pushed");
 	return newDot;
-	//dots.push(newDot);
 	
 }
 
+// function that initializes and returns an instance of the line template
 var getLine = function() {
 	var newLine = new lineTemplate();
 
@@ -320,19 +314,19 @@ var program = gl.createProgram();
 var vertexShader = gl.createShader(gl.VERTEX_SHADER);
 var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
 var cameraPosition;
-var puzzleObjects = [];
-var lineObjects = [];
-var dot;
-var line;
+var puzzleObjects = [];				// list of puzzle objects that wont change much like dots and numbers
+var lineObjects = [];				// list of lines that will be interacted with and change
+var dot;							// instance of the dot template
+var line;							// instance of the line template
 var puzzleSize = 3;
 
 var length = puzzleSize + 1;
 var height = (puzzleSize * 2) + 1;
 
-var MoB;	// Middle of Board
-var linesArray = Array(height);
-
-// initializes openGL
+var MoB;							// Middle of Board. Used to set the camera position in the center
+var linesArray = Array(height);		// 2D Array that indicates which lines are on/off
+									
+// initializes openGL and initial board
 var InitGame = function(){
 	console.log("InitGame() started");
 	Timer();
@@ -389,51 +383,50 @@ var InitGame = function(){
 		return;
 	}
 	
-	//var dots = [];
-	
-
 	// main render loop --------------------------------------------------------------------
-	dot = getDot();
-	line = getLine();
-	var translateX = 0.0;
-	var translateY = 0.0;
-	zoomLevel = puzzleSize;
-	var dotIndex = 0;
+	dot = getDot();					// dot template instance, same one as before
+	line = getLine();				// line template instance, same one as before
 
-	// Setup the dots
+	var translateX = 0.0;			// will be used to apply a translation to an object to put it in the right place in the world
+	var translateY = 0.0;
+	zoomLevel = puzzleSize;			// used to change the camera's z-coordinate to make the board appear bigger or smaller
+
+	// Setup the dots. Applies a translation to a new dot object and pushes to a list of objects.
 	for (let i = 0; i < puzzleSize + 1; i++) {
 		for (let j = 0; j < puzzleSize + 1; j++) {
 			let newMesh = new puzzlePiece();
-			newMesh.type = 1;
+			newMesh.type = 1;			// 1 for dot
 
-			var translationVec = glMatrix.vec3.fromValues(translateX, translateY, -1.0);
-			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
+			var translationVec = glMatrix.vec3.fromValues(translateX, translateY, -1.0);		// vector to move object by in world space
+			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);	// applies translation vector to current object's model matrix
 			
-			puzzleObjects.push(newMesh);
+			puzzleObjects.push(newMesh);			// put the new object into list of objects
 			
-			translateX += 10.0;
+			translateX += 10.0;						// increase translation amount to move next object to the right
 
 		}
 		translateX = 0.0;
-		translateY = translateY - 10.0;
+		translateY = translateY - 10.0;				// moves the next row of dots down
 	}
 
+	// setup to put lines back at the top and shifted slightly to the right
 	translateX = 5.0;
 	translateY = 0.0;
 
-
+	// Gives each line an x, y coordinate in the linesArray list.
 	var xIndex = 0;
 	var yIndex = 0;
 
 	// setup the horizontal lines
+	// follows a similar process as the dots but now we must track our position in the linesArray
 	for (let i = 0; i < puzzleSize + 1; i++) {
 
-		let tempLines = [];
+		let tempLines = [];			// will be a single row in linesArray
 
 		for (let j = 0; j < puzzleSize; j++) {
 			let newMesh = new puzzlePiece();
-			newMesh.type = 2;
-			newMesh.xCoord = xIndex;
+			newMesh.type = 2;					// 2 for a line
+			newMesh.xCoord = xIndex;			// store the linesArray index into the object
 			newMesh.yCoord = yIndex;
 			
 			var translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
@@ -450,8 +443,8 @@ var InitGame = function(){
 			xIndex++;
 
 		}
-		tempLines.push(2);
-		linesArray[2 * i] = tempLines;
+		tempLines.push(2);					// puts a junk value in the linesArray for horizontal line rows\
+		linesArray[2 * i] = tempLines;		// horizontal lines are every other row in the linesArray
 
 		translateX = 5.0;
 		translateY = translateY - 10.0;
@@ -469,6 +462,7 @@ var InitGame = function(){
 	let linesArrayIndex = 1;
 
 	// setup the vertical lines
+	// follows a similar process to the horizontal lines
 	for (let i = 0; i < puzzleSize; i++) {
 
 		let tempLines = [];
@@ -511,7 +505,7 @@ var InitGame = function(){
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
 	// https://www.npmjs.com/package/polyline-normals
 
-
+	// manually set some of the lines to be off to look like example puzzle from presentation slides
 	linesArray[0][2] = 0;
 	linesArray[1][1] = 0;
 	linesArray[1][3] = 0;
@@ -529,6 +523,7 @@ var InitGame = function(){
 	
 };
 
+// render call to draw stuff to screen
 var Render = function () {
 
 	gl.clearColor(R, G, B, 1.0);
@@ -550,34 +545,35 @@ var Render = function () {
 
 	// vp matrix
 	var vp = glMatrix.mat4.create();
-	glMatrix.mat4.multiply(vp, projection, view);		// might have to swap operands
+	glMatrix.mat4.multiply(vp, projection, view);		// combine view and projection matrices into new vp matrix
 
 	var mvp = glMatrix.mat4.create();
-	var mvpLoc = gl.getUniformLocation(program, "mvp");
+	var mvpLoc = gl.getUniformLocation(program, "mvp");			// location of "mvp" in shader program
 
 	for (let i = 0; i < puzzleObjects.length; i++) {
 		if (puzzleObjects[i].type == 1)
 			gl.bindVertexArray(dot.VAO);
 
-		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);
-		gl.uniformMatrix4fv(mvpLoc, false, mvp);
-		
-		if (puzzleObjects[i].type == 1)
+		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
+		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
+
+		if (puzzleObjects[i].type == 1)									// need to use the correct set of indices in draw call
 			gl.drawElements(gl.TRIANGLES, dot.indices.length, gl.UNSIGNED_SHORT, 0);
 	}
 
 	for (let i = 0; i < lineObjects.length; i++) {
-		if (linesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) continue;
+		if (linesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) continue;	// if the linesArray at the current position is 0 
+																						//		then don't draw the current line and skip to the next
 		
 		//console.log(lineObjects[i].yCoord, lineObjects[i].xCoord);
 
-		if (lineObjects[i].type == 2)
+		if (lineObjects[i].type == 2)				
 			gl.bindVertexArray(line.VAO);
 
-		glMatrix.mat4.multiply(mvp, vp, lineObjects[i].modelMatrix);
-		gl.uniformMatrix4fv(mvpLoc, false, mvp);
+		glMatrix.mat4.multiply(mvp, vp, lineObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
+		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
 		
-		if (lineObjects[i].type == 2)
+		if (lineObjects[i].type == 2)									// need to use the correct set of indices in draw call
 			gl.drawElements(gl.TRIANGLES, line.indices.length, gl.UNSIGNED_SHORT, 0);
 	}
 };
