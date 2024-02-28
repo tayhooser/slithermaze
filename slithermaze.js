@@ -415,7 +415,7 @@ var InitGame = function(){
 
 		}
 		translateX = 0.0;
-		translateY = translateY + 10.0;
+		translateY = translateY - 10.0;
 	}
 
 	translateX = 5.0;
@@ -454,7 +454,7 @@ var InitGame = function(){
 		linesArray[2 * i] = tempLines;
 
 		translateX = 5.0;
-		translateY = translateY + 10.0;
+		translateY = translateY - 10.0;
 
 		xIndex = 0;
 		yIndex += 2;
@@ -462,7 +462,7 @@ var InitGame = function(){
 	
 
 	translateX = 0.0;
-	translateY = 5.0;
+	translateY = -5.0;
 
 	xIndex = 0;
 	yIndex = 1;
@@ -502,7 +502,7 @@ var InitGame = function(){
 		linesArrayIndex += 2;
 
 		translateX = 0.0;
-		translateY = translateY + 10.0;
+		translateY = translateY - 10.0;
 
 		xIndex = 0;
 		yIndex += 2
@@ -525,9 +525,6 @@ var InitGame = function(){
 	linesArray[6][0] = 0;
 	linesArray[6][2] = 0;
 	
-	linesArray
-	console.log(linesArray);
-
 	Render();
 	
 };
@@ -541,9 +538,9 @@ var Render = function () {
 
 	// camera setup
 	var view = glMatrix.mat4.create();
-	var up = [0.0, -1.0, 0.0];
-	cameraPosition = [MoB, MoB, zoomLevel * 10]; // z-coordinate should be puzzleSize * 10
-	var lookAt = [MoB, MoB, 0.0];
+	var up = [0.0, 1.0, 0.0];
+	cameraPosition = [MoB, -MoB, (zoomLevel * 10)]; // z-coordinate should be puzzleSize * 10
+	var lookAt = [MoB, -MoB, 0.0];
 	glMatrix.mat4.lookAt(view, cameraPosition, lookAt, up);
 
 	// projection setup
@@ -572,7 +569,7 @@ var Render = function () {
 	for (let i = 0; i < lineObjects.length; i++) {
 		if (linesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) continue;
 		
-		console.log(lineObjects[i].yCoord, lineObjects[i].xCoord);
+		//console.log(lineObjects[i].yCoord, lineObjects[i].xCoord);
 
 		if (lineObjects[i].type == 2)
 			gl.bindVertexArray(line.VAO);
