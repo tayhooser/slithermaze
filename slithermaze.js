@@ -374,6 +374,81 @@ var verifySolution = function(puzzle){
 	console.log("CORRECT SOLUTION");
 	return true;
 }
+// AUTOSOLVER
+// uses patterns recognized on Wikipedia to automatically fill out certain moves an help puzzle completion.
+// link for patterns / strategies : https://en.wikipedia.org/wiki/Slitherlink
+
+
+var autoSolver = function(puzzle) {
+	for (let i = 0; i < puzzle.h; i++) {
+        for (let j = 0; j < puzzle.w; j++) {
+            // Check if the cell contains a number
+            if (puzzle.cells[i][j][0] == 1) {
+                // Check if the cell is in a corner
+				//if (node[i][j])
+                if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+                    // Place crosses at top and left lines of the corner
+                    if (i === 0) {
+                        // Place cross at top line
+                        placeCross(puzzle, i, j, i+1, j);
+                    }
+					else if (i == puzzle.h - 1) {
+						placeCross(puzzle, i-1, j,i,j);
+					}
+
+
+                    if (j === 0) {
+                        // Place cross at left line
+                        placeCross(puzzle, i, j,i,j+1);
+                    }
+					
+					else if (j == puzzle.w - 1){
+						placeCross(puzzle, i, j-1, i, j);
+
+					}
+
+
+                }
+            }
+			else if (puzzle.cells[i][j][0] == 3  ) {
+				if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+                    // Place crosses at top and left lines of the corner
+					if (i === 0) {
+                        // Place line at top line
+                        placeLine(puzzle, i, j, i+1, j);
+                    }
+					else if (i == puzzle.h - 1) {
+						placeLine(puzzle, i-1, j,i,j);
+					}
+
+
+                    if (j === 0) {
+                        // Place line at left line
+                        placeLine(puzzle, i, j,i,j+1);
+                    }
+					
+					else if (j == puzzle.w - 1){
+						placeLine(puzzle, i, j-1, i, j);
+
+					}
+                }		
+
+
+			}	
+
+        }
+    }
+
+	
+
+
+}
+
+
+
+
+
+
 
 // GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
 
