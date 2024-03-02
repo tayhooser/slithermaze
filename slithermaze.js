@@ -712,6 +712,9 @@ var init = function(){
 	console.log("init() started");
 	timer();
 
+	canvas.addEventListener("mouseup", mouseUp, false);				// should maybe move these to a different events_init() function or something
+	canvas.addEventListener("wheel", mouseWheel, false);
+
 	// TEMP: placeholder puzzle for testing algos
 	// see discord for visual solution
 	// puzzle: -1 -1 -1 -1 -1
@@ -1067,6 +1070,19 @@ var render = function () {
 			gl.drawElements(gl.TRIANGLES, line.indices.length, gl.UNSIGNED_SHORT, 0);
 	}
 };
+
+// CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
+var mouseUp = function( event ) {
+	console.log( event );
+}
+
+var mouseWheel = function( event ) {
+	console.log( event );
+	event.preventDefault();
+	
+	zoomLevel -= event.wheelDelta / 100;
+	render();
+}
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
 
