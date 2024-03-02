@@ -700,6 +700,7 @@ var lineObjects = [];				// list of lines that will be interacted with and chang
 var dot;							// instance of the dot template
 var line;							// instance of the line template
 var puzzleSize = 5;
+var renderT = false;
 
 //var gLength = puzzleSize + 1;
 var gHeight = (puzzleSize * 2) + 1;
@@ -1006,13 +1007,17 @@ var init = function(){
 	gLinesArray[3][0] = 1;
 	gLinesArray[1][0] = 1;
 
-	
+
+	renderT = true;
 	render();
 	
 };
 
+
 // render call to draw stuff to screen
 var render = function () {
+
+	if (!renderT) return;
 
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1069,6 +1074,9 @@ var render = function () {
 		if (lineObjects[i].type == 2)									// need to use the correct set of indices in draw call
 			gl.drawElements(gl.TRIANGLES, line.indices.length, gl.UNSIGNED_SHORT, 0);
 	}
+
+
+	setTimeout(render, 12);
 };
 
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
@@ -1081,7 +1089,7 @@ var mouseWheel = function( event ) {
 	event.preventDefault();
 	
 	zoomLevel -= event.wheelDelta / 100;
-	render();
+	//render();
 }
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
@@ -1168,7 +1176,7 @@ var zoom = function(){
 // default 50, range 1-100
 slider.oninput = function(){
 	zoomLevel = this.value;
-	render();
+	//render();
 	//console.log("Slider value: " + zoomLevel);
 }
 
