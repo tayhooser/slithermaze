@@ -51,11 +51,6 @@ var ACdead = false;
 var ACloop = false;
 var highlight = false;
 
-// webGL stuff
-var canvas = document.getElementById("game-area");
-var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
-var program = gl.createProgram();
-
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
 //function must be async to give us access to await
 async function getMap(query = { author: 'Taylor' }) {
@@ -453,7 +448,7 @@ var autoSolver = function(puzzle) {
 // GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
 
 // dot graphic
-class Circle {
+class circleTemplate {
 	modelMatrix;
 	color;
 	vertices;
@@ -729,10 +724,18 @@ var gHeight = (puzzleSize * 2) + 1;
 var MoB;								// Middle of Board. Used to set the camera position in the center
 var gLinesArray = Array(gHeight);		// 2D Array that indicates which lines are on/off
 									
-// initializes openGL and initial board
-var InitGame = function(){
-	console.log("InitGame() started");
-	Timer();
+// initializes openGL, other functions, and initial board
+var init = function(){
+	console.log("init() started");
+	timer();
+
+	// TEMP: placeholder puzzle for testing algos
+	// see discord for visual solution
+	// puzzle: -1 -1 -1 -1 -1
+	//		   -1 -1  1 -1 -1
+	//		   -1 -1  2  1 -1
+	//		   -1 -1  2  2  2
+	//		    0  2  2  2 -1
 	
 	gl.enable(gl.CULL_FACE);
 	//gl.cullFace(gl.BACK);
