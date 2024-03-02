@@ -227,7 +227,7 @@ class lineTemplate {
 };
 
 // data for a single object. Can be a line, or circle, or later on can be numbers, or X's
-class puzzlePiece {
+class graphicsObj {
 	modelMatrix;		// matrix that holds transformation, rotation, and scale info
 	color;
 	type;				// 1 for dot, 2 for line/cross
@@ -320,11 +320,11 @@ var dot;							// instance of the dot template
 var line;							// instance of the line template
 var puzzleSize = 3;
 
-var length = puzzleSize + 1;
-var height = (puzzleSize * 2) + 1;
+//var length = puzzleSize + 1;
+var gHeight = (puzzleSize * 2) + 1;
 
-var MoB;							// Middle of Board. Used to set the camera position in the center
-var linesArray = Array(height);		// 2D Array that indicates which lines are on/off
+var MoB;								// Middle of Board. Used to set the camera position in the center
+var gLinesArray = Array(gHeight);		// 2D Array that indicates which lines are on/off
 									
 // initializes openGL and initial board
 var InitGame = function(){
@@ -394,7 +394,7 @@ var InitGame = function(){
 	// Setup the dots. Applies a translation to a new dot object and pushes to a list of objects.
 	for (let i = 0; i < puzzleSize + 1; i++) {
 		for (let j = 0; j < puzzleSize + 1; j++) {
-			let newMesh = new puzzlePiece();
+			let newMesh = new graphicsObj();
 			newMesh.type = 1;			// 1 for dot
 
 			var translationVec = glMatrix.vec3.fromValues(translateX, translateY, -1.0);		// vector to move object by in world space
@@ -424,7 +424,7 @@ var InitGame = function(){
 		let tempLines = [];			// will be a single row in linesArray
 
 		for (let j = 0; j < puzzleSize; j++) {
-			let newMesh = new puzzlePiece();
+			let newMesh = new graphicsObj();
 			newMesh.type = 2;					// 2 for a line
 			newMesh.xCoord = xIndex;			// store the linesArray index into the object
 			newMesh.yCoord = yIndex;
@@ -444,7 +444,7 @@ var InitGame = function(){
 
 		}
 		tempLines.push(2);					// puts a junk value in the linesArray for horizontal line rows\
-		linesArray[2 * i] = tempLines;		// horizontal lines are every other row in the linesArray
+		gLinesArray[2 * i] = tempLines;		// horizontal lines are every other row in the linesArray
 
 		translateX = 5.0;
 		translateY = translateY - 10.0;
@@ -459,7 +459,7 @@ var InitGame = function(){
 
 	xIndex = 0;
 	yIndex = 1;
-	let linesArrayIndex = 1;
+	let gLinesArrayIndex = 1;
 
 	// setup the vertical lines
 	// follows a similar process to the horizontal lines
@@ -468,7 +468,7 @@ var InitGame = function(){
 		let tempLines = [];
 
 		for (let j = 0; j < puzzleSize + 1; j++) {
-			let newMesh = new puzzlePiece();
+			let newMesh = new graphicsObj();
 			newMesh.type = 2;
 			newMesh.xCoord = xIndex;
 			newMesh.yCoord = yIndex;
@@ -492,8 +492,8 @@ var InitGame = function(){
 			xIndex++;
 		}
 
-		linesArray[linesArrayIndex] = tempLines;
-		linesArrayIndex += 2;
+		gLinesArray[gLinesArrayIndex] = tempLines;
+		gLinesArrayIndex += 2;
 
 		translateX = 0.0;
 		translateY = translateY - 10.0;
@@ -506,18 +506,18 @@ var InitGame = function(){
 	// https://www.npmjs.com/package/polyline-normals
 
 	// manually set some of the lines to be off to look like example puzzle from presentation slides
-	linesArray[0][2] = 0;
-	linesArray[1][1] = 0;
-	linesArray[1][3] = 0;
-	linesArray[2][0] = 0;
-	linesArray[2][1] = 0;
-	linesArray[3][1] = 0;
-	linesArray[3][2] = 0;
-	linesArray[4][1] = 0;
-	linesArray[5][0] = 0;
-	linesArray[5][3] = 0;
-	linesArray[6][0] = 0;
-	linesArray[6][2] = 0;
+	gLinesArray[0][2] = 0;
+	gLinesArray[1][1] = 0;
+	gLinesArray[1][3] = 0;
+	gLinesArray[2][0] = 0;
+	gLinesArray[2][1] = 0;
+	gLinesArray[3][1] = 0;
+	gLinesArray[3][2] = 0;
+	gLinesArray[4][1] = 0;
+	gLinesArray[5][0] = 0;
+	gLinesArray[5][3] = 0;
+	gLinesArray[6][0] = 0;
+	gLinesArray[6][2] = 0;
 	
 	Render();
 	
@@ -562,7 +562,7 @@ var Render = function () {
 	}
 
 	for (let i = 0; i < lineObjects.length; i++) {
-		if (linesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) continue;	// if the linesArray at the current position is 0 
+		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) continue;	// if the linesArray at the current position is 0 
 																						//		then don't draw the current line and skip to the next
 		
 		//console.log(lineObjects[i].yCoord, lineObjects[i].xCoord);
