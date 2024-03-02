@@ -447,10 +447,8 @@ var autoSolver = function(puzzle) {
 
 // GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
 
-// dot graphic
+// dot graphic only made once and reused to draw multiple lines
 class circleTemplate {
-	modelMatrix;
-	color;
 	vertices;
 	indices;
 	VAO;
@@ -588,9 +586,6 @@ class circleTemplate {
 		this.VAO = 0;
 		this.VBO = 0;
 		this.IBO = 0;
-
-		console.log("circle has been created! :D");
-
 	}
 };
 
@@ -617,10 +612,6 @@ class lineTemplate {
 		this.VBO = 0;
 		this.IBO = 0;
 
-		console.log("line has been created! :D");
-		//this.modelMatrix = mat4.create();
-		//this.color = vec3.create()
-		//this.modelMatrix = [5,0,8];
 	}
 };
 
@@ -675,13 +666,8 @@ var getLine = function() {
 	var newLine = new lineTemplate();
 
 	newLine.VAO = gl.createVertexArray();
-	//console.log("here");
 	gl.bindVertexArray(newLine.VAO);
 	
-	// create and set active buffer
-	//var lineVertexBufferObject = gl.createBuffer();
-	//gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexBufferObject);
-
 	newLine.VBO = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, newLine.VBO);
 
@@ -697,13 +683,10 @@ var getLine = function() {
 	newLine.IBO = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newLine.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newLine.indices), gl.STATIC_DRAW);
-
-	//gl.bindVertexArray();
 	
 	console.log("newLine has been pushed");
 	return newLine;
-	//dots.push(newDot);
-	
+
 }
 
 var canvas = document.getElementById("game-area");
@@ -716,9 +699,9 @@ var puzzleObjects = [];				// list of puzzle objects that wont change much like 
 var lineObjects = [];				// list of lines that will be interacted with and change
 var dot;							// instance of the dot template
 var line;							// instance of the line template
-var puzzleSize = 3;
+var puzzleSize = 5;
 
-//var length = puzzleSize + 1;
+//var gLength = puzzleSize + 1;
 var gHeight = (puzzleSize * 2) + 1;
 
 var MoB;								// Middle of Board. Used to set the camera position in the center
@@ -738,7 +721,6 @@ var init = function(){
 	//		    0  2  2  2 -1
 	
 	gl.enable(gl.CULL_FACE);
-	//gl.cullFace(gl.BACK);
 
 	curPuzzle = new Puzzle(5, 5);
 	curPuzzle.cells[1][2] = [1, false];
@@ -832,7 +814,7 @@ var init = function(){
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	// create andf compile shaders
+	// create and compile shaders
 	
 	gl.shaderSource(vertexShader, vertexShaderText);
 	gl.shaderSource(fragmentShader, fragmentShaderText);
@@ -920,7 +902,7 @@ var init = function(){
 			translateX += 10.0;
 			lineObjects.push(newMesh);
 
-			tempLines.push(1);
+			tempLines.push(0);
 
 			xIndex++;
 
@@ -967,7 +949,7 @@ var init = function(){
 
 			lineObjects.push(newMesh);
 
-			tempLines.push(1);
+			tempLines.push(0);
 
 			translateX += 10.0;
 		
@@ -988,18 +970,39 @@ var init = function(){
 	// https://www.npmjs.com/package/polyline-normals
 
 	// manually set some of the lines to be off to look like example puzzle from presentation slides
-	gLinesArray[0][2] = 0;
-	gLinesArray[1][1] = 0;
-	gLinesArray[1][3] = 0;
-	gLinesArray[2][0] = 0;
-	gLinesArray[2][1] = 0;
-	gLinesArray[3][1] = 0;
-	gLinesArray[3][2] = 0;
-	gLinesArray[4][1] = 0;
-	gLinesArray[5][0] = 0;
-	gLinesArray[5][3] = 0;
-	gLinesArray[6][0] = 0;
-	gLinesArray[6][2] = 0;
+	gLinesArray[0][0] = 1;
+	gLinesArray[0][1] = 1;
+	gLinesArray[0][2] = 1;
+	gLinesArray[0][3] = 1;
+	gLinesArray[0][4] = 1;
+	gLinesArray[1][5] = 1;
+	gLinesArray[3][5] = 1;
+	gLinesArray[5][5] = 1;
+	gLinesArray[6][4] = 1;
+	gLinesArray[5][4] = 1;
+	gLinesArray[3][4] = 1;
+	gLinesArray[2][3] = 1;
+	gLinesArray[2][2] = 1;
+	gLinesArray[2][1] = 1;
+	gLinesArray[3][1] = 1;
+	gLinesArray[4][1] = 1;
+	gLinesArray[5][2] = 1;
+	gLinesArray[6][2] = 1;
+	gLinesArray[7][3] = 1;
+	gLinesArray[8][3] = 1;
+	gLinesArray[8][4] = 1;
+	gLinesArray[9][5] = 1;
+	gLinesArray[10][4] = 1;
+	gLinesArray[10][3] = 1;
+	gLinesArray[10][2] = 1;
+	gLinesArray[9][2] = 1;
+	gLinesArray[8][1] = 1;
+	gLinesArray[7][1] = 1;
+	gLinesArray[6][0] = 1;
+	gLinesArray[5][0] = 1;
+	gLinesArray[3][0] = 1;
+	gLinesArray[1][0] = 1;
+
 	
 	Render();
 	
