@@ -853,7 +853,7 @@ var init = function(){
 
 	var translateX = 0.0;			// will be used to apply a translation to an object to put it in the right place in the world
 	var translateY = 0.0;
-	zoomLevel = puzzleSize;			// used to change the camera's z-coordinate to make the board appear bigger or smaller
+	zoomLevel = puzzleSize * 3;			// used to change the camera's z-coordinate to make the board appear bigger or smaller
 
 	// Setup the dots. Applies a translation to a new dot object and pushes to a list of objects.
 	for (let i = 0; i < puzzleSize + 1; i++) {
@@ -1004,12 +1004,12 @@ var init = function(){
 	gLinesArray[1][0] = 1;
 
 	
-	Render();
+	render();
 	
 };
 
 // render call to draw stuff to screen
-var Render = function () {
+var render = function () {
 
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1019,14 +1019,19 @@ var Render = function () {
 	// camera setup
 	var view = glMatrix.mat4.create();
 	var up = [0.0, 1.0, 0.0];
-	cameraPosition = [MoB, -MoB, (zoomLevel * 10)]; // z-coordinate should be puzzleSize * 10
+	cameraPosition = [MoB, -MoB, (1)]; // z-coordinate should be puzzleSize * 10
 	var lookAt = [MoB, -MoB, 0.0];
 	glMatrix.mat4.lookAt(view, cameraPosition, lookAt, up);
 
+	var ortho_size = zoomLevel * 2;				// need also consider the initial zoomLevel set in init()
+
 	// projection setup
-	var fovy = 60.0 * (3.14159265359 / 180.0);
+	//var fovy = 60.0 * (3.14159265359 / 180.0);
 	var projection = glMatrix.mat4.create();
-	projection = glMatrix.mat4.perspective(projection, fovy, 1.0, 0.0000001, null);
+	//projection = glMatrix.mat4.perspective(projection, fovy, 1.0, 0.0000001, null);
+	projection = glMatrix.mat4.ortho(projection, -ortho_size, ortho_size, -ortho_size, ortho_size, null, 2);
+
+	
 
 	// vp matrix
 	var vp = glMatrix.mat4.create();
@@ -1147,7 +1152,7 @@ var zoom = function(){
 // default 50, range 1-100
 slider.oninput = function(){
 	zoomLevel = this.value;
-	Render();
+	render();
 	//console.log("Slider value: " + zoomLevel);
 }
 
