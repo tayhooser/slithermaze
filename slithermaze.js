@@ -1,5 +1,5 @@
 //import * from 'graphics.js';
-//import * as logic from 'logic.js';
+import * as pl from './logic.js';
 
 // source for vertex shader
 var vertexShaderText =
@@ -34,6 +34,7 @@ var G = 1.0;
 var B = 1.0;
 
 var saveCounter = 0; // number of savestates
+var curPuzzle;
 
 // timer stuff
 var timer = true; // true = running
@@ -41,9 +42,25 @@ var hour = 0;
 var minute = 0;
 var second = 0;
 
-// zoom
-var slider = document.getElementById("zoomSlider");
-var zoomLevel = 50;
+// HTML elements
+var undoHTML = document.getElementById("undo");
+var redoHTML = document.getElementById("redo");
+var zoomHTML = document.getElementById("zoom");
+var zoomSliderHTML = document.getElementById("zoomSlider");
+var settingsHTML = document.getElementById("settings");
+var ACnumHTML = document.getElementById('ACnum');
+var ACinterHTML = document.getElementById('ACinter');
+var ACdeadHTML = document.getElementById('ACdead');
+var ACloopHTML = document.getElementById('ACloop');
+var highlightHTML = document.getElementById('highlight');
+var hintHTML = document.getElementById('hint');
+var solutionHTML = document.getElementById('solution');
+var restartHTML = document.getElementById('restart');
+var printHTML = document.getElementById('print');
+var tutorialHTML = document.getElementById('tutorial');
+var saveHTML = document.getElementById('save');
+var submitHTML = document.getElementById('submit');
+var newPuzzleHTML = document.getElementById('new-puzzle');
 
 // settings
 var ACnum = false;
@@ -51,6 +68,7 @@ var ACinter = false;
 var ACdead = false;
 var ACloop = false;
 var highlight = false;
+var zoomLevel = 50;
 
 // webGL globals
 var canvas = document.getElementById("game-area");
@@ -97,363 +115,6 @@ async function getMap(query = { author: 'Taylor' }) {
     //because function is asyncronous, returns a promise instead of a value". 
     return returning;
 }
-
-// PUZZLE LOGIC FUNCTIONS ----------------------------------------------------------------------------------------------
-
-// class for displayed puzzle
-class Puzzle {
-	h;
-	w;
-	cells;
-	nodes;
-	
-	constructor(h, w) {
-		this.h = h;
-		this.w = w;
-		// cells[i][j] = [num, shaded] 
-		this.cells = Array(h).fill().map(e =>
-					 Array(w).fill([-1, false]));
-		// nodes[i][j] = undefined
-		// array created in pleaceLine and placeCross
-		this.nodes = Array(h+1).fill().map(e => 
-					  Array(w+1));
-	}
-}
-
-// debug only, prints puzzle state to console
-var logPuzzleState = function(puzzle) {
-	console.log("CELLS:");
-	for (let i = 0; i < puzzle.h; i++){ // row
-		temp = "";
-		for (let j = 0; j < puzzle.w; j++) { // col
-			if (puzzle.cells[i][j][0] != -1)
-				temp += " ";
-			temp += puzzle.cells[i][j][0];
-			temp += " ";
-		}
-		console.log(temp);
-	}
-	
-	console.log("NODE CONNECTIONS:");
-	for (let i = 0; i < puzzle.h + 1; i++){
-		for (let j = 0; j < puzzle.w + 1; j++) {
-			if (puzzle.nodes[i][j] && (puzzle.nodes[i][j].length > 0)){ // if connection data actually exists
-				tmp = "";
-				for (let k = 0; k < puzzle.nodes[i][j].length; k++){
-					tmp += "[" + puzzle.nodes[i][j][k] + "] ";
-				}
-				console.log("(" + i + ", " + j + ") --> " + tmp);
-			}
-		}
-	}
-}
-
-// returns index of array v found within array a
-// returns -1 if not found
-var arrayIndexOf = function(a, v){
-	if (!a) // a is not an array/undefined
-		return -1;
-	var index = -1;
-	for (var i = 0; i < a.length; i++){
-		if (a[i] === v)
-			return i;
-		if ((v instanceof Array) && (a[i] instanceof Array) && (v.length == a[i].length)){
-			index = i;
-			for (var j = 0; j < v.length; j++){
-				if (v[j] !== a[i][j])
-					index = -1;
-			}
-		}
-		if (index > -1)
-			return index;
-	}
-	return index;
-}
-
-// creates line connection between 2 nodes
-// returns true if connection created successfully or already exists
-var placeLine = function(puzzle, x1, y1, x2, y2){
-	// must be 1 node away in either x or y direction, but not both
-	if (((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1))
-		 || ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1))){
-		//console.log("failed connection: too far");
-		return false;
-	}
-
-	// check that connection doesnt already exists
-	if(puzzle.nodes[x1][y1]){
-		a = puzzle.nodes[x1][y1];
-		if (arrayIndexOf(a, [x2, y2, 1]) != -1){ // line already exists, do nothing
-			//console.log("failed connection: already exists");
-			return true;
-		} else if (arrayIndexOf(a, [x2, y2, 0]) != -1){ // cross exists, remove and continue
-			//console.log("calling removeLine for (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
-			removeLine(puzzle, x1, y1, x2, y2);
-		}
-	}
-	
-	// update connections. create element in node[i][j] then push to created element
-	if (puzzle.nodes[x1][y1]){
-		puzzle.nodes[x1][y1].push([x2, y2, 1]);
-	} else {
-		(puzzle.nodes[x1][y1]=[]).push([x2, y2, 1]);
-	}
-	if (puzzle.nodes[x2][y2]){
-		puzzle.nodes[x2][y2].push([x1, y1, 1]);
-	} else {
-		(puzzle.nodes[x2][y2]=[]).push([x1, y1, 1]);
-	}
-	
-	//console.log("new connection LINE: (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
-	return true;
-}
-
-// same as create line, but places a cross instead
-var placeCross = function(puzzle, x1, y1, x2, y2){
-	// must be 1 node away in either x or y direction, but not both
-	if (((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1))
-		 || ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1))){
-		//console.log("failed connection: too far");
-		return false;
-	}
-
-	// check that connection doesnt already exists
-	if(puzzle.nodes[x1][y1]){
-		a = puzzle.nodes[x1][y1];
-		lloc = arrayIndexOf(a, [x2, y2, 1]);
-		xloc = arrayIndexOf(a, [x2, y2, 0]);
-		if (xloc != -1){ // cross already exists, do nothing
-			//console.log("failed connection: already exists");
-			return true;
-		} else if (lloc != -1){ // line exists, remove and continue
-			//console.log("calling removeLine for (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
-			removeLine(puzzle, x1, y1, x2, y2);
-		}
-	}
-	
-	// update connections. create element in node[i][j] then push to created element
-	if (puzzle.nodes[x1][y1]){
-		puzzle.nodes[x1][y1].push([x2, y2, 0]);
-	} else {
-		(puzzle.nodes[x1][y1]=[]).push([x2, y2, 0]);
-	}
-	if (puzzle.nodes[x2][y2]){
-		puzzle.nodes[x2][y2].push([x1, y1, 0]);
-	} else {
-		(puzzle.nodes[x2][y2]=[]).push([x1, y1, 0]);
-	}
-	
-	//console.log("new connection CROSS: (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
-	return true;
-}
-
-// removes a connection between two nodes (cross or line)
-var removeLine = function(puzzle, x1, y1, x2, y2) {
-	if (!puzzle.nodes[x1][y1] || !puzzle.nodes[x2][y2]) // one or both nodes do not have any connections
-		return;
-		
-	// find line/cross in node 1, then remove
-	loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 1]);
-	if (loc1 == -1)
-		loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 0]);
-	if (loc1 == -1)
-		return;
-	puzzle.nodes[x1][y1].splice(loc1, 1);
-	
-	// find line/cross in node 2, then remove
-	loc2 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 1]);
-	if (loc2 == -1)
-		loc2 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 0]);
-	puzzle.nodes[x2][y2].splice(loc2, 1);
-	return;
-}
-
-// clears puzzle of lines/crosses/shaded cells
-var clearPuzzle = function(puzzle) {
-	// clear shaded cell regions
-	for (let i = 0; i < puzzle.h; i++){
-		for (let j = 0; j < puzzle.w; j++) {
-			puzzle.cells[i][j][1] = false;
-		}	
-	}
-	
-	// remove all lines and crosses
-	for (let i = 0; i < puzzle.h + 1; i++){
-		for (let j = 0; j < puzzle.w + 1; j++) {
-			puzzle.nodes[i][j] = [];
-		}
-	}
-}
-
-// convert puzzle from json to Puzzle class
-// currently just parses cell data
-var convertPuzzle = function(json) {
-	var data = JSON.parse(json);
-	puzzle = new Puzzle(data.size, data.size);
-	for (let i = 0; i < data.size; i++){
-		for (let j = 0; j < data.size; j++){
-			puzzle.cells[i][j] = [data.matrix.numbers[i][j], false];
-		}
-	}
-	return puzzle;
-}
-
-// generates a new puzzle
-var generatePuzzle = function(puzzle, d) {
-	
-}
-
-// returns number of lines around a given cell
-var countLines = function(puzzle, x, y){
-	n = 0;
-	// nodes[i][j] is top left node of cells[i][j]
-	if (arrayIndexOf(puzzle.nodes[x][y], [x, y+1, 1]) != -1) // top line
-		n++;
-	if (arrayIndexOf(puzzle.nodes[x][y+1], [x+1, y+1, 1]) != -1) // right line
-		n++;
-	if (arrayIndexOf(puzzle.nodes[x+1][y+1], [x+1, y, 1]) != -1) // bottom line
-		n++;
-	if (arrayIndexOf(puzzle.nodes[x+1][y], [x, y, 1]) != -1) // left line
-		n++;
-	return n;
-}
-
-// returns true if puzzle was solved correctly
-var verifySolution = function(puzzle){
-	// check that all cells surrounded by correct num lines
-	for (let i = 0; i < puzzle.h; i++){
-		for (let j = 0; j < puzzle.w; j++) {
-			if (puzzle.cells[i][j][0] == -1) // unnumbered cell, skip
-				continue;
-			if (countLines(puzzle, i, j) != puzzle.cells[i][j][0]){ // wrong num lines
-				console.log("INCORRECT SOLUTION: wrong num lines around cell (" + i + ", " + j + ")");
-				return false;
-			}
-		}
-	}
-	
-	// find start of loop
-	find_start:
-	for (let i = 0; i < puzzle.h + 1; i++){
-		for (let j = 0; j < puzzle.w + 1; j++) {
-			if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0)
-				continue;
-			start = [i, j];
-			prev = [i, j];
-			cur = [puzzle.nodes[i][j][0][0], puzzle.nodes[i][j][0][1]]; // store coords of 1st connection
-			visited = [prev];
-			break find_start;
-		}
-	}
-	// no starting nodes found. redundant but added just in case
-	if (!start){
-		console.log("INCORRECT SOLUTION: no lines placed");
-		return false;
-	}
-	
-	// follow path, ensure 1 loop without intersections or dead ends
-	while (cur.toString() != start.toString()){ // use toString() bc cant compare arrays the easy way in js
-		//console.log("visiting " + cur);
-		if (puzzle.nodes[cur[0]][cur[1]].length != 2){
-			console.log("INCORRECT SOLUTION: dead end or intersection found at nodes[" + cur[0] + "][" + cur[1] + "]");
-			return false;
-		}
-		visited.push([...cur]);
-		 // if first connection in list = prev, use second in list
-		if ((puzzle.nodes[cur[0]][cur[1]][0][0] == prev[0]) && (puzzle.nodes[cur[0]][cur[1]][0][1] == prev[1])){
-			prev = [...cur];
-			x = puzzle.nodes[cur[0]][cur[1]][1][0];
-			y = puzzle.nodes[cur[0]][cur[1]][1][1];
-			cur[0] = x;
-			cur[1] = y;
-		} else {
-			prev = [...cur];
-			x = puzzle.nodes[cur[0]][cur[1]][0][0];
-			y = puzzle.nodes[cur[0]][cur[1]][0][1];
-			cur[0] = x;
-			cur[1] = y;
-		}
-	}
-
-	// search for stray lines/subloops
-	for (let i = 0; i < puzzle.h + 1; i++){
-		for (let j = 0; j < puzzle.w + 1; j++) {
-			if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0) // not part of line
-				continue;
-			if (arrayIndexOf(visited, [i, j]) > -1) // part of main loop
-				continue;
-			console.log("INCORRECT SOLUTION: multiple loops/segments detected!");
-			return false; // else part of another line segment/subloop
-		}
-	}
-	console.log("CORRECT SOLUTION");
-	return true;
-}
-
-// AUTOSOLVER
-// uses patterns recognized on Wikipedia to automatically fill out certain moves an help puzzle completion.
-// link for patterns / strategies : https://en.wikipedia.org/wiki/Slitherlink
-var autoSolver = function(puzzle) {
-	for (let i = 0; i < puzzle.h; i++) {
-        for (let j = 0; j < puzzle.w; j++) {
-            // Check if the cell contains a number
-            if (puzzle.cells[i][j][0] == 1) {
-                // Check if the cell is in a corner
-				//if (node[i][j])
-                if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-                    // Place crosses at top and left lines of the corner
-                    if (i === 0) {
-                        // Place cross at top line
-                        placeCross(puzzle, i, j, i+1, j);
-                    }
-					else if (i == puzzle.h - 1) {
-						placeCross(puzzle, i-1, j,i,j);
-					}
-
-
-                    if (j === 0) {
-                        // Place cross at left line
-                        placeCross(puzzle, i, j,i,j+1);
-                    }
-					
-					else if (j == puzzle.w - 1){
-						placeCross(puzzle, i, j-1, i, j);
-
-					}
-
-
-                }
-            }
-			else if (puzzle.cells[i][j][0] == 3  ) {
-				if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-                    // Place crosses at top and left lines of the corner
-					if (i === 0) {
-                        // Place line at top line
-                        placeLine(puzzle, i, j, i+1, j);
-                    }
-					else if (i == puzzle.h - 1) {
-						placeLine(puzzle, i-1, j,i,j);
-					}
-
-
-                    if (j === 0) {
-                        // Place line at left line
-                        placeLine(puzzle, i, j,i,j+1);
-                    }
-					
-					else if (j == puzzle.w - 1){
-						placeLine(puzzle, i, j-1, i, j);
-
-					}
-                }		
-
-
-			}	
-
-        }
-    }
-}
-
 
 // GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
 
@@ -704,17 +365,17 @@ var updateGraphicPuzzleState = function(puzzle, gLinesArray){
 	for (let i = 0; i < 2 * puzzle.h + 1; i++) {
 		for (let j = 0; j < puzzle.w + 1; j++) {
 			if (i%2 == 0){ // horizontal line
-				if (arrayIndexOf(puzzle.nodes[i/2][j], [i/2, j+1, 1]) != -1){ // line exists
+				if (pl.arrayIndexOf(puzzle.nodes[i/2][j], [i/2, j+1, 1]) != -1){ // line exists
 					gLinesArray[i][j] = 1;
-				} else if (arrayIndexOf(puzzle.nodes[i/2][j], [i/2, j+1, 0]) != -1){ // cross exists
+				} else if (pl.arrayIndexOf(puzzle.nodes[i/2][j], [i/2, j+1, 0]) != -1){ // cross exists
 					gLinesArray[i][j] = 2;
 				} else { // no connection
 					gLinesArray[i][j] = 0;
 				}
 			} else if (i%2 == 1){ // vertical line
-				if (arrayIndexOf(puzzle.nodes[(i+1)/2][j], [((i+1)/2)-1, j, 1]) != -1) { // line exists
+				if (pl.arrayIndexOf(puzzle.nodes[(i+1)/2][j], [((i+1)/2)-1, j, 1]) != -1) { // line exists
 					gLinesArray[i][j] = 1;
-				} else if (arrayIndexOf(puzzle.nodes[(i+1)/2][j], [((i+1)/2)-1, j, 0]) != -1) { // cross exists
+				} else if (pl.arrayIndexOf(puzzle.nodes[(i+1)/2][j], [((i+1)/2)-1, j, 0]) != -1) { // cross exists
 					gLinesArray[i][j] = 2;
 				} else { // no connection
 					gLinesArray[i][j] = 0;
@@ -725,9 +386,9 @@ var updateGraphicPuzzleState = function(puzzle, gLinesArray){
 }
 
 // initializes openGL, other functions, and initial board
-var init = function(){
+window.onload = function(){
 	console.log("init() started");
-	timer();
+	clock();
 
 	canvas.addEventListener("mouseup", mouseUp, false);				// should maybe move these to a different events_init() function or something
 	canvas.addEventListener("wheel", mouseWheel, false);
@@ -742,7 +403,7 @@ var init = function(){
 	
 	gl.enable(gl.CULL_FACE);
 
-	curPuzzle = new Puzzle(5, 5);
+	curPuzzle = new pl.Puzzle(5, 5);
 	curPuzzle.cells[1][2] = [1, false];
 	curPuzzle.cells[2][2] = [2, false];
 	curPuzzle.cells[2][3] = [1, false];
@@ -754,47 +415,44 @@ var init = function(){
 	curPuzzle.cells[4][2] = [2, false];
 	curPuzzle.cells[4][3] = [2, false];
 	
-	placeLine(curPuzzle, 0, 0, 0, 1);
-	placeLine(curPuzzle, 0, 1, 0, 2);
-	placeLine(curPuzzle, 0, 2, 0, 3);
-	placeLine(curPuzzle, 0, 3, 0, 4);
-	placeLine(curPuzzle, 0, 4, 0, 5);
-	placeLine(curPuzzle, 0, 5, 1, 5);
-	placeLine(curPuzzle, 1, 5, 2, 5);
-	placeLine(curPuzzle, 2, 5, 3, 5);
-	placeLine(curPuzzle, 3, 5, 3, 4);
-	placeLine(curPuzzle, 3, 4, 2, 4);
-	placeLine(curPuzzle, 2, 4, 1, 4);
-	placeLine(curPuzzle, 1, 4, 1, 3);
-	placeLine(curPuzzle, 1, 3, 1, 2);
-	placeLine(curPuzzle, 1, 2, 1, 1);
-	placeLine(curPuzzle, 1, 1, 2, 1);
-	placeLine(curPuzzle, 2, 1, 2, 2);
-	placeLine(curPuzzle, 2, 2, 3, 2);
-	placeLine(curPuzzle, 3, 2, 3, 3);
-	placeLine(curPuzzle, 3, 3, 4, 3);
-	placeLine(curPuzzle, 4, 3, 4, 4);
-	placeLine(curPuzzle, 4, 4, 4, 5);
-	placeLine(curPuzzle, 4, 5, 5, 5);
-	placeLine(curPuzzle, 5, 5, 5, 4);
-	placeLine(curPuzzle, 5, 4, 5, 3);
-	placeLine(curPuzzle, 5, 3, 5, 2);
-	placeLine(curPuzzle, 5, 2, 4, 2);
-	placeLine(curPuzzle, 4, 2, 4, 1);
-	placeLine(curPuzzle, 4, 1, 3, 1);
-	placeLine(curPuzzle, 3, 1, 3, 0);
-	placeLine(curPuzzle, 3, 0, 2, 0);
-	placeLine(curPuzzle, 2, 0, 1, 0);
-	placeLine(curPuzzle, 1, 0, 0, 0);
+	pl.placeLine(curPuzzle, 0, 0, 0, 1);
+	pl.placeLine(curPuzzle, 0, 1, 0, 2);
+	pl.placeLine(curPuzzle, 0, 2, 0, 3);
+	pl.placeLine(curPuzzle, 0, 3, 0, 4);
+	pl.placeLine(curPuzzle, 0, 4, 0, 5);
+	pl.placeLine(curPuzzle, 0, 5, 1, 5);
+	pl.placeLine(curPuzzle, 1, 5, 2, 5);
+	pl.placeLine(curPuzzle, 2, 5, 3, 5);
+	pl.placeLine(curPuzzle, 3, 5, 3, 4);
+	pl.placeLine(curPuzzle, 3, 4, 2, 4);
+	pl.placeLine(curPuzzle, 2, 4, 1, 4);
+	pl.placeLine(curPuzzle, 1, 4, 1, 3);
+	pl.placeLine(curPuzzle, 1, 3, 1, 2);
+	pl.placeLine(curPuzzle, 1, 2, 1, 1);
+	pl.placeLine(curPuzzle, 1, 1, 2, 1);
+	pl.placeLine(curPuzzle, 2, 1, 2, 2);
+	pl.placeLine(curPuzzle, 2, 2, 3, 2);
+	pl.placeLine(curPuzzle, 3, 2, 3, 3);
+	pl.placeLine(curPuzzle, 3, 3, 4, 3);
+	pl.placeLine(curPuzzle, 4, 3, 4, 4);
+	pl.placeLine(curPuzzle, 4, 4, 4, 5);
+	pl.placeLine(curPuzzle, 4, 5, 5, 5);
+	pl.placeLine(curPuzzle, 5, 5, 5, 4);
+	pl.placeLine(curPuzzle, 5, 4, 5, 3);
+	pl.placeLine(curPuzzle, 5, 3, 5, 2);
+	pl.placeLine(curPuzzle, 5, 2, 4, 2);
+	pl.placeLine(curPuzzle, 4, 2, 4, 1);
+	pl.placeLine(curPuzzle, 4, 1, 3, 1);
+	pl.placeLine(curPuzzle, 3, 1, 3, 0);
+	pl.placeLine(curPuzzle, 3, 0, 2, 0);
+	pl.placeLine(curPuzzle, 2, 0, 1, 0);
+	pl.placeLine(curPuzzle, 1, 0, 0, 0);
 	
-	verifySolution(curPuzzle); // correct solution
-	//logPuzzleState(curPuzzle);
-	
-	/*
-	clearPuzzle(curPuzzle); // clears all node connections and shaded regions
-	//logPuzzleState(curPuzzle);
+	pl.verifySolution(curPuzzle); // correct solution
+	//pl.clearPuzzle(curPuzzle); // clears all node connections and shaded regions
 
 	// TEMP: placeholder json for testing converter function
+	/*
 	const tmpjson = `{
 		 "name": "Mayflower",
 		 "author": "Taylor",
@@ -815,10 +473,10 @@ var init = function(){
 			]
 		 }
 		}
-	
-	curPuzzle = convertPuzzle(tmpjson);
-	//logPuzzleState(curPuzzle)
+	`
+	curPuzzle = pl.convertPuzzle(tmpjson);
 	*/
+	//pl.logPuzzleState(curPuzzle)
 	
 	gLinesArray = Array(curPuzzle.h);
 	
@@ -1026,10 +684,8 @@ var init = function(){
 	
 };
 
-
 // looping render call to draw stuff to screen
 var render = function () {
-
 	if (!renderT) return;
 
 	gl.clearColor(R, G, B, 1.0);
@@ -1106,7 +762,7 @@ var mouseWheel = function( event ) {
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
 
 // runs the timer
-var timer = function(){
+var clock = function(){
 	//console.log("Timer started.");
 	if (timer){
         if (second == 60) { 
@@ -1140,44 +796,44 @@ var timer = function(){
         document.getElementById('sec').innerHTML = secString;
 		
 		second++;
-		setTimeout(timer, 1000); // calls Timer() after 1 second
+		setTimeout(clock, 1000); // calls Timer() after 1 second
 	}
 }
 
 // called when user hits undo button, HTML side
-var undo = function(){
+undoHTML.onclick = function(){
 	console.log("Undo pressed.");
 	return;
 };
 
 // called when user hits redo button, HTML side
-var redo = function(){
+redoHTML.onclick = function(){
 	console.log("Redo pressed.");
 	return;
 };
 
 // toggles zoom slider to open/close
-var zoom = function(){
+zoomHTML.onclick = function(){
 	//console.log("Zoom pressed.");
-	var zoom = document.getElementById('zoom');
+	var zoomSliderBox = document.getElementById('zoom-slider-box');
 	var zoomContent = document.getElementById('zoom-content');
 	
-    if (zoom.style.height == '0px') { // show menu
+    if (zoomSlider.style.height == '0px') { // show menu
 		 //console.log("showing");
-        zoom.style.height = '40px';
-		zoom.style.marginTop = '10px';
+        zoomSliderBox.style.height = '40px';
+		zoomSliderBox.style.marginTop = '10px';
 		zoomContent.style.opacity = '1';
 		
-    } else if (zoom.style.height == '40px'){ // hide menu
+    } else if (zoomSliderBox.style.height == '40px'){ // hide menu
 		//console.log("hiding");
-        zoom.style.height = '0px';
-		zoom.style.marginTop = '0px';
+        zoomSliderBox.style.height = '0px';
+		zoomSliderBox.style.marginTop = '0px';
 		zoomContent.style.opacity = '0';
 		
     } else { // always falls back to this else block on first click..... dont know why
 		//console.log("showing (else)");
-        zoom.style.height = '40px';
-		zoom.style.marginTop = '10px';
+        zoomSliderBox.style.height = '40px';
+		zoomSliderBox.style.marginTop = '10px';
 		zoomContent.style.opacity = '1';
 	}
 	return;
@@ -1185,78 +841,74 @@ var zoom = function(){
 
 // updates zoom level with slider value
 // default 50, range 1-100
-slider.oninput = function(){
+zoomSliderHTML.oninput = function(){
 	zoomLevel = this.value;
 	//render();
 	//console.log("Slider value: " + zoomLevel);
 }
 
 // toggles settings menu to open/close
-var settings = function(){
-	var settings = document.getElementById('settings');
+settingsHTML.onclick = function(){
+	var settingsMenu = document.getElementById('settings-menu');
 	var settingsContent = document.getElementById('settings-content');
 	
-    if (settings.style.height == '0px') { // show menu
-        settings.style.height = '280px';
-		settings.style.marginTop = '10px';
+    if (settingsMenu.style.height == '0px') { // show menu
+        settingsMenu.style.height = '280px';
+		settingsMenu.style.marginTop = '10px';
 		settingsContent.style.opacity = '1';
 		
-    } else if (settings.style.height == '280px'){ // hide menu
-        settings.style.height = '0px';
-		settings.style.marginTop = '0px';
+    } else if (settingsMenu.style.height == '280px'){ // hide menu
+        settingsMenu.style.height = '0px';
+		settingsMenu.style.marginTop = '0px';
 		settingsContent.style.opacity = '0';
 		
     } else { // always falls back to this else block on first click..... dont know why
-        settings.style.height = '280px';
-		settings.style.marginTop = '10px';
+        settingsMenu.style.height = '280px';
+		settingsMenu.style.marginTop = '10px';
 		settingsContent.style.opacity = '1';
 	}
 	return;
 };
 
-// handles settings congif
-var settingsHandler = function(selection){
-	switch(selection){
-		case 'ACnum':
-			ACnum = document.getElementById('ACnum').checked;
-			//console.log(selection + " value = " + ACnum);
-			break;
-		case 'ACinter':
-			ACinter = document.getElementById('ACinter').checked;
-			//console.log(selection + " value = " + ACinter);
-			break;
-		case 'ACdead':
-			ACdead = document.getElementById('ACdead').checked;
-			//console.log(selection + " value = " + ACdead);
-			break;
-		case 'ACloop':
-			ACloop = document.getElementById('ACloop').checked;
-			//console.log(selection + " value = " + ACloop);
-			break;
-		case 'highlight':
-			highlight = document.getElementById('highlight').checked;
-			//console.log(selection + " value = " + AChighlight);
-			break;
-	}
+// toggles auto cross completed numbers
+ACnumHTML.oninput = function() {
+	ACnum = ACnumHTML.checked;
+	console.log("ACnum = " + ACnum);
+}
+
+// toggles auto cross intersections
+ACinterHTML.oninput = function() {
+	ACinter = ACinterHTML.checked;
+	console.log("ACinter = " + ACinter);
+}
+
+// toggles auto cross dead ends
+ACdeadHTML.oninput = function() {
+	ACdead = ACdeadHTML.checked;
+	console.log("ACdead = " + ACdead);
+}
+
+// toggles auto cross premature loops
+ACloopHTML.oninput = function() {
+	ACloop = ACloopHTML.checked;
+	console.log("ACloop = " + ACloop);
+}
+
+// toggles highlight wrong moves
+highlightHTML.oninput = function() {
+	highlight = highlightHTML.checked;
+	console.log("highlight = " + highlight);
 }
 
 // creates new savestate + button
-var save = function(){
-	console.log("Save pressed");
-	
-    // make new savestate button
+saveHTML.onclick = function(){
+	// make new savestate button
 	saveCounter += 1;
-	document.getElementById("save-container").
-            innerHTML += ("<button class=\"save-button\" onclick=\"load(" + saveCounter + ");\">" + saveCounter + "</button>");
-	
+	console.log("Save pressed; counter = " + saveCounter);
+	// BUG: causes function to stall
 	/*
-	if (testCookie != "") { // cookie already exists, load data
-		
-		console.log("Cookie exists! Value =");
-	} else {
-		console.log("Creating cookie...");
-		document.cookie = `testCookie=${encodeURIComponent('Test Yay')}; max-age=${7*24*60*60}` // expires in 7 days
-	}
+	document.getElementById("save-container").
+            innerHTML += ("<button class=\"save-button\">" + saveCounter + "</button>");
 	*/
 };
 
@@ -1269,42 +921,42 @@ var load = function(state){
 
 // called when user hits hint button, HTML side
 // shows either 1 possible cross or line, depends on current state and puzzle
-var hint = function(){
-	console.log("Redo pressed.");
+hintHTML.onclick = function(){
+	console.log("Hint pressed.");
 	return;
 };
 
 // called when user hits solution button, HTML side
 // should complete a solution step by step, like an animation
-var solution = function(){
+solutionHTML.onclick = function(){
 	console.log("Solution pressed.");
 	return;
 };
 
 // called when user hits restart button, HTML side
 // wipes all lines and crosses from screen
-var restart = function(){
+// BUG: hangs at 0 sec for an extra second when pressed
+restartHTML.onclick = function(){
 	console.log("Restart pressed.");
 	
 	// restart puzzle
-	clearPuzzle(curPuzzle);
+	pl.clearPuzzle(curPuzzle);
 	
 	// restart timer
-	hour = 00; 
-	minute = 00; 
-	second = 00;
+	hour = 0; 
+	minute = 0; 
+	second = 0;
 	document.getElementById('hr').innerHTML = "00";
     document.getElementById('min').innerHTML = "00"; 
     document.getElementById('sec').innerHTML = "00";
 	timer = true;
-	Timer();
 	
 	return;
 };
 
 // opens new tab with blank puzzle for printing
 // TODO: wipe puzzle state before printing
-var printPuzzle = function(){
+printHTML.onclick = function(){
 	console.log("Print pressed.");
 	const canvas = document.getElementById('game-area')	
 	const dataUrl = canvas.toDataURL();
@@ -1326,15 +978,15 @@ var printPuzzle = function(){
 
 // called when user hits tutorial button, HTML side
 // loads simple puzzle(s) for user to solve as well as tutorial text on screen
-var tutorial = function(){
+tutorial.onclick = function(){
 	console.log("Tutorial pressed.");
 	return;
 };
 
 // stops timer, checks answer
-var submit = function(){
+submitHTML.onclick = function(){
 	console.log("Submit pressed.");
-	if (verifySolution(curPuzzle)){
+	if (pl.verifySolution(curPuzzle)){
 		timer = false;
 		// record current time and display message on screen
 	} else {
@@ -1344,7 +996,7 @@ var submit = function(){
 };
 
 // generate new puzzle or select from premade puzzles
-var newPuzzle = function(){
+newPuzzleHTML.onclick = function(){
 	console.log("New Puzzle pressed.");
 	// delete save data
 	saveCounter = 0;
