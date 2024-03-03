@@ -1,4 +1,5 @@
 //import * from 'graphics.js';
+//import * as logic from 'logic.js';
 
 // source for vertex shader
 var vertexShaderText =
@@ -36,9 +37,9 @@ var saveCounter = 0; // number of savestates
 
 // timer stuff
 var timer = true; // true = running
-var hour = 00;
-var minute = 00;
-var second = 00;
+var hour = 0;
+var minute = 0;
+var second = 0;
 
 // zoom
 var slider = document.getElementById("zoomSlider");
@@ -50,6 +51,25 @@ var ACinter = false;
 var ACdead = false;
 var ACloop = false;
 var highlight = false;
+
+// webGL globals
+var canvas = document.getElementById("game-area");
+var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
+var program = gl.createProgram();
+var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+var cameraPosition;
+var puzzleObjects = [];				// list of puzzle objects that wont change much like dots and numbers
+var lineObjects = [];				// list of lines that will be interacted with and change
+var dot;							// instance of the dot template
+var line;							// instance of the line template
+var renderT = false;
+
+//var gLength = puzzleSize + 1;
+var gHeight;
+
+var MoB;				// Middle of Board. Used to set the camera position in the center
+var gLinesArray;		// 2D Array that indicates which lines are on/off
 
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
 //function must be async to give us access to await
@@ -369,11 +389,10 @@ var verifySolution = function(puzzle){
 	console.log("CORRECT SOLUTION");
 	return true;
 }
+
 // AUTOSOLVER
 // uses patterns recognized on Wikipedia to automatically fill out certain moves an help puzzle completion.
 // link for patterns / strategies : https://en.wikipedia.org/wiki/Slitherlink
-
-
 var autoSolver = function(puzzle) {
 	for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {
@@ -433,16 +452,7 @@ var autoSolver = function(puzzle) {
 
         }
     }
-
-	
-
-
 }
-
-
-
-
-
 
 
 // GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
@@ -689,25 +699,31 @@ var getLine = function() {
 
 }
 
-var canvas = document.getElementById("game-area");
-var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
-var program = gl.createProgram();
-var vertexShader = gl.createShader(gl.VERTEX_SHADER);
-var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-var cameraPosition;
-var puzzleObjects = [];				// list of puzzle objects that wont change much like dots and numbers
-var lineObjects = [];				// list of lines that will be interacted with and change
-var dot;							// instance of the dot template
-var line;							// instance of the line template
-var puzzleSize = 5;
-var renderT = false;
+// changes graphical lines, crosses, and shaded regions
+var updateGraphicPuzzleState = function(puzzle, gLinesArray){
+	for (let i = 0; i < 2 * puzzle.h + 1; i++) {
+		for (let j = 0; j < puzzle.w + 1; j++) {
+			if (i%2 == 0){ // horizontal line
+				if (arrayIndexOf(puzzle.nodes[i/2][j], [i/2, j+1, 1]) != -1){ // line exists
+					gLinesArray[i][j] = 1;
+				} else if (arrayIndexOf(puzzle.nodes[i/2][j], [i/2, j+1, 0]) != -1){ // cross exists
+					gLinesArray[i][j] = 2;
+				} else { // no connection
+					gLinesArray[i][j] = 0;
+				}
+			} else if (i%2 == 1){ // vertical line
+				if (arrayIndexOf(puzzle.nodes[(i+1)/2][j], [((i+1)/2)-1, j, 1]) != -1) { // line exists
+					gLinesArray[i][j] = 1;
+				} else if (arrayIndexOf(puzzle.nodes[(i+1)/2][j], [((i+1)/2)-1, j, 0]) != -1) { // cross exists
+					gLinesArray[i][j] = 2;
+				} else { // no connection
+					gLinesArray[i][j] = 0;
+				}
+			}
+		}	
+	}
+}
 
-//var gLength = puzzleSize + 1;
-var gHeight = (puzzleSize * 2) + 1;
-
-var MoB;								// Middle of Board. Used to set the camera position in the center
-var gLinesArray = Array(gHeight);		// 2D Array that indicates which lines are on/off
-									
 // initializes openGL, other functions, and initial board
 var init = function(){
 	console.log("init() started");
@@ -774,6 +790,7 @@ var init = function(){
 	verifySolution(curPuzzle); // correct solution
 	//logPuzzleState(curPuzzle);
 	
+	/*
 	clearPuzzle(curPuzzle); // clears all node connections and shaded regions
 	//logPuzzleState(curPuzzle);
 
@@ -798,9 +815,12 @@ var init = function(){
 			]
 		 }
 		}
-	`
+	
 	curPuzzle = convertPuzzle(tmpjson);
-	//logPuzzleState(curPuzzle);
+	//logPuzzleState(curPuzzle)
+	*/
+	
+	gLinesArray = Array(curPuzzle.h);
 	
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
@@ -819,7 +839,6 @@ var init = function(){
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// create and compile shaders
-	
 	gl.shaderSource(vertexShader, vertexShaderText);
 	gl.shaderSource(fragmentShader, fragmentShaderText);
 	
@@ -851,17 +870,16 @@ var init = function(){
 		return;
 	}
 	
-	// main render loop --------------------------------------------------------------------
 	dot = getDot();					// dot template instance, same one as before
 	line = getLine();				// line template instance, same one as before
 
 	var translateX = 0.0;			// will be used to apply a translation to an object to put it in the right place in the world
 	var translateY = 0.0;
-	zoomLevel = puzzleSize * 3;			// used to change the camera's z-coordinate to make the board appear bigger or smaller
+	zoomLevel = curPuzzle.h * 3;			// used to change the camera's z-coordinate to make the board appear bigger or smaller
 
 	// Setup the dots. Applies a translation to a new dot object and pushes to a list of objects.
-	for (let i = 0; i < puzzleSize + 1; i++) {
-		for (let j = 0; j < puzzleSize + 1; j++) {
+	for (let i = 0; i < curPuzzle.h + 1; i++) {
+		for (let j = 0; j < curPuzzle.w + 1; j++) {
 			let newMesh = new graphicsObj();
 			newMesh.type = 1;			// 1 for dot
 
@@ -871,7 +889,6 @@ var init = function(){
 			puzzleObjects.push(newMesh);			// put the new object into list of objects
 			
 			translateX += 10.0;						// increase translation amount to move next object to the right
-
 		}
 		translateX = 0.0;
 		translateY = translateY - 10.0;				// moves the next row of dots down
@@ -887,11 +904,9 @@ var init = function(){
 
 	// setup the horizontal lines
 	// follows a similar process as the dots but now we must track our position in the linesArray
-	for (let i = 0; i < puzzleSize + 1; i++) {
-
+	for (let i = 0; i < curPuzzle.h + 1; i++) {
 		let tempLines = [];			// will be a single row in linesArray
-
-		for (let j = 0; j < puzzleSize; j++) {
+		for (let j = 0; j < curPuzzle.h; j++) {
 			let newMesh = new graphicsObj();
 			newMesh.type = 2;					// 2 for a line
 			newMesh.xCoord = xIndex;			// store the linesArray index into the object
@@ -911,7 +926,7 @@ var init = function(){
 			xIndex++;
 
 		}
-		tempLines.push(2);					// puts a junk value in the linesArray for horizontal line rows\
+		tempLines.push(2);					// puts a junk value in the linesArray for horizontal line rows
 		gLinesArray[2 * i] = tempLines;		// horizontal lines are every other row in the linesArray
 
 		translateX = 5.0;
@@ -921,7 +936,6 @@ var init = function(){
 		yIndex += 2;
 	}
 	
-
 	translateX = 0.0;
 	translateY = -5.0;
 
@@ -931,11 +945,9 @@ var init = function(){
 
 	// setup the vertical lines
 	// follows a similar process to the horizontal lines
-	for (let i = 0; i < puzzleSize; i++) {
-
+	for (let i = 0; i < curPuzzle.h; i++) {
 		let tempLines = [];
-
-		for (let j = 0; j < puzzleSize + 1; j++) {
+		for (let j = 0; j < curPuzzle.h + 1; j++) {
 			let newMesh = new graphicsObj();
 			newMesh.type = 2;
 			newMesh.xCoord = xIndex;
@@ -959,7 +971,6 @@ var init = function(){
 		
 			xIndex++;
 		}
-
 		gLinesArray[gLinesArrayIndex] = tempLines;
 		gLinesArrayIndex += 2;
 
@@ -974,6 +985,7 @@ var init = function(){
 	// https://www.npmjs.com/package/polyline-normals
 
 	// manually set some of the lines to be off to look like example puzzle from presentation slides
+	/*
 	gLinesArray[0][0] = 1;
 	gLinesArray[0][1] = 1;
 	gLinesArray[0][2] = 1;
@@ -1006,7 +1018,8 @@ var init = function(){
 	gLinesArray[5][0] = 1;
 	gLinesArray[3][0] = 1;
 	gLinesArray[1][0] = 1;
-
+	*/
+	updateGraphicPuzzleState(curPuzzle, gLinesArray);
 
 	renderT = true;
 	render();
@@ -1014,7 +1027,7 @@ var init = function(){
 };
 
 
-// render call to draw stuff to screen
+// looping render call to draw stuff to screen
 var render = function () {
 
 	if (!renderT) return;
@@ -1022,7 +1035,7 @@ var render = function () {
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	MoB = (puzzleSize * 10) / 2; // (Middle of Board) will be (puzzleSize * 10) / 2
+	MoB = (curPuzzle.h * 10) / 2; // (Middle of Board) will be (curPuzzle.h * 10) / 2
 
 	// camera setup
 	var view = glMatrix.mat4.create();
@@ -1074,8 +1087,6 @@ var render = function () {
 		if (lineObjects[i].type == 2)									// need to use the correct set of indices in draw call
 			gl.drawElements(gl.TRIANGLES, line.indices.length, gl.UNSIGNED_SHORT, 0);
 	}
-
-
 	setTimeout(render, 12);
 };
 
