@@ -1,8 +1,7 @@
-// classes, functions, and variables related to WebGL graphics
-// ISSUE: does not work in localhost environments, file unused for now
+import * as pl from './logic.js';
 
 // source for vertex shader
-export const vertexShaderText =
+export var vertexShaderText =
 [
 "precision mediump float;",
 "",
@@ -18,7 +17,7 @@ export const vertexShaderText =
 ].join("\n");
 
 // source for fragment shader
-export const fragmentShaderText =
+export var fragmentShaderText =
 [
 "precision mediump float;",
 "",
@@ -28,171 +27,75 @@ export const fragmentShaderText =
 "}"
 ].join("\n");
 
-// webGL circle
-export class circle {
-	modelMatrix;
-	color;
+// dot graphic only made once and reused to draw multiple lines
+export class circleTemplate {
 	vertices;
 	indices;
 	VAO;
 	VBO;
 	IBO;
 	constructor() {
-		this.modelMatrix = glMatrix.mat4.create();
-		this.color = [0.439, 0.329, 0.302];
 		this.vertices = [
-				0.0, 0.0, 0.0,
-				0.00000, -1.00000, 0.00000, 
-				0.72360, -0.44722, 0.525725, 
-				-0.27638, -0.44722, 0.850649, 
-				-0.89442, -0.44721, 0.000000, 
-				-0.27638, -0.44722, -0.850649,
-				0.72360, -0.44722, -0.525725,
-				0.27638, 0.44722, 0.850649, 
-				-0.72360, 0.44722, 0.525725, 
-				-0.72360, 0.44722, -0.525725,
-				0.27638, 0.44722, -0.850649,
-				0.89442, 0.44721, 0.000000, 
-				0.00000, 1.00000, 0.000000, 
-				-0.16245, -0.85065, 0.499995,
-				0.42532, -0.85065, 0.309011, 
-				0.26286, -0.52573, 0.809012, 
-				0.85064, -0.52573, 0.000000, 
-				0.42532, -0.85065, -0.309011,
-				-0.52573, -0.85065, 0.000000, 
-				-0.68818, -0.52573, 0.499997, 
-				-0.16245, -0.85065, -0.499995,
-				-0.68818, -0.52573, -0.499997,
-				0.26286, -0.52573, -0.809012,
-				0.95105, 0.00000, 0.309013, 
-				0.95105, 0.00000, -0.309013,
-				0.00000, 0.00000, 1.000000,
-				0.58778, 0.00000, 0.809017,
-				-0.95105, 0.00000, 0.309013, 
-				-0.58778, 0.00000, 0.809017, 
-				-0.58778, 0.00000, -0.809017,
-				-0.95105, 0.00000, -0.309013,
-				0.58778, 0.00000, -0.809017,
-				0.00000, 0.00000, -1.000000,
-				0.68818, 0.52573, 0.499997,
-				-0.26286, 0.52573, 0.809012, 
-				-0.85064, 0.52573, 0.000000, 
-				-0.26286, 0.52573, -0.809012,
-				0.68818, 0.52573, -0.499997,
-				0.16245, 0.85065, 0.499995, 
-				0.52573, 0.85065, 0.000000, 
-				-0.42532, 0.85065, 0.309011,
-				-0.42532, 0.85065, -0.309011,
-				0.16245, 0.85065, -0.499995
+			0.000000, 0.000000, 0.000000,
+			0.951057, 0.309017, 1.000000,
+			0.809018, 0.587785, 1.000000,
+			0.587786, 0.809018, 1.000000,
+			0.309017, 0.951057, 1.000000,
+			0.000000, 1.000001, 1.000000,
+			-0.309017, 0.951057, 1.000000,
+			-0.587785, 0.809017, 1.000000,
+			-0.809017, 0.587785, 1.000000,
+			-0.951057, 0.309017, 1.000000,
+			-1.000000, 0.000000, 1.000000,
+			-0.951057, -0.309017, 1.000000,
+			-0.809017, -0.587785, 1.000000,
+			-0.587785, -0.809017, 1.000000,
+			-0.309017, -0.951056, 1.000000,
+			-0.000000, -1.000001, 1.000000,
+			0.309017, -0.951056, 1.000000,
+			0.587785, -0.809017, 1.000000,
+			0.809017, -0.587785, 1.000000,
+			0.951057, -0.309017, 1.000000,
+			1.000000, 0.000000, 1.000000,
+			0.000000, 0.000000, 1.000000
 		];
 		this.indices = [
-				1, 14, 13,
-				2, 14, 16,
-				1, 13, 18,
-				1, 18, 20,
-				1, 20, 17,
-				2, 16, 23,
-				3, 15, 25,
-				4, 19, 27,
-				5, 21, 29,
-				6, 22, 31,
-				2, 23, 26,
-				3, 25, 28,
-				4, 27, 30,
-				5, 29, 32,
-				6, 31, 24,
-				7, 33, 38,
-				8, 34, 40,
-				9, 35, 41,
-				10, 36, 42,
-				11, 37, 39,
-				39, 42, 12,
-				39, 37, 42,
-				37, 10, 42,
-				42, 41, 12,
-				42, 36, 41,
-				36, 9, 41,
-				41, 40, 12,
-				41, 35, 40,
-				35, 8, 40,
-				40, 38, 12,
-				40, 34, 38,
-				34, 7, 38,
-				38, 39, 12,
-				38, 33, 39,
-				33, 11, 39,
-				24, 37, 11,
-				24, 31, 37,
-				31, 10, 37,
-				32, 36, 10,
-				32, 29, 36,
-				29, 9, 36,
-				30, 35, 9,
-				30, 27, 35,
-				27, 8, 35,
-				28, 34, 8,
-				28, 25, 34,
-				25, 7, 34,
-				26, 33, 7,
-				26, 23, 33,
-				23, 11, 33,
-				31, 32, 10,
-				31, 22, 32,
-				22, 5, 32,
-				29, 30, 9,
-				29, 21, 30,
-				21, 4, 30,
-				27, 28, 8,
-				27, 19, 28,
-				19, 3, 28,
-				25, 26, 7,
-				25, 15, 26,
-				15, 2, 26,
-				23, 24, 11,
-				23, 16, 24,
-				16, 6, 24,
-				17, 22, 6,
-				17, 20, 22,
-				20, 5, 22,
-				20, 21, 5,
-				20, 18, 21,
-				18, 4, 21,
-				18, 19, 4,
-				18, 13, 19,
-				13, 3, 19,
-				16, 17, 6,
-				16, 14, 17,
-				14, 1, 17,
-				13, 15, 3,
-				13, 14, 15,
-				14, 2, 15
+			1, 2, 21,
+			2, 3, 21,
+			3, 4, 21,
+			4, 5, 21,
+			5, 6, 21,
+			6, 7, 21,
+			7, 8, 21,
+			8, 9, 21,
+			9, 10, 21,
+			10, 11, 21,
+			11, 12, 21,
+			12, 13, 21,
+			13, 14, 21,
+			14, 15, 21,
+			15, 16, 21,
+			16, 17, 21,
+			17, 18, 21,
+			18, 19, 21,
+			19, 20, 21,
+			20, 1, 21
 		];
 		this.VAO = 0;
 		this.VBO = 0;
 		this.IBO = 0;
-
-		console.log("circle has been created! :D");
-		
-		//this.modelMatrix = mat4.create();
-		//this.color = vec3.create()
-		//this.modelMatrix = [5,0,8];
-			
 	}
 };
 
-// webGL line
-export class line {
-	modelMatrix;
-	color;
+// only made once and reused to draw multiple lines
+export class lineTemplate {
 	vertices;
 	indices;
 	VAO;
 	VBO;
 	IBO;
 	constructor() {
-		this.modelMatrix = glMatrix.mat4.create();
-		this.color = [0.439, 0.329, 0.302];
-		this.verticies = [
+		this.vertices = [
 			-1.0, -0.5, 0.0,
 			1.0, -0.5, 0.0,
 			1.0, 0.5, 0.0,
@@ -207,29 +110,64 @@ export class line {
 		this.VBO = 0;
 		this.IBO = 0;
 
-		console.log("line has been created! :D");
-		//this.modelMatrix = mat4.create();
-		//this.color = vec3.create()
-		//this.modelMatrix = [5,0,8];
 	}
 };
 
-export const getDot = function() {
-	var newDot = new circle();
+export class crossTemplate {
+	vertices;
+	indices;
+	VAO;
+	VBO;
+	IBO;
+	constructor() {
+		this.vertices = [
+			-1.0, -0.5, 0.0,
+			1.0, -0.5, 0.0,
+			1.0, 0.5, 0.0,
+			-1.0, 0.5, 0.0
+		];
+		this.indices = [
+			0, 1, 2,
+			2, 3, 0
+		];
+		
+		this.VAO = 0;
+		this.VBO = 0;
+		this.IBO = 0;
+
+	}
+};
+
+// data for a single object. Can be a line, or circle, or later on can be numbers, or X's
+export class graphicsObj {
+	modelMatrix;		// matrix that holds transformation, rotation, and scale info
+	color;
+	type;				// 1 for dot, 2 for line/cross
+	display;			// 0 for nothing, 1 for line, 2 for X
+	
+	xCoord;				//	coords in line array to determine if a 
+	yCoord;				// 		line should be drawn or not
+	constructor() {
+		this.modelMatrix = glMatrix.mat4.create();
+		this.color = [0.439, 0.329, 0.302];
+		this.type = -1;
+		this.xCoord = -1;
+		this.yCoord = -1;
+	}
+};
+
+// function that initializes and returns an instance of the dot template
+export var getDot = function(gl, program) {
+	var newDot = new circleTemplate();
 
 	newDot.VAO = gl.createVertexArray();
-	console.log("here");
+	//console.log("here");
 	gl.bindVertexArray(newDot.VAO);
 	
-	// create and set active buffer
-	//var lineVertexBufferObject = gl.createBuffer();
-	//gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexBufferObject);
-
 	newDot.VBO = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, newDot.VBO);
 
 	// new Float32Array(verticies) --> webGL expects 32 bit, JS encodes as 64 bit
-	// gl.STATIC_DRAW --> triangle shape will not change at all after being drawn
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newDot.vertices), gl.STATIC_DRAW);
 	
 	var posAttribLoc = gl.getAttribLocation(program, "vertPos");
@@ -241,25 +179,18 @@ export const getDot = function() {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newDot.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newDot.indices), gl.STATIC_DRAW);
 
-	//gl.bindVertexArray();
-	
 	console.log("newDot has been pushed");
 	return newDot;
-	//dots.push(newDot);
 	
 }
 
-export const getLine = function() {
-	var newLine = new line();
+// function that initializes and returns an instance of the line template
+export var getLine = function(gl, program) {
+	var newLine = new lineTemplate();
 
 	newLine.VAO = gl.createVertexArray();
-	console.log("here");
 	gl.bindVertexArray(newLine.VAO);
 	
-	// create and set active buffer
-	//var lineVertexBufferObject = gl.createBuffer();
-	//gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexBufferObject);
-
 	newLine.VBO = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, newLine.VBO);
 
@@ -275,11 +206,33 @@ export const getLine = function() {
 	newLine.IBO = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newLine.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newLine.indices), gl.STATIC_DRAW);
-
-	//gl.bindVertexArray();
 	
 	console.log("newLine has been pushed");
 	return newLine;
-	//dots.push(newDot);
-	
+
+}
+
+// changes graphical lines, crosses, and shaded regions
+export var updateGraphicPuzzleState = function(puzzle, gLinesArray){
+	for (let i = 0; i < 2 * puzzle.h + 1; i++) {
+		for (let j = 0; j < puzzle.w + 1; j++) {
+			if (i%2 == 0){ // horizontal line
+				if (pl.arrayIndexOf(puzzle.nodes[i/2][j], [i/2, j+1, 1]) != -1){ // line exists
+					gLinesArray[i][j] = 1;
+				} else if (pl.arrayIndexOf(puzzle.nodes[i/2][j], [i/2, j+1, 0]) != -1){ // cross exists
+					gLinesArray[i][j] = 2;
+				} else { // no connection
+					gLinesArray[i][j] = 0;
+				}
+			} else if (i%2 == 1){ // vertical line
+				if (pl.arrayIndexOf(puzzle.nodes[(i+1)/2][j], [((i+1)/2)-1, j, 1]) != -1) { // line exists
+					gLinesArray[i][j] = 1;
+				} else if (pl.arrayIndexOf(puzzle.nodes[(i+1)/2][j], [((i+1)/2)-1, j, 0]) != -1) { // cross exists
+					gLinesArray[i][j] = 2;
+				} else { // no connection
+					gLinesArray[i][j] = 0;
+				}
+			}
+		}	
+	}
 }
