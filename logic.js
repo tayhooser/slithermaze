@@ -120,13 +120,9 @@ export var placeCross = function(puzzle, x1, y1, x2, y2){
 	// check that connection doesnt already exists
 	if(puzzle.nodes[x1][y1]){
 		let a = puzzle.nodes[x1][y1];
-		lloc = arrayIndexOf(a, [x2, y2, 1]);
-		xloc = arrayIndexOf(a, [x2, y2, 0]);
-		if (xloc != -1){ // cross already exists, do nothing
-			//console.log("failed connection: already exists");
+		if (arrayIndexOf(a, [x2, y2, 0]) != -1){ // cross already exists, do nothing
 			return true;
-		} else if (lloc != -1){ // line exists, remove and continue
-			//console.log("calling removeLine for (" + x1 + ", " + y1 + ")---(" + x2 + ", " + y2 + ")");
+		} else if (arrayIndexOf(a, [x2, y2, 1]) != -1){ // line exists, remove and continue
 			removeLine(puzzle, x1, y1, x2, y2);
 		}
 	}
@@ -142,7 +138,6 @@ export var placeCross = function(puzzle, x1, y1, x2, y2){
 	} else {
 		(puzzle.nodes[x2][y2]=[]).push([x1, y1, 0]);
 	}
-	
 	//console.log("new connection CROSS: (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
 	return true;
 }
@@ -253,25 +248,35 @@ export var verifySolution = function(puzzle){
 	}
 	
 	// follow path, ensure 1 loop without intersections or dead ends
-	var x, y;
+	var x, y, lineConns;
 	while (cur.toString() != start.toString()){ // use toString() bc cant compare arrays the easy way in js
 		//console.log("visiting " + cur);
-		if (puzzle.nodes[cur[0]][cur[1]].length != 2){
+		
+		// array of nodes connected to current node by line
+		lineConns = [];
+		for (let i = 0; i < puzzle.nodes[cur[0]][cur[1]].length; i++){
+			if (puzzle.nodes[cur[0]][cur[1]][i][2] == 1)
+				lineConns.push(puzzle.nodes[cur[0]][cur[1]][i]);
+		}
+		
+		// each node should only have 2 connections
+		if (lineConns.length != 2){
 			console.log("INCORRECT SOLUTION: dead end or intersection found at nodes[" + cur[0] + "][" + cur[1] + "]");
 			return false;
 		}
 		visited.push([...cur]);
+		
 		 // if first connection in list = prev, use second in list
-		if ((puzzle.nodes[cur[0]][cur[1]][0][0] == prev[0]) && (puzzle.nodes[cur[0]][cur[1]][0][1] == prev[1])){
+		if ((lineConns[0][0] == prev[0]) && (lineConns[0][1] == prev[1])){
 			prev = [...cur];
-			x = puzzle.nodes[cur[0]][cur[1]][1][0];
-			y = puzzle.nodes[cur[0]][cur[1]][1][1];
+			x = lineConns[1][0];
+			y = lineConns[1][1];
 			cur[0] = x;
 			cur[1] = y;
 		} else {
 			prev = [...cur];
-			x = puzzle.nodes[cur[0]][cur[1]][0][0];
-			y = puzzle.nodes[cur[0]][cur[1]][0][1];
+			x = lineConns[0][0];
+			y = lineConns[0][1];
 			cur[0] = x;
 			cur[1] = y;
 		}
@@ -280,12 +285,17 @@ export var verifySolution = function(puzzle){
 	// search for stray lines/subloops
 	for (let i = 0; i < puzzle.h + 1; i++){
 		for (let j = 0; j < puzzle.w + 1; j++) {
-			if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0) // not part of line
+			if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0) // no connections
 				continue;
 			if (arrayIndexOf(visited, [i, j]) > -1) // part of main loop
 				continue;
-			console.log("INCORRECT SOLUTION: multiple loops/segments detected!");
-			return false; // else part of another line segment/subloop
+			// check for any line connections
+			for (let k = 0; k < puzzle.nodes[i][j].length; k++){
+				if (puzzle.nodes[i][j][k][2] == 1){
+					console.log("INCORRECT SOLUTION: multiple loops/segments detected!");
+					return false; // part of another line segment/subloop
+				}
+			}
 		}
 	}
 	console.log("CORRECT SOLUTION");

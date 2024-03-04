@@ -154,7 +154,13 @@ window.onload = function(){
 	pl.placeLine(curPuzzle, 2, 0, 1, 0);
 	pl.placeLine(curPuzzle, 1, 0, 0, 0);
 	
+	pl.placeCross(curPuzzle, 2, 2, 2, 3);
+	pl.placeCross(curPuzzle, 2, 3, 1, 3);
+	pl.placeCross(curPuzzle, 2, 3, 2, 4);
+	pl.placeCross(curPuzzle, 2, 3, 3, 3);
+	
 	pl.verifySolution(curPuzzle); // correct solution
+	//pl.logPuzzleState(curPuzzle);
 	//pl.clearPuzzle(curPuzzle); // clears all node connections and shaded regions
 
 	// TEMP: placeholder json for testing converter function
