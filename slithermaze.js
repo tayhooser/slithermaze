@@ -50,11 +50,13 @@ var program = gl.createProgram();
 var vertexShader = gl.createShader(gl.VERTEX_SHADER);
 var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
 var cameraPosition;
+var lookAt;
 var puzzleObjects = [];				// list of puzzle objects that wont change much like dots and numbers
 var lineObjects = [];				// list of lines that will be interacted with and change
 var dot;							// instance of the dot template
 var line;							// instance of the line template
 var renderT = false;
+var view;
 
 //var gLength = puzzleSize + 1;
 var gHeight;
@@ -96,8 +98,10 @@ window.onload = function(){
 	console.log("init() started");
 	clock();
 
-	canvas.addEventListener("mouseup", mouseUp, false);				// should maybe move these to a different events_init() function or something
-	canvas.addEventListener("wheel", mouseWheel, false);
+
+	canvas.addEventListener("mouseenter", mouseEnter, false);
+
+	
 
 	// TEMP: placeholder puzzle for testing algos
 	// see discord for visual solution
@@ -351,6 +355,10 @@ window.onload = function(){
 		yIndex += 2
 	}
 
+	MoB = (curPuzzle.h * 10) / 2; // (Middle of Board) will be (curPuzzle.h * 10) / 2
+	cameraPosition = [MoB, -MoB, (1)]; // z-coordinate should be puzzleSize * 10
+	lookAt = [MoB, -MoB, 0.0];
+
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
 	// https://www.npmjs.com/package/polyline-normals
 
@@ -369,13 +377,13 @@ var render = function () {
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	MoB = (curPuzzle.h * 10) / 2; // (Middle of Board) will be (curPuzzle.h * 10) / 2
+	
 
 	// camera setup
-	var view = glMatrix.mat4.create();
+	view = glMatrix.mat4.create();
 	var up = [0.0, 1.0, 0.0];
-	cameraPosition = [MoB, -MoB, (1)]; // z-coordinate should be puzzleSize * 10
-	var lookAt = [MoB, -MoB, 0.0];
+	//cameraPosition = [MoB, -MoB, (1)]; // z-coordinate should be puzzleSize * 10
+	//lookAt = [MoB, -MoB, 0.0];
 	glMatrix.mat4.lookAt(view, cameraPosition, lookAt, up);
 
 	var ortho_size = zoomLevel * 2;				// need also consider the initial zoomLevel set in init()
@@ -385,8 +393,6 @@ var render = function () {
 	var projection = glMatrix.mat4.create();
 	//projection = glMatrix.mat4.perspective(projection, fovy, 1.0, 0.0000001, null);
 	projection = glMatrix.mat4.ortho(projection, -ortho_size, ortho_size, -ortho_size, ortho_size, null, 2);
-
-	
 
 	// vp matrix
 	var vp = glMatrix.mat4.create();
@@ -425,17 +431,80 @@ var render = function () {
 };
 
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
-var mouseUp = function( event ) {
-	console.log( event );
-}
+var click = function( event ) {
+	console.log("Y coord:", event.layerY, "X coord:", event.layerX);
+	var invProj = glMatrix.mat4.create();
+	glMatrix.mat4.invert(invProj, view);
+	var coords = [event.layerX, event.layerY, 1, 1];
+	glMatrix.vec4.transformMat4(coords, coords, invProj);
+	console.log("y", coords[1],"x", coords[0]);
+
+};
 
 var mouseWheel = function( event ) {
-	console.log( event );
+	//console.log( event );
 	event.preventDefault();
-	
-	zoomLevel -= event.wheelDelta / 100;
+	var zoomAmt = event.wheelDelta * 0.1;
+
+	if ((zoomLevel - zoomAmt) > 2 )
+		zoomLevel -= zoomAmt;
 	//render();
+};
+
+var mouseEnter = function (event) {
+
+	canvas.addEventListener("click", click, false);		
+	canvas.addEventListener("mousedown", mouseDown, false);		
+	canvas.addEventListener("wheel", mouseWheel, false);
+	canvas.addEventListener("mouseleave", mouseLeave, false);
+
+	canvas.removeEventListener("mouseenter", mouseEnter, false);
+};
+
+
+var startPos =  Array(2);
+
+var mouseDown = function( event ) {
+	canvas.addEventListener("mousemove", mouseMove, false);
+	canvas.addEventListener("mouseup", mouseUp, false);
+
+	startPos[0] = event.layerX;
+	startPos[1] = event.layerY;
+
+};
+
+var mouseMove = function ( event ) {
+	//console.log(event);
+	var deltaX = event.layerX - startPos[0];
+	var deltaY = event.layerY - startPos[1];
+
+	console.log( deltaX, deltaY);
+
+	cameraPosition[0] -= deltaX * 0.1;
+	cameraPosition[1] += deltaY * 0.1;
+
+	lookAt[0] -= deltaX * 0.1;
+	lookAt[1] += deltaY * 0.1;
+
+	startPos[0] = event.layerX;
+	startPos[1] = event.layerY;
 }
+
+var mouseUp = function ( event ) {
+
+	canvas.removeEventListener("mousemove", mouseMove, false);
+	canvas.removeEventListener("mouseup", mouseUp, false);
+
+}
+
+var mouseLeave = function (event) { 
+	canvas.removeEventListener("click", click, false);		
+	canvas.removeEventListener("wheel", mouseWheel, false);
+	canvas.removeEventListener("mousedown", mouseDown, false);
+	canvas.removeEventListener("mouseleave", mouseLeave, false);
+
+	canvas.addEventListener("mouseenter", mouseEnter, false);
+};
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
 
