@@ -1,4 +1,3 @@
-
 // class for displayed puzzle
 export class Puzzle {
 	h;
@@ -355,6 +354,34 @@ export var autoSolver = function(puzzle) {
 					
 					else if (j == puzzle.w - 1){
 						placeLine(puzzle, i, j-1, i, j);
+
+					}
+                }		
+
+
+			}
+
+			else if (puzzle.cells[i][j][0] == 2  ) {
+				if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+                    
+					if (i === 0) {
+                        // Place line going out from border
+                        placeLine(puzzle, i, j, i+2, j);
+                    }
+					else if (i == puzzle.h - 1) {
+						// Place line going out from border
+						placeLine(puzzle, i-2, j,i-1,j);
+					}
+
+
+                    if (j === 0) {
+                        // Place line going out from border
+                        placeLine(puzzle, i, j+1,i,j+2);
+                    }
+					
+					else if (j == puzzle.w - 1){
+						// Place line going out from border
+						placeLine(puzzle, i, j-2, i, j-1);
 
 					}
                 }		
