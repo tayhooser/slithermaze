@@ -18,8 +18,8 @@ var second = 0;
 // HTML elements
 var undoHTML = document.getElementById("undo");
 var redoHTML = document.getElementById("redo");
-var zoomHTML = document.getElementById("zoom");
-var zoomSliderHTML = document.getElementById("zoomSlider");
+var zoomHTML = document.getElementById("zoom"); // zoom button
+var zoomSliderHTML = document.getElementById("zoomSlider"); // the actual zoom slider
 var settingsHTML = document.getElementById("settings");
 var ACnumHTML = document.getElementById('ACnum');
 var ACinterHTML = document.getElementById('ACinter');
@@ -32,6 +32,7 @@ var restartHTML = document.getElementById('restart');
 var printHTML = document.getElementById('print');
 var tutorialHTML = document.getElementById('tutorial');
 var saveHTML = document.getElementById('save');
+var saveContainerHTML = document.getElementById("save-container"); // for adding load buttons
 var submitHTML = document.getElementById('submit');
 var newPuzzleHTML = document.getElementById('new-puzzle');
 
@@ -41,7 +42,7 @@ var ACinter = false;
 var ACdead = false;
 var ACloop = false;
 var highlight = false;
-var zoomLevel = 50;
+var zoomLevel;
 
 // webGL globals
 var canvas = document.getElementById("game-area");
@@ -98,10 +99,7 @@ window.onload = function(){
 	console.log("init() started");
 	clock();
 
-
 	canvas.addEventListener("mouseenter", mouseEnter, false);
-
-	
 
 	// TEMP: placeholder puzzle for testing algos
 	// see discord for visual solution
@@ -249,7 +247,7 @@ window.onload = function(){
 
 	var translateX = 0.0;			// will be used to apply a translation to an object to put it in the right place in the world
 	var translateY = 0.0;
-	zoomLevel = curPuzzle.h * 3;			// used to change the camera's z-coordinate to make the board appear bigger or smaller
+	zoomLevel = zoomSliderHTML.value = curPuzzle.h * 3;			// used to change the camera's z-coordinate to make the board appear bigger or smaller
 
 	// Setup the dots. Applies a translation to a new dot object and pushes to a list of objects.
 	for (let i = 0; i < curPuzzle.h + 1; i++) {
@@ -444,10 +442,13 @@ var click = function( event ) {
 var mouseWheel = function( event ) {
 	//console.log( event );
 	event.preventDefault();
-	var zoomAmt = event.wheelDelta * 0.1;
+	var zoomAmt = event.wheelDelta * 0.05;
 
-	if ((zoomLevel - zoomAmt) > 2 )
+	if ((zoomLevel - zoomAmt) > 3 ){
 		zoomLevel -= zoomAmt;
+		zoomSliderHTML.value = zoomLevel;
+		console.log("zoom = " + zoomLevel);
+	}
 	//render();
 };
 
@@ -649,19 +650,21 @@ highlightHTML.oninput = function() {
 
 // creates new savestate + button
 saveHTML.onclick = function(){
-	// make new savestate button
 	saveCounter += 1;
-	console.log("Save pressed; counter = " + saveCounter);
-	// BUG: causes function to stall
-	/*
-	document.getElementById("save-container").
-            innerHTML += ("<button class=\"save-button\">" + saveCounter + "</button>");
-	*/
+	//console.log("Save pressed; counter = " + saveCounter);
+	
+	// add button
+	let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\">" + saveCounter + "<\/button>";
+	saveContainerHTML.insertAdjacentHTML('beforeend', insertHTML);
+	
+	// add listener
+	let id = 'load' + saveCounter;
+	//console.log("ID: " + id);
+	document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
 };
 
 // called when user hits a savestate button, HTML side
 var load = function(state){
-	state = state || 0;
 	console.log("Loaded state " + state);
 	return;
 };
