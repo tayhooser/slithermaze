@@ -56,11 +56,24 @@ var puzzleObjects = [];				// list of puzzle objects that wont change much like 
 var lineObjects = [];				// list of lines that will be interacted with and change
 var dot;							// instance of the dot template
 var line;							// instance of the line template
+var zero;
+var one;
+var two;
+var three;
 var renderT = false;
 var view;
+var projection;
+var vp;
 
 //var gLength = puzzleSize + 1;
 var gHeight;
+var cellNumbers = [
+	[3, -1, -1, -1, -1],
+	[-1, -1,  1, -1, -1],
+	[-1, -1,  2,  1, 3],
+	[3, -1,  2,  2,  2],
+ 	[0,  2,  2,  2, -1]
+];
 
 var MoB;				// Middle of Board. Used to set the camera position in the center
 var gLinesArray;		// 2D Array that indicates which lines are on/off
@@ -243,7 +256,12 @@ window.onload = function(){
 	}
 	
 	dot = g.getDot(gl, program);					// dot template instance, same one as before
-	line = g.getLine(gl, program);				// line template instance, same one as before
+	line = g.getLine(gl, program);					// line template instance, same one as before
+	zero = g.getZero(gl, program);
+	one = g.getOne(gl, program);
+	two = g.getTwo(gl, program);
+	three = g.getThree(gl, program);
+	console.log("passed");
 
 	var translateX = 0.0;			// will be used to apply a translation to an object to put it in the right place in the world
 	var translateY = 0.0;
@@ -255,7 +273,7 @@ window.onload = function(){
 			let newMesh = new g.graphicsObj();
 			newMesh.type = 1;			// 1 for dot
 
-			var translationVec = glMatrix.vec3.fromValues(translateX, translateY, -1.0);		// vector to move object by in world space
+			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);		// vector to move object by in world space
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);	// applies translation vector to current object's model matrix
 			
 			puzzleObjects.push(newMesh);			// put the new object into list of objects
@@ -264,6 +282,34 @@ window.onload = function(){
 		}
 		translateX = 0.0;
 		translateY = translateY - 10.0;				// moves the next row of dots down
+	}
+
+
+	translateX = 5.0;
+	translateY = -5.0;
+	// setup the cell numbers
+	for (let i = 0; i < curPuzzle.h; i++) {
+		for (let j = 0; j < curPuzzle.w; j++) {
+			if (cellNumbers[i][j] != -1) {
+
+				let newMesh = new g.graphicsObj();
+				newMesh.type = 3;
+				newMesh.display = cellNumbers[i][j];
+				
+				let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);	
+				glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
+
+				let scaleVec = glMatrix.vec3.fromValues(5, 5, 1);
+				glMatrix.mat4.scale(newMesh.modelMatrix, newMesh.modelMatrix, scaleVec);
+
+				puzzleObjects.push(newMesh);
+			}
+
+			translateX += 10.0;
+
+		}
+		translateX = 5.0;
+		translateY = translateY - 10.0;
 	}
 
 	// setup to put lines back at the top and shifted slightly to the right
@@ -284,10 +330,12 @@ window.onload = function(){
 			newMesh.xCoord = xIndex;			// store the linesArray index into the object
 			newMesh.yCoord = yIndex;
 			
-			var translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
+			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
-			
-			var scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
+			newMesh.xWorld = translateX;
+			newMesh.yWorld = translateY;
+
+			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
 			glMatrix.mat4.scale(newMesh.modelMatrix, newMesh.modelMatrix, scaleVec);
 
 			translateX += 10.0;
@@ -325,14 +373,16 @@ window.onload = function(){
 			newMesh.xCoord = xIndex;
 			newMesh.yCoord = yIndex;
 
-			var translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
+			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
+			newMesh.xWorld = translateX;
+			newMesh.yWorld = translateY;
 
-			var rotationMat = glMatrix.mat4.create()
+			let rotationMat = glMatrix.mat4.create()
 			glMatrix.mat4.fromZRotation(rotationMat, 1.5708)
 	 		glMatrix.mat4.multiply(newMesh.modelMatrix, newMesh.modelMatrix, rotationMat);
 
-			var scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
+			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
 			glMatrix.mat4.scale(newMesh.modelMatrix, newMesh.modelMatrix, scaleVec);
 
 			lineObjects.push(newMesh);
@@ -356,6 +406,7 @@ window.onload = function(){
 	MoB = (curPuzzle.h * 10) / 2; // (Middle of Board) will be (curPuzzle.h * 10) / 2
 	cameraPosition = [MoB, -MoB, (1)]; // z-coordinate should be puzzleSize * 10
 	lookAt = [MoB, -MoB, 0.0];
+	vp = glMatrix.mat4.create();
 
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
 	// https://www.npmjs.com/package/polyline-normals
@@ -388,54 +439,131 @@ var render = function () {
 
 	// projection setup
 	//var fovy = 60.0 * (3.14159265359 / 180.0);
-	var projection = glMatrix.mat4.create();
+	projection = glMatrix.mat4.create();
 	//projection = glMatrix.mat4.perspective(projection, fovy, 1.0, 0.0000001, null);
 	projection = glMatrix.mat4.ortho(projection, -ortho_size, ortho_size, -ortho_size, ortho_size, null, 2);
 
 	// vp matrix
-	var vp = glMatrix.mat4.create();
 	glMatrix.mat4.multiply(vp, projection, view);		// combine view and projection matrices into new vp matrix
 
 	var mvp = glMatrix.mat4.create();
 	var mvpLoc = gl.getUniformLocation(program, "mvp");			// location of "mvp" in shader program
+	var colorLoc = gl.getUniformLocation(program, "color");
+
+	for (let i = 0; i < lineObjects.length; i++) {
+		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// if the linesArray at the current position is 0 
+			lineObjects[i].color = [1.0, 1.0, 1.0];												// then don't draw the current line and skip to the next
+		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	
+			lineObjects[i].color = [0.439, 0.329, 0.302];
+		}
+		
+		//console.log(lineObjects[i].yCoord, lineObjects[i].xCoord);
+
+		// if (lineObjects[i].type == 2)				
+		// 	gl.bindVertexArray(line.VAO);
+		gl.uniform3fv(colorLoc, lineObjects[i].color);
+
+		glMatrix.mat4.multiply(mvp, vp, lineObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
+		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
+		
+		if (lineObjects[i].type == 2) {									// need to use the correct set of indices in draw call
+			gl.bindVertexArray(line.VAO);
+			gl.drawElements(gl.TRIANGLES, line.indices.length, gl.UNSIGNED_SHORT, 0);
+		}
+	}
 
 	for (let i = 0; i < puzzleObjects.length; i++) {
 		if (puzzleObjects[i].type == 1)
 			gl.bindVertexArray(dot.VAO);
+
+		if (puzzleObjects[i].type == 3) {
+			if (puzzleObjects[i].display == 0)
+				gl.bindVertexArray(zero.VAO);
+			if (puzzleObjects[i].display == 1)
+				gl.bindVertexArray(one.VAO);
+			if (puzzleObjects[i].display == 2)
+				gl.bindVertexArray(two.VAO);
+			if (puzzleObjects[i].display == 3)
+				gl.bindVertexArray(three.VAO);
+		}
+
+		gl.uniform3fv(colorLoc, puzzleObjects[i].color);
 
 		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
 
 		if (puzzleObjects[i].type == 1)									// need to use the correct set of indices in draw call
 			gl.drawElements(gl.TRIANGLES, dot.indices.length, gl.UNSIGNED_SHORT, 0);
+
+		if (puzzleObjects[i].type == 3) {
+			if (puzzleObjects[i].display == 0)
+				gl.drawElements(gl.TRIANGLES, zero.indices.length, gl.UNSIGNED_SHORT, 0);
+			if (puzzleObjects[i].display == 1)
+				gl.drawElements(gl.TRIANGLES, one.indices.length, gl.UNSIGNED_SHORT, 0);
+			if (puzzleObjects[i].display == 2)
+				gl.drawElements(gl.TRIANGLES, two.indices.length, gl.UNSIGNED_SHORT, 0);
+			if (puzzleObjects[i].display == 3)
+				gl.drawElements(gl.TRIANGLES, three.indices.length, gl.UNSIGNED_SHORT, 0);
+			
+		}
 	}
 
-	for (let i = 0; i < lineObjects.length; i++) {
-		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) continue;	// if the linesArray at the current position is 0 
-																						//		then don't draw the current line and skip to the next
-		
-		//console.log(lineObjects[i].yCoord, lineObjects[i].xCoord);
-
-		if (lineObjects[i].type == 2)				
-			gl.bindVertexArray(line.VAO);
-
-		glMatrix.mat4.multiply(mvp, vp, lineObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
-		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
-		
-		if (lineObjects[i].type == 2)									// need to use the correct set of indices in draw call
-			gl.drawElements(gl.TRIANGLES, line.indices.length, gl.UNSIGNED_SHORT, 0);
-	}
 	setTimeout(render, 12);
 };
 
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
 var click = function( event ) {
-	console.log("Y coord:", event.layerY, "X coord:", event.layerX);
+	console.log("X coord:", event.layerX, "Y coord:", event.layerY);
+	var cSpace = [event.layerX, canvas.height - event.layerY];
+	cSpace[0] /= canvas.width;
+	cSpace[1] /= canvas.height;
+	var ndc = [ (cSpace[0] * 2) - 1, (cSpace[1] * 2) - 1 ];
+	//console.log(ndc);
+		
 	var invProj = glMatrix.mat4.create();
-	glMatrix.mat4.invert(invProj, view);
-	var coords = [event.layerX, event.layerY, 1, 1];
-	glMatrix.vec4.transformMat4(coords, coords, invProj);
-	console.log("y", coords[1],"x", coords[0]);
+	glMatrix.mat4.invert(invProj, projection);
+
+	var invView = glMatrix.mat4.create();
+	glMatrix.mat4.invert(invView, view);
+
+	var tempPrev = glMatrix.vec4.fromValues(ndc[0], ndc[1], 0, 1);
+	
+	var prev = glMatrix.vec4.create();
+	glMatrix.vec4.transformMat4(prev, tempPrev, invProj);
+	
+	prev = glMatrix.vec4.fromValues(prev[0], prev[1], prev[2], 1);
+	
+	var worldCoords = glMatrix.vec4.create();;
+	glMatrix.vec4.transformMat4(worldCoords, prev, invView);
+
+	console.log(worldCoords[0], worldCoords[1]);
+
+	var closestDist = 9999999;
+	var keptIndex = 0;
+	for (var i = 0; i < lineObjects.length; i++) {
+		var a = worldCoords[0] - lineObjects[i].xWorld;
+		var b = worldCoords[1] - lineObjects[i].yWorld;
+
+		var dist = Math.sqrt((a*a) + (b*b));
+		
+		if (dist < closestDist) {
+			closestDist = dist;
+			keptIndex = i;
+		}
+	}
+	//console.log(dist);
+
+	var tempXIndex = lineObjects[keptIndex].xCoord;
+	var tempYIndex = lineObjects[keptIndex].yCoord;
+
+	console.log(tempXIndex, tempYIndex);
+
+	gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];
+
+	// var coords = [event.layerX, event.layerY, 1, 1];
+	// glMatrix.vec4.transformMat4(coords, coords, invProj);
+	// console.log("y", coords[1],"x", coords[0]);
+	// console.log(invProj);
 
 };
 
@@ -479,7 +607,7 @@ var mouseMove = function ( event ) {
 	var deltaX = event.layerX - startPos[0];
 	var deltaY = event.layerY - startPos[1];
 
-	console.log( deltaX, deltaY);
+	//console.log( deltaX, deltaY);
 
 	cameraPosition[0] -= deltaX * 0.1;
 	cameraPosition[1] += deltaY * 0.1;
