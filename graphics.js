@@ -781,8 +781,13 @@ export class graphicsObj {
 	type;				// 1 for dot, 2 for line/cross, 3 for cell number
 	display;			// for lines: 0 for nothing, 1 for line, 2 for X. for cells: do the number
 	
-	xWorld;
-	yWorld;
+	//xWorld;
+	//yWorld;
+	xLowerBound;
+	xUpperBound;
+	yLowerBound;
+	yUpperBound;
+
 	xCoord;				//	coords in line array to determine if a 
 	yCoord;				// 		line should be drawn or not
 	constructor() {

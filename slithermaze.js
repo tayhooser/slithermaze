@@ -332,8 +332,12 @@ window.onload = function(){
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
-			newMesh.xWorld = translateX;
-			newMesh.yWorld = translateY;
+			//newMesh.xWorld = translateX;
+			//newMesh.yWorld = translateY;
+			newMesh.yLowerBound = translateY - 0.85;
+			newMesh.yUpperBound = translateY + 0.85;
+			newMesh.xUpperBound = translateX + 5.0;
+			newMesh.xLowerBound = translateX - 5.0;
 
 			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
 			glMatrix.mat4.scale(newMesh.modelMatrix, newMesh.modelMatrix, scaleVec);
@@ -375,8 +379,12 @@ window.onload = function(){
 
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
-			newMesh.xWorld = translateX;
-			newMesh.yWorld = translateY;
+			//newMesh.xWorld = translateX;
+			//newMesh.yWorld = translateY;
+			newMesh.xLowerBound = translateX - 0.85;
+			newMesh.xUpperBound = translateX + 0.85;
+			newMesh.yUpperBound = translateY + 5.0;
+			newMesh.yLowerBound = translateY - 5.0;
 
 			let rotationMat = glMatrix.mat4.create()
 			glMatrix.mat4.fromZRotation(rotationMat, 1.5708)
@@ -512,8 +520,11 @@ var render = function () {
 };
 
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
+
+var camWasMoved = false;
+
 var click = function( event ) {
-	console.log("X coord:", event.layerX, "Y coord:", event.layerY);
+	//console.log("X coord:", event.layerX, "Y coord:", event.layerY);
 	var cSpace = [event.layerX, canvas.height - event.layerY];
 	cSpace[0] /= canvas.width;
 	cSpace[1] /= canvas.height;
@@ -538,27 +549,37 @@ var click = function( event ) {
 
 	console.log(worldCoords[0], worldCoords[1]);
 
-	var closestDist = 9999999;
+	//var closestDist = 9999999;
 	var keptIndex = 0;
+	var lineFound = false;
 	for (var i = 0; i < lineObjects.length; i++) {
-		var a = worldCoords[0] - lineObjects[i].xWorld;
-		var b = worldCoords[1] - lineObjects[i].yWorld;
+		// var a = worldCoords[0] - lineObjects[i].xWorld;
+		// var b = worldCoords[1] - lineObjects[i].yWorld;
+		// var dist = Math.sqrt((a*a) + (b*b));
+		// if (dist < closestDist) {
+		// 	closestDist = dist;
+		// 	keptIndex = i;
+		// }
 
-		var dist = Math.sqrt((a*a) + (b*b));
-		
-		if (dist < closestDist) {
-			closestDist = dist;
+		if ((worldCoords[0] > lineObjects[i].xLowerBound & worldCoords[0] < lineObjects[i].xUpperBound) 				// click was inside a line
+			& (worldCoords[1] > lineObjects[i].yLowerBound & worldCoords[1] < lineObjects[i].yUpperBound)) {
+			
+			console.log("line found");
+			lineFound = true;
 			keptIndex = i;
+			
 		}
+
 	}
 	//console.log(dist);
 
 	var tempXIndex = lineObjects[keptIndex].xCoord;
 	var tempYIndex = lineObjects[keptIndex].yCoord;
 
-	console.log(tempXIndex, tempYIndex);
+	//console.log(tempXIndex, tempYIndex);
 
-	gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];
+	if (!camWasMoved & lineFound)
+		gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];
 
 	// var coords = [event.layerX, event.layerY, 1, 1];
 	// glMatrix.vec4.transformMat4(coords, coords, invProj);
@@ -597,6 +618,8 @@ var mouseDown = function( event ) {
 	canvas.addEventListener("mousemove", mouseMove, false);
 	canvas.addEventListener("mouseup", mouseUp, false);
 
+	camWasMoved = false;
+
 	startPos[0] = event.layerX;
 	startPos[1] = event.layerY;
 
@@ -611,6 +634,7 @@ var mouseMove = function ( event ) {
 
 	cameraPosition[0] -= deltaX * 0.1;
 	cameraPosition[1] += deltaY * 0.1;
+	camWasMoved = true;
 
 	lookAt[0] -= deltaX * 0.1;
 	lookAt[1] += deltaY * 0.1;
