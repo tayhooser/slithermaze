@@ -60,6 +60,7 @@ var zero;
 var one;
 var two;
 var three;
+var cross;
 var renderT = false;
 var view;
 var projection;
@@ -261,6 +262,7 @@ window.onload = function(){
 	one = g.getOne(gl, program);
 	two = g.getTwo(gl, program);
 	three = g.getThree(gl, program);
+	cross = g.getCross(gl, program);
 	console.log("passed");
 
 	var translateX = 0.0;			// will be used to apply a translation to an object to put it in the right place in the world
@@ -434,21 +436,15 @@ var render = function () {
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	
-
 	// camera setup
 	view = glMatrix.mat4.create();
 	var up = [0.0, 1.0, 0.0];
-	//cameraPosition = [MoB, -MoB, (1)]; // z-coordinate should be puzzleSize * 10
-	//lookAt = [MoB, -MoB, 0.0];
 	glMatrix.mat4.lookAt(view, cameraPosition, lookAt, up);
 
 	var ortho_size = zoomLevel * 2;				// need also consider the initial zoomLevel set in init()
 
 	// projection setup
-	//var fovy = 60.0 * (3.14159265359 / 180.0);
 	projection = glMatrix.mat4.create();
-	//projection = glMatrix.mat4.perspective(projection, fovy, 1.0, 0.0000001, null);
 	projection = glMatrix.mat4.ortho(projection, -ortho_size, ortho_size, -ortho_size, ortho_size, null, 2);
 
 	// vp matrix
@@ -460,9 +456,14 @@ var render = function () {
 
 	for (let i = 0; i < lineObjects.length; i++) {
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// if the linesArray at the current position is 0 
-			lineObjects[i].color = [1.0, 1.0, 1.0];												// then don't draw the current line and skip to the next
+			lineObjects[i].color = [1.0, 1.0, 1.0];											// then don't draw the current line and skip to the next
+			lineObjects[i].display = 0;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	
 			lineObjects[i].color = [0.439, 0.329, 0.302];
+			lineObjects[i].display = 1;
+		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 2)	{	
+			lineObjects[i].color = [1.0, 0.0, 0.0];
+			lineObjects[i].display = 2;
 		}
 		
 		//console.log(lineObjects[i].yCoord, lineObjects[i].xCoord);
@@ -475,43 +476,56 @@ var render = function () {
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
 		
 		if (lineObjects[i].type == 2) {									// need to use the correct set of indices in draw call
-			gl.bindVertexArray(line.VAO);
-			gl.drawElements(gl.TRIANGLES, line.indices.length, gl.UNSIGNED_SHORT, 0);
+			if (lineObjects[i].display == 1) {
+				gl.bindVertexArray(line.VAO);
+				gl.drawElements(gl.TRIANGLES, line.indices.length, gl.UNSIGNED_SHORT, 0);
+			} else if (lineObjects[i].display == 2) {
+				gl.bindVertexArray(cross.VAO);
+				gl.drawElements(gl.TRIANGLES, cross.indices.length, gl.UNSIGNED_SHORT, 0);
+			}
 		}
 	}
 
 	for (let i = 0; i < puzzleObjects.length; i++) {
-		if (puzzleObjects[i].type == 1)
-			gl.bindVertexArray(dot.VAO);
 
-		if (puzzleObjects[i].type == 3) {
-			if (puzzleObjects[i].display == 0)
-				gl.bindVertexArray(zero.VAO);
-			if (puzzleObjects[i].display == 1)
-				gl.bindVertexArray(one.VAO);
-			if (puzzleObjects[i].display == 2)
-				gl.bindVertexArray(two.VAO);
-			if (puzzleObjects[i].display == 3)
-				gl.bindVertexArray(three.VAO);
-		}
+		// if (puzzleObjects[i].type == 1)
+		// 	gl.bindVertexArray(dot.VAO);
+
+		// if (puzzleObjects[i].type == 3) {
+		// 	if (puzzleObjects[i].display == 0)
+		// 		gl.bindVertexArray(zero.VAO);
+		// 	if (puzzleObjects[i].display == 1)
+		// 		gl.bindVertexArray(one.VAO);
+		// 	if (puzzleObjects[i].display == 2)
+		// 		gl.bindVertexArray(two.VAO);
+		// 	if (puzzleObjects[i].display == 3)
+		// 		gl.bindVertexArray(three.VAO);
+		// }
 
 		gl.uniform3fv(colorLoc, puzzleObjects[i].color);
 
 		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
 
-		if (puzzleObjects[i].type == 1)									// need to use the correct set of indices in draw call
+		if (puzzleObjects[i].type == 1)	{								// need to use the correct set of indices in draw call
+			gl.bindVertexArray(dot.VAO);
 			gl.drawElements(gl.TRIANGLES, dot.indices.length, gl.UNSIGNED_SHORT, 0);
+		}
 
-		if (puzzleObjects[i].type == 3) {
-			if (puzzleObjects[i].display == 0)
+		else if (puzzleObjects[i].type == 3) {
+			if (puzzleObjects[i].display == 0) {
+				gl.bindVertexArray(zero.VAO);
 				gl.drawElements(gl.TRIANGLES, zero.indices.length, gl.UNSIGNED_SHORT, 0);
-			if (puzzleObjects[i].display == 1)
+			} else if (puzzleObjects[i].display == 1) {
+				gl.bindVertexArray(one.VAO);
 				gl.drawElements(gl.TRIANGLES, one.indices.length, gl.UNSIGNED_SHORT, 0);
-			if (puzzleObjects[i].display == 2)
+			} else if (puzzleObjects[i].display == 2) {
+				gl.bindVertexArray(two.VAO);
 				gl.drawElements(gl.TRIANGLES, two.indices.length, gl.UNSIGNED_SHORT, 0);
-			if (puzzleObjects[i].display == 3)
+			} else if (puzzleObjects[i].display == 3) {
+				gl.bindVertexArray(three.VAO);
 				gl.drawElements(gl.TRIANGLES, three.indices.length, gl.UNSIGNED_SHORT, 0);
+			}
 			
 		}
 	}
@@ -579,7 +593,7 @@ var click = function( event ) {
 	//console.log(tempXIndex, tempYIndex);
 
 	if (!camWasMoved & lineFound)
-		gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];
+		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3;
 
 	// var coords = [event.layerX, event.layerY, 1, 1];
 	// glMatrix.vec4.transformMat4(coords, coords, invProj);
