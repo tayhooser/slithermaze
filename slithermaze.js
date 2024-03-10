@@ -52,6 +52,7 @@ var vertexShader = gl.createShader(gl.VERTEX_SHADER);
 var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
 var cameraPosition;
 var lookAt;
+var camAndLook;
 var puzzleObjects = [];				// list of puzzle objects that wont change much like dots and numbers
 var lineObjects = [];				// list of lines that will be interacted with and change
 var dot;							// instance of the dot template
@@ -184,7 +185,7 @@ window.onload = function(){
 	two = g.getTwo(gl, program);
 	three = g.getThree(gl, program);
 	cross = g.getCross(gl, program);
-	console.log("passed");
+	//console.log("passed");
 
 	var translateX = 0.0;			// used to apply translation to object pos
 	var translateY = 0.0;
@@ -329,8 +330,9 @@ window.onload = function(){
 	}
 
 	MoB = (curPuzzle.h * 10) / 2;
-	cameraPosition = [MoB, -MoB, (1)];
-	lookAt = [MoB, -MoB, 0.0];
+	camAndLook = [MoB, -MoB];
+	cameraPosition = [camAndLook[0], camAndLook[1], (1)];
+	lookAt = [camAndLook[0], camAndLook[1], 0.0];
 	vp = glMatrix.mat4.create();
 
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
@@ -354,6 +356,8 @@ var render = function () {
 	// camera setup
 	view = glMatrix.mat4.create();
 	var up = [0.0, 1.0, 0.0];
+	cameraPosition = [camAndLook[0], camAndLook[1], (1)];
+	lookAt = [camAndLook[0], camAndLook[1], 0.0];
 	glMatrix.mat4.lookAt(view, cameraPosition, lookAt, up);
 
 	var ortho_size = zoomLevel * 2;				// need also consider the initial zoomLevel set in init()
@@ -463,11 +467,15 @@ var camWasMoved = false;
 
 var click = function( event ) {
 	//console.log("X coord:", event.layerX, "Y coord:", event.layerY);
-	var cSpace = [event.layerX, canvas.height - event.layerY];
+	//console.log(event);
+	var canvasRect = canvas.getBoundingClientRect();
+	var mouseX = event.clientX - canvasRect.left;
+	var mouseY = event.clientY - canvasRect.top;
+
+	var cSpace = [mouseX, canvas.height - mouseY];
 	cSpace[0] /= canvas.width;
 	cSpace[1] /= canvas.height;
 	var ndc = [ (cSpace[0] * 2) - 1, (cSpace[1] * 2) - 1 ];
-	//console.log(ndc);
 		
 	var invProj = glMatrix.mat4.create();
 	glMatrix.mat4.invert(invProj, projection);
@@ -485,7 +493,7 @@ var click = function( event ) {
 	var worldCoords = glMatrix.vec4.create();;
 	glMatrix.vec4.transformMat4(worldCoords, prev, invView);
 
-	console.log(worldCoords[0], worldCoords[1]);
+	//console.log(worldCoords[0], worldCoords[1]);
 
 	//var closestDist = 9999999;
 	var keptIndex = 0;
@@ -499,10 +507,10 @@ var click = function( event ) {
 		// 	keptIndex = i;
 		// }
 
-		if ((worldCoords[0] > lineObjects[i].xLowerBound & worldCoords[0] < lineObjects[i].xUpperBound) 				// click was inside a line
-			& (worldCoords[1] > lineObjects[i].yLowerBound & worldCoords[1] < lineObjects[i].yUpperBound)) {
+		if ((worldCoords[0] > lineObjects[i].xLowerBound && worldCoords[0] < lineObjects[i].xUpperBound) 				// click was inside a line
+			&& (worldCoords[1] > lineObjects[i].yLowerBound && worldCoords[1] < lineObjects[i].yUpperBound)) {
 			
-			console.log("line found");
+			//console.log("line found");
 			lineFound = true;
 			keptIndex = i;
 			
@@ -516,7 +524,7 @@ var click = function( event ) {
 
 	//console.log(tempXIndex, tempYIndex);
 
-	if (!camWasMoved & lineFound){
+	if (!camWasMoved && lineFound){
 		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3;
 		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex);
 	}
@@ -566,21 +574,39 @@ var mouseDown = function( event ) {
 };
 
 var mouseMove = function ( event ) {
-	//console.log(event);
-	var deltaX = event.layerX - startPos[0];
-	var deltaY = event.layerY - startPos[1];
+	var deltaX = (event.layerX - startPos[0]) * 0.1;
+	var deltaY = (event.layerY - startPos[1]) * 0.1;
 
 	//console.log( deltaX, deltaY);
 
-	cameraPosition[0] -= deltaX * 0.1;
-	cameraPosition[1] += deltaY * 0.1;
-	camWasMoved = true;
+	if (((camAndLook[0] - (deltaX)) > 0)
+		&& ((camAndLook[0] + (deltaX)) < (curPuzzle.w * 10))) {
 
-	lookAt[0] -= deltaX * 0.1;
-	lookAt[1] += deltaY * 0.1;
+		// cameraPosition[0] -= deltaX;
+		// lookAt[0] -= deltaX;
 
-	startPos[0] = event.layerX;
-	startPos[1] = event.layerY;
+		camAndLook[0] -= deltaX;
+		
+		camWasMoved = true;
+
+		startPos[0] = event.layerX;
+		
+	}
+
+	if ((camAndLook[1] + (deltaY)) > (curPuzzle.h * -10)
+		&& ((camAndLook[1] + (deltaY)) < 0)) {
+		
+		// cameraPosition[1] += deltaY;
+		// lookAt[1] += deltaY;
+
+		camAndLook[1] += deltaY;
+
+		camWasMoved = true;
+
+		startPos[1] = event.layerY;
+	}
+
+	//console.log(deltaX, deltaY);
 }
 
 var mouseUp = function ( event ) {
