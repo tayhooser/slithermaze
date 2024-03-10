@@ -16,25 +16,25 @@ var minute = 0;
 var second = 0;
 
 // HTML elements
-var undoHTML = document.getElementById("undo");
-var redoHTML = document.getElementById("redo");
-var zoomHTML = document.getElementById("zoom"); // zoom button
-var zoomSliderHTML = document.getElementById("zoomSlider"); // the actual zoom slider
-var settingsHTML = document.getElementById("settings");
-var ACnumHTML = document.getElementById('ACnum');
-var ACinterHTML = document.getElementById('ACinter');
-var ACdeadHTML = document.getElementById('ACdead');
-var ACloopHTML = document.getElementById('ACloop');
-var highlightHTML = document.getElementById('highlight');
-var hintHTML = document.getElementById('hint');
-var solutionHTML = document.getElementById('solution');
-var restartHTML = document.getElementById('restart');
-var printHTML = document.getElementById('print');
-var tutorialHTML = document.getElementById('tutorial');
-var saveHTML = document.getElementById('save');
-var saveContainerHTML = document.getElementById("save-container"); // for adding load buttons
-var submitHTML = document.getElementById('submit');
-var newPuzzleHTML = document.getElementById('new-puzzle');
+const undoHTML = document.getElementById("undo");
+const redoHTML = document.getElementById("redo");
+const zoomHTML = document.getElementById("zoom"); // zoom button
+const zoomSliderHTML = document.getElementById("zoomSlider"); // the actual zoom slider
+const settingsHTML = document.getElementById("settings");
+const ACnumHTML = document.getElementById('ACnum');
+const ACinterHTML = document.getElementById('ACinter');
+const ACdeadHTML = document.getElementById('ACdead');
+const ACloopHTML = document.getElementById('ACloop');
+const highlightHTML = document.getElementById('highlight');
+const hintHTML = document.getElementById('hint');
+const solutionHTML = document.getElementById('solution');
+const restartHTML = document.getElementById('restart');
+const printHTML = document.getElementById('print');
+const tutorialHTML = document.getElementById('tutorial');
+const saveHTML = document.getElementById('save');
+const saveContainerHTML = document.getElementById("save-container"); // for adding load buttons
+const submitHTML = document.getElementById('submit');
+const newPuzzleHTML = document.getElementById('new-puzzle');
 
 // settings
 var ACnum = false;
@@ -50,17 +50,10 @@ var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
 var program = gl.createProgram();
 var vertexShader = gl.createShader(gl.VERTEX_SHADER);
 var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-var cameraPosition;
-var lookAt;
+var cameraPosition, lookAt;
 var puzzleObjects = [];				// list of puzzle objects that wont change much like dots and numbers
 var lineObjects = [];				// list of lines that will be interacted with and change
-var dot;							// instance of the dot template
-var line;							// instance of the line template
-var zero;
-var one;
-var two;
-var three;
-var cross;
+var dot, line, cross, zero, one, two, three;	// instance of graphic templates
 var renderT = false;
 var view;
 var projection;
@@ -106,26 +99,31 @@ window.onload = function(){
 	canvas.addEventListener("mouseenter", mouseEnter, false);
 	gl.enable(gl.CULL_FACE);
 	clock();
+	
+	// check for local data
+	if (false){ // if puzzle data exists from last time
+		
+	} else { // load some random puzzle
+		// TEMP: placeholder puzzle for testing algos
+		// see discord for visual solution
+		// puzzle: -1 -1 -1 -1 -1
+		//		   -1 -1  1 -1 -1
+		//		   -1 -1  2  1 -1
+		//		   -1 -1  2  2  2
+		//		    0  2  2  2 -1
 
-	// TEMP: placeholder puzzle for testing algos
-	// see discord for visual solution
-	// puzzle: -1 -1 -1 -1 -1
-	//		   -1 -1  1 -1 -1
-	//		   -1 -1  2  1 -1
-	//		   -1 -1  2  2  2
-	//		    0  2  2  2 -1
-
-	curPuzzle = new pl.Puzzle(5, 5);
-	curPuzzle.cells[1][2] = [1, false];
-	curPuzzle.cells[2][2] = [2, false];
-	curPuzzle.cells[2][3] = [1, false];
-	curPuzzle.cells[3][2] = [2, false];
-	curPuzzle.cells[3][3] = [2, false];
-	curPuzzle.cells[3][4] = [2, false];
-	curPuzzle.cells[4][0] = [0, false];
-	curPuzzle.cells[4][1] = [2, false];
-	curPuzzle.cells[4][2] = [2, false];
-	curPuzzle.cells[4][3] = [2, false];
+		curPuzzle = new pl.Puzzle(5, 5);
+		curPuzzle.cells[1][2] = [1, false];
+		curPuzzle.cells[2][2] = [2, false];
+		curPuzzle.cells[2][3] = [1, false];
+		curPuzzle.cells[3][2] = [2, false];
+		curPuzzle.cells[3][3] = [2, false];
+		curPuzzle.cells[3][4] = [2, false];
+		curPuzzle.cells[4][0] = [0, false];
+		curPuzzle.cells[4][1] = [2, false];
+		curPuzzle.cells[4][2] = [2, false];
+		curPuzzle.cells[4][3] = [2, false];
+	}
 	
 	gLinesArray = Array(curPuzzle.h);
 	
@@ -743,7 +741,6 @@ highlightHTML.oninput = function() {
 // creates new savestate + button
 saveHTML.onclick = function(){
 	saveCounter += 1;
-	//console.log("Save pressed; counter = " + saveCounter);
 	
 	// add button
 	let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\">" + saveCounter + "<\/button>";
@@ -751,13 +748,34 @@ saveHTML.onclick = function(){
 	
 	// add listener
 	let id = 'load' + saveCounter;
-	//console.log("ID: " + id);
 	document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
+	
+	// store data in local storage
+	let key = "load" + saveCounter + "cells";
+	let val = JSON.stringify(curPuzzle.cells);
+	localStorage.setItem(key, val);
+	
+	key = "load" + saveCounter + "nodes";
+	val = JSON.stringify(curPuzzle.nodes);
+	localStorage.setItem(key, val);
+	
+	//console.log("SAVESTATE " + saveCounter + ":");
+	//pl.logPuzzleState(curPuzzle);
+	
 };
 
 // called when user hits a savestate button, HTML side
 var load = function(state){
 	console.log("Loaded state " + state);
+	
+	let key = "load" + state + "cells";
+	curPuzzle.cells = JSON.parse(localStorage.getItem(key));
+	key = "load" + state + "nodes";
+	curPuzzle.nodes = JSON.parse(localStorage.getItem(key));
+	
+	//pl.logPuzzleState(curPuzzle);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	
 	return;
 };
 
@@ -777,12 +795,23 @@ solutionHTML.onclick = function(){
 
 // called when user hits restart button, HTML side
 // wipes all lines and crosses from screen
-// BUG: hangs at 0 sec for an extra second when pressed
 restartHTML.onclick = function(){
 	console.log("Restart pressed.");
 	
 	// restart puzzle
 	pl.clearPuzzle(curPuzzle);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	
+	// clear save data
+	localStorage.clear();
+	//saveCounter = 0;
+	
+	// delete load buttons
+	for (let i = 1; i <= saveCounter; i++){
+		let id = "load" + i;
+		document.getElementById(id).remove();
+	}
+	saveCounter = 0;
 	
 	// restart timer
 	hour = 0; 
@@ -797,24 +826,29 @@ restartHTML.onclick = function(){
 };
 
 // opens new tab with blank puzzle for printing
-// TODO: wipe puzzle state before printing
 printHTML.onclick = function(){
 	console.log("Print pressed.");
-	const canvas = document.getElementById('game-area')	
-	const dataUrl = canvas.toDataURL();
+	
+	pl.clearPuzzle(curPuzzle);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	
+	setTimeout(function(){
+		const canvas = document.getElementById('game-area')	
+		const dataUrl = canvas.toDataURL();
 
-	let windowContent = '<!DOCTYPE html>';
-	windowContent += '<html>';
-	windowContent += '<head><title>Print canvas</title></head>';
-	windowContent += '<body><center><img src="' + dataUrl + '"></center></body>';
-	windowContent += '</html>';
+		let windowContent = '<!DOCTYPE html>';
+		windowContent += '<html>';
+		windowContent += '<head><title>Print canvas</title></head>';
+		windowContent += '<body><center><img src="' + dataUrl + '"></center></body>';
+		windowContent += '</html>';
 
-	const printWin = window.open('', '', 'width=' + (screen.availWidth - 500) + ',height=' + (screen.availHeight - 300));
-	printWin.document.open();
-	printWin.document.write(windowContent);
-	printWin.focus();
-    printWin.print();
-	printWin.close();
+		const printWin = window.open('', '', 'width=' + (screen.availWidth - 500) + ',height=' + (screen.availHeight - 300));
+		printWin.document.open();
+		printWin.document.write(windowContent);
+		printWin.focus();
+		printWin.print();
+		printWin.close();
+	}, 100);
 	return;
 };
 
