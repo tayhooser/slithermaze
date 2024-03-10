@@ -1062,7 +1062,7 @@ export var getDot = function(gl, program) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newDot.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newDot.indices), gl.STATIC_DRAW);
 
-	console.log("newDot has been pushed");
+	//console.log("newDot has been pushed");
 	return newDot;
 	
 }
@@ -1090,7 +1090,7 @@ export var getLine = function(gl, program) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newLine.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newLine.indices), gl.STATIC_DRAW);
 	
-	console.log("newLine has been pushed");
+	//console.log("newLine has been pushed");
 	return newLine;
 
 }
@@ -1117,7 +1117,7 @@ export var getZero = function(gl, program) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newZero.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newZero.indices), gl.STATIC_DRAW);
 	
-	console.log("newZero has been pushed");
+	//console.log("newZero has been pushed");
 	return newZero;
 
 }
@@ -1144,7 +1144,7 @@ export var getOne = function(gl, program) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newOne.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newOne.indices), gl.STATIC_DRAW);
 	
-	console.log("newOne has been pushed");
+	//console.log("newOne has been pushed");
 	return newOne;
 
 }
@@ -1171,7 +1171,7 @@ export var getTwo = function(gl, program) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newTwo.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newTwo.indices), gl.STATIC_DRAW);
 	
-	console.log("newTwo has been pushed");
+	//console.log("newTwo has been pushed");
 	return newTwo;
 
 }
@@ -1198,7 +1198,7 @@ export var getThree = function(gl, program) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newThree.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newThree.indices), gl.STATIC_DRAW);
 	
-	console.log("newThree has been pushed");
+	//console.log("newThree has been pushed");
 	return newThree;
 
 }
@@ -1225,12 +1225,12 @@ export var getCross = function(gl, program) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newCross.IBO);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newCross.indices), gl.STATIC_DRAW);
 	
-	console.log("newCross has been pushed");
+	//console.log("newCross has been pushed");
 	return newCross;
 
 }
 
-// changes graphical lines, crosses, and shaded regions
+// update graphic state to match logic state
 export var updateGraphicPuzzleState = function(puzzle, gLinesArray){
 	for (let i = 0; i < 2 * puzzle.h + 1; i++) {
 		for (let j = 0; j < puzzle.w + 1; j++) {
@@ -1253,4 +1253,32 @@ export var updateGraphicPuzzleState = function(puzzle, gLinesArray){
 			}
 		}	
 	}
+}
+
+// updates a logical line to sync with graphics
+export var updateLogicConnection = function(puzzle, gLinesArray, i, j){
+	if (i % 2 == 0){ // horizonatal conn
+		switch(gLinesArray[i][j]){
+			case 1: // line
+				pl.placeLine(puzzle, i/2, j, i/2, j+1);
+				break;
+			case 2: // cross
+				pl.placeCross(puzzle, i/2, j, i/2, j+1);
+				break;
+			default: // remove connection
+				pl.removeLine(puzzle, i/2, j, i/2, j+1);
+		}
+	} else { // vertical conn
+		switch(gLinesArray[i][j]){
+			case 1: // line
+				pl.placeLine(puzzle, (i+1)/2, j, ((i+1)/2)-1, j);
+				break;
+			case 2: // cross
+				pl.placeCross(puzzle, (i+1)/2, j, ((i+1)/2)-1, j);
+				break;
+			default: // remove connection
+				pl.removeLine(puzzle, (i+1)/2, j, ((i+1)/2)-1, j);
+		}
+	}
+
 }

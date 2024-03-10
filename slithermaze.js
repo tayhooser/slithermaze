@@ -68,13 +68,6 @@ var vp;
 
 //var gLength = puzzleSize + 1;
 var gHeight;
-var cellNumbers = [
-	[3, -1, -1, -1, -1],
-	[-1, -1,  1, -1, -1],
-	[-1, -1,  2,  1, 3],
-	[3, -1,  2,  2,  2],
- 	[0,  2,  2,  2, -1]
-];
 
 var MoB;				// Middle of Board. Used to set the camera position in the center
 var gLinesArray;		// 2D Array that indicates which lines are on/off
@@ -110,10 +103,9 @@ async function getMap(query = { author: 'Taylor' }) {
 
 // initializes openGL, other functions, and initial board
 window.onload = function(){
-	console.log("init() started");
-	clock();
-
 	canvas.addEventListener("mouseenter", mouseEnter, false);
+	gl.enable(gl.CULL_FACE);
+	clock();
 
 	// TEMP: placeholder puzzle for testing algos
 	// see discord for visual solution
@@ -122,8 +114,6 @@ window.onload = function(){
 	//		   -1 -1  2  1 -1
 	//		   -1 -1  2  2  2
 	//		    0  2  2  2 -1
-	
-	gl.enable(gl.CULL_FACE);
 
 	curPuzzle = new pl.Puzzle(5, 5);
 	curPuzzle.cells[1][2] = [1, false];
@@ -136,75 +126,6 @@ window.onload = function(){
 	curPuzzle.cells[4][1] = [2, false];
 	curPuzzle.cells[4][2] = [2, false];
 	curPuzzle.cells[4][3] = [2, false];
-	
-	pl.placeLine(curPuzzle, 0, 0, 0, 1);
-	pl.placeLine(curPuzzle, 0, 1, 0, 2);
-	pl.placeLine(curPuzzle, 0, 2, 0, 3);
-	pl.placeLine(curPuzzle, 0, 3, 0, 4);
-	pl.placeLine(curPuzzle, 0, 4, 0, 5);
-	pl.placeLine(curPuzzle, 0, 5, 1, 5);
-	pl.placeLine(curPuzzle, 1, 5, 2, 5);
-	pl.placeLine(curPuzzle, 2, 5, 3, 5);
-	pl.placeLine(curPuzzle, 3, 5, 3, 4);
-	pl.placeLine(curPuzzle, 3, 4, 2, 4);
-	pl.placeLine(curPuzzle, 2, 4, 1, 4);
-	pl.placeLine(curPuzzle, 1, 4, 1, 3);
-	pl.placeLine(curPuzzle, 1, 3, 1, 2);
-	pl.placeLine(curPuzzle, 1, 2, 1, 1);
-	pl.placeLine(curPuzzle, 1, 1, 2, 1);
-	pl.placeLine(curPuzzle, 2, 1, 2, 2);
-	pl.placeLine(curPuzzle, 2, 2, 3, 2);
-	pl.placeLine(curPuzzle, 3, 2, 3, 3);
-	pl.placeLine(curPuzzle, 3, 3, 4, 3);
-	pl.placeLine(curPuzzle, 4, 3, 4, 4);
-	pl.placeLine(curPuzzle, 4, 4, 4, 5);
-	pl.placeLine(curPuzzle, 4, 5, 5, 5);
-	pl.placeLine(curPuzzle, 5, 5, 5, 4);
-	pl.placeLine(curPuzzle, 5, 4, 5, 3);
-	pl.placeLine(curPuzzle, 5, 3, 5, 2);
-	pl.placeLine(curPuzzle, 5, 2, 4, 2);
-	pl.placeLine(curPuzzle, 4, 2, 4, 1);
-	pl.placeLine(curPuzzle, 4, 1, 3, 1);
-	pl.placeLine(curPuzzle, 3, 1, 3, 0);
-	pl.placeLine(curPuzzle, 3, 0, 2, 0);
-	pl.placeLine(curPuzzle, 2, 0, 1, 0);
-	pl.placeLine(curPuzzle, 1, 0, 0, 0);
-	
-	pl.placeCross(curPuzzle, 2, 2, 2, 3);
-	pl.placeCross(curPuzzle, 2, 3, 1, 3);
-	pl.placeCross(curPuzzle, 2, 3, 2, 4);
-	pl.placeCross(curPuzzle, 2, 3, 3, 3);
-	
-	pl.verifySolution(curPuzzle); // correct solution
-	//pl.logPuzzleState(curPuzzle);
-	//pl.clearPuzzle(curPuzzle); // clears all node connections and shaded regions
-
-	// TEMP: placeholder json for testing converter function
-	/*
-	const tmpjson = `{
-		 "name": "Mayflower",
-		 "author": "Taylor",
-		 "difficulty": "easy",
-		 "size": 3,
-		 "matrix": {
-			"map": [[1,1,0,2],
-					[1,0,1,0],
-					[0,0,1,2],
-					[1,0,0,1],
-					[1,0,1,2],
-					[0,1,1,0],
-					[0,1,0,2]
-			],
-			"numbers": [[2,-1,-1],
-						[-1,0,3],
-						[-1,3,-1]
-			]
-		 }
-		}
-	`
-	curPuzzle = pl.convertPuzzle(tmpjson);
-	*/
-	//pl.logPuzzleState(curPuzzle)
 	
 	gLinesArray = Array(curPuzzle.h);
 	
@@ -256,8 +177,8 @@ window.onload = function(){
 		return;
 	}
 	
-	dot = g.getDot(gl, program);					// dot template instance, same one as before
-	line = g.getLine(gl, program);					// line template instance, same one as before
+	dot = g.getDot(gl, program);
+	line = g.getLine(gl, program);
 	zero = g.getZero(gl, program);
 	one = g.getOne(gl, program);
 	two = g.getTwo(gl, program);
@@ -265,9 +186,9 @@ window.onload = function(){
 	cross = g.getCross(gl, program);
 	console.log("passed");
 
-	var translateX = 0.0;			// will be used to apply a translation to an object to put it in the right place in the world
+	var translateX = 0.0;			// used to apply translation to object pos
 	var translateY = 0.0;
-	zoomLevel = zoomSliderHTML.value = curPuzzle.h * 3;			// used to change the camera's z-coordinate to make the board appear bigger or smaller
+	zoomLevel = zoomSliderHTML.value = curPuzzle.h * 3;
 
 	// Setup the dots. Applies a translation to a new dot object and pushes to a list of objects.
 	for (let i = 0; i < curPuzzle.h + 1; i++) {
@@ -292,11 +213,11 @@ window.onload = function(){
 	// setup the cell numbers
 	for (let i = 0; i < curPuzzle.h; i++) {
 		for (let j = 0; j < curPuzzle.w; j++) {
-			if (cellNumbers[i][j] != -1) {
+			if (curPuzzle.cells[i][j][0] != -1) {
 
 				let newMesh = new g.graphicsObj();
 				newMesh.type = 3;
-				newMesh.display = cellNumbers[i][j];
+				newMesh.display = curPuzzle.cells[i][j][0];
 				
 				let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);	
 				glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
@@ -306,9 +227,7 @@ window.onload = function(){
 
 				puzzleObjects.push(newMesh);
 			}
-
 			translateX += 10.0;
-
 		}
 		translateX = 5.0;
 		translateY = translateY - 10.0;
@@ -346,11 +265,8 @@ window.onload = function(){
 
 			translateX += 10.0;
 			lineObjects.push(newMesh);
-
 			tempLines.push(0);
-
 			xIndex++;
-
 		}
 		tempLines.push(2);					// puts a junk value in the linesArray for horizontal line rows
 		gLinesArray[2 * i] = tempLines;		// horizontal lines are every other row in the linesArray
@@ -369,8 +285,7 @@ window.onload = function(){
 	yIndex = 1;
 	let gLinesArrayIndex = 1;
 
-	// setup the vertical lines
-	// follows a similar process to the horizontal lines
+	// set up the vertical lines
 	for (let i = 0; i < curPuzzle.h; i++) {
 		let tempLines = [];
 		for (let j = 0; j < curPuzzle.h + 1; j++) {
@@ -413,8 +328,8 @@ window.onload = function(){
 		yIndex += 2
 	}
 
-	MoB = (curPuzzle.h * 10) / 2; // (Middle of Board) will be (curPuzzle.h * 10) / 2
-	cameraPosition = [MoB, -MoB, (1)]; // z-coordinate should be puzzleSize * 10
+	MoB = (curPuzzle.h * 10) / 2;
+	cameraPosition = [MoB, -MoB, (1)];
 	lookAt = [MoB, -MoB, 0.0];
 	vp = glMatrix.mat4.create();
 
@@ -422,7 +337,7 @@ window.onload = function(){
 	// https://www.npmjs.com/package/polyline-normals
 
 	// draw curPuzzle
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	//g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 
 	renderT = true;
 	render();
@@ -455,9 +370,9 @@ var render = function () {
 	var colorLoc = gl.getUniformLocation(program, "color");
 	var crossScale = [3.0, 3.0, 1];
 
+	// drawing lines and crosses
 	for (let i = 0; i < lineObjects.length; i++) {
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off
-
 			lineObjects[i].color = [1.0, 1.0, 1.0];											
 			lineObjects[i].display = 0;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
@@ -601,8 +516,10 @@ var click = function( event ) {
 
 	//console.log(tempXIndex, tempYIndex);
 
-	if (!camWasMoved & lineFound)
+	if (!camWasMoved & lineFound){
 		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3;
+		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex);
+	}
 
 	// var coords = [event.layerX, event.layerY, 1, 1];
 	// glMatrix.vec4.transformMat4(coords, coords, invProj);

@@ -147,7 +147,7 @@ export var removeLine = function(puzzle, x1, y1, x2, y2) {
 		return;
 		
 	// find line/cross in node 1, then remove
-	loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 1]);
+	let loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 1]);
 	if (loc1 == -1)
 		loc1 = arrayIndexOf(puzzle.nodes[x1][y1], [x2, y2, 0]);
 	if (loc1 == -1)
@@ -155,7 +155,7 @@ export var removeLine = function(puzzle, x1, y1, x2, y2) {
 	puzzle.nodes[x1][y1].splice(loc1, 1);
 	
 	// find line/cross in node 2, then remove
-	loc2 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 1]);
+	let loc2 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 1]);
 	if (loc2 == -1)
 		loc2 = arrayIndexOf(puzzle.nodes[x2][y2], [x1, y1, 0]);
 	puzzle.nodes[x2][y2].splice(loc2, 1);
