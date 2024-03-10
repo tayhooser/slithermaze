@@ -1011,6 +1011,9 @@ export class crossTemplate {
 // data for a single object. Can be a line, or circle, or later on can be numbers, or X's
 export class graphicsObj {
 	modelMatrix;		// matrix that holds transformation, rotation, and scale info
+	translate;
+	rotate;
+	scale;
 	color;
 	type;				// 1 for dot, 2 for line/cross, 3 for cell number
 	display;			// for lines: 0 for nothing, 1 for line, 2 for X. for cells: do the number
@@ -1026,6 +1029,9 @@ export class graphicsObj {
 	yCoord;				// 		line should be drawn or not
 	constructor() {
 		this.modelMatrix = glMatrix.mat4.create();
+		this.translate = glMatrix.mat4.create();
+		this.rotate = glMatrix.mat4.create();
+		this.scale = glMatrix.mat4.create();
 		this.color = [0.439, 0.329, 0.302];
 		this.type = -1;
 		this.xCoord = -1;

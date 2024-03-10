@@ -333,7 +333,7 @@ window.onload = function(){
 			newMesh.yCoord = yIndex;
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
-			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
+			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
 			//newMesh.xWorld = translateX;
 			//newMesh.yWorld = translateY;
 			newMesh.yLowerBound = translateY - 0.85;
@@ -342,7 +342,7 @@ window.onload = function(){
 			newMesh.xLowerBound = translateX - 5.0;
 
 			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
-			glMatrix.mat4.scale(newMesh.modelMatrix, newMesh.modelMatrix, scaleVec);
+			glMatrix.mat4.scale(newMesh.scale, newMesh.scale, scaleVec);
 
 			translateX += 10.0;
 			lineObjects.push(newMesh);
@@ -380,7 +380,7 @@ window.onload = function(){
 			newMesh.yCoord = yIndex;
 
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
-			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
+			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
 			//newMesh.xWorld = translateX;
 			//newMesh.yWorld = translateY;
 			newMesh.xLowerBound = translateX - 0.85;
@@ -390,10 +390,10 @@ window.onload = function(){
 
 			let rotationMat = glMatrix.mat4.create()
 			glMatrix.mat4.fromZRotation(rotationMat, 1.5708)
-	 		glMatrix.mat4.multiply(newMesh.modelMatrix, newMesh.modelMatrix, rotationMat);
+	 		glMatrix.mat4.multiply(newMesh.rotate, newMesh.rotate, rotationMat);
 
 			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
-			glMatrix.mat4.scale(newMesh.modelMatrix, newMesh.modelMatrix, scaleVec);
+			glMatrix.mat4.scale(newMesh.scale, newMesh.scale, scaleVec);
 
 			lineObjects.push(newMesh);
 
@@ -453,15 +453,24 @@ var render = function () {
 	var mvp = glMatrix.mat4.create();
 	var mvpLoc = gl.getUniformLocation(program, "mvp");			// location of "mvp" in shader program
 	var colorLoc = gl.getUniformLocation(program, "color");
+	var crossScale = [3.0, 3.0, 1];
 
 	for (let i = 0; i < lineObjects.length; i++) {
-		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// if the linesArray at the current position is 0 
-			lineObjects[i].color = [1.0, 1.0, 1.0];											// then don't draw the current line and skip to the next
+		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off
+
+			lineObjects[i].color = [1.0, 1.0, 1.0];											
 			lineObjects[i].display = 0;
-		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	
+		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
+			lineObjects[i].modelMatrix = glMatrix.mat4.create();
+			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
+			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].rotate);
+			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].scale);
 			lineObjects[i].color = [0.439, 0.329, 0.302];
 			lineObjects[i].display = 1;
-		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 2)	{	
+		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 2)	{	   // cross
+			lineObjects[i].modelMatrix = glMatrix.mat4.create();
+			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
+			glMatrix.mat4.scale(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, crossScale );
 			lineObjects[i].color = [1.0, 0.0, 0.0];
 			lineObjects[i].display = 2;
 		}
