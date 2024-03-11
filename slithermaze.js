@@ -58,6 +58,7 @@ var renderT = false;
 var view;
 var projection;
 var vp;
+var startPos =  Array(2);
 
 //var gLength = puzzleSize + 1;
 var gHeight;
@@ -99,9 +100,39 @@ window.onload = function(){
 	canvas.addEventListener("mouseenter", mouseEnter, false);
 	gl.enable(gl.CULL_FACE);
 	clock();
-	
-	// check for local data
-	if (false){ // if puzzle data exists from last time
+
+	if (localStorage.getItem("load1cells") != null){ // if puzzle data exists from last time
+		// find most recent save state #
+		let maxSave = 0;
+		for (let i = 1; i <= 32; i++){
+			let key = "load" + i + "cells";
+			if (localStorage.getItem(key) == null){
+				maxSave = i - 1;
+				break;
+			}
+		}
+		console.log("maxSave = " + maxSave);
+		
+		// load puzzle on screen
+		let n = JSON.parse(localStorage.getItem("load" + maxSave + "cells")).length;
+		curPuzzle = new pl.Puzzle(n, n);
+		curPuzzle.cells = JSON.parse(localStorage.getItem("load" + maxSave + "cells"));
+		curPuzzle.nodes = JSON.parse(localStorage.getItem("load" + maxSave + "nodes"));
+		
+		// add the load buttons
+		for (saveCounter = 1; saveCounter <= maxSave; saveCounter++){
+			// add button
+			let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\">" + saveCounter + "<\/button>";
+			saveContainerHTML.insertAdjacentHTML('beforeend', insertHTML);
+		
+			// add listener
+			let id = 'load' + saveCounter;
+			document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
+			
+			console.log("saveCounter = " + saveCounter);
+		}
+		saveCounter--; // for loop adds extra saveState
+		
 		
 	} else { // load some random puzzle
 		// TEMP: placeholder puzzle for testing algos
@@ -335,8 +366,8 @@ window.onload = function(){
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
 	// https://www.npmjs.com/package/polyline-normals
 
-	// draw curPuzzle
-	//g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	// draw curPuzzle -- used if theres save data present
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 
 	renderT = true;
 	render();
@@ -547,17 +578,12 @@ var mouseWheel = function( event ) {
 };
 
 var mouseEnter = function (event) {
-
 	canvas.addEventListener("click", click, false);		
 	canvas.addEventListener("mousedown", mouseDown, false);		
 	canvas.addEventListener("wheel", mouseWheel, false);
 	canvas.addEventListener("mouseleave", mouseLeave, false);
-
 	canvas.removeEventListener("mouseenter", mouseEnter, false);
 };
-
-
-var startPos =  Array(2);
 
 var mouseDown = function( event ) {
 	canvas.addEventListener("mousemove", mouseMove, false);
@@ -607,10 +633,8 @@ var mouseMove = function ( event ) {
 }
 
 var mouseUp = function ( event ) {
-
 	canvas.removeEventListener("mousemove", mouseMove, false);
 	canvas.removeEventListener("mouseup", mouseUp, false);
-
 }
 
 var mouseLeave = function (event) { 
@@ -765,15 +789,18 @@ highlightHTML.oninput = function() {
 
 // creates new savestate + button
 saveHTML.onclick = function(){
-	saveCounter += 1;
+	if (saveCounter < 31){ // max 31 savestates. saves 32+ overwrite save 31
+		saveCounter += 1;
+		console.log("saveCounter (in save func): " + saveCounter);
 	
-	// add button
-	let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\">" + saveCounter + "<\/button>";
-	saveContainerHTML.insertAdjacentHTML('beforeend', insertHTML);
-	
-	// add listener
-	let id = 'load' + saveCounter;
-	document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
+		// add button
+		let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\">" + saveCounter + "<\/button>";
+		saveContainerHTML.insertAdjacentHTML('beforeend', insertHTML);
+		
+		// add listener
+		let id = 'load' + saveCounter;
+		document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
+	}
 	
 	// store data in local storage
 	let key = "load" + saveCounter + "cells";
@@ -834,6 +861,7 @@ restartHTML.onclick = function(){
 	// delete load buttons
 	for (let i = 1; i <= saveCounter; i++){
 		let id = "load" + i;
+		//console.log(i);
 		document.getElementById(id).remove();
 	}
 	saveCounter = 0;
