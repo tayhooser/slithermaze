@@ -602,32 +602,33 @@ var mouseMove = function ( event ) {
 
 	//console.log( deltaX, deltaY);
 
-	if (((camAndLook[0] - (deltaX)) > 0)
-		&& ((camAndLook[0] + (deltaX)) < (curPuzzle.w * 10))) {
+	camAndLook[0] -= deltaX;
+	camAndLook[1] += deltaY;
+	camWasMoved = true;
+	startPos[0] = event.layerX;
+	startPos[1] = event.layerY;
 
-		// cameraPosition[0] -= deltaX;
-		// lookAt[0] -= deltaX;
-
-		camAndLook[0] -= deltaX;
+	//if (((camAndLook[0] - (deltaX)) > 0))
 		
-		camWasMoved = true;
 
-		startPos[0] = event.layerX;
+	if (camAndLook[0] < 0 )
+		camAndLook[0] = 0;
+
+	if (camAndLook[0] > (curPuzzle.w * 10))
+		camAndLook[0] = curPuzzle.w * 10;
+
+	if (camAndLook[1] < (curPuzzle.h * -10))
+		camAndLook[1] = curPuzzle.h * -10;
+
+	if (camAndLook[1] > 0)
+		camAndLook[1] = 0;
+
+	// if ((camAndLook[1] + (deltaY)) > (curPuzzle.h * -10)
+	// 	&& ((camAndLook[1] + (deltaY)) < 0)) {
 		
-	}
-
-	if ((camAndLook[1] + (deltaY)) > (curPuzzle.h * -10)
-		&& ((camAndLook[1] + (deltaY)) < 0)) {
 		
-		// cameraPosition[1] += deltaY;
-		// lookAt[1] += deltaY;
-
-		camAndLook[1] += deltaY;
-
-		camWasMoved = true;
-
-		startPos[1] = event.layerY;
-	}
+		
+	// }
 
 	//console.log(deltaX, deltaY);
 }
