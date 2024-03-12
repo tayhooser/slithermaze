@@ -492,10 +492,10 @@ var render = function () {
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
 
 var camWasMoved = false;
+var camTotalMoved;
 
 var click = function( event ) {
-	//console.log("X coord:", event.layerX, "Y coord:", event.layerY);
-	//console.log(event);
+
 	var canvasRect = canvas.getBoundingClientRect();
 	var mouseX = event.clientX - canvasRect.left;
 	var mouseY = event.clientY - canvasRect.top;
@@ -521,46 +521,27 @@ var click = function( event ) {
 	var worldCoords = glMatrix.vec4.create();;
 	glMatrix.vec4.transformMat4(worldCoords, prev, invView);
 
-	//console.log(worldCoords[0], worldCoords[1]);
-
-	//var closestDist = 9999999;
 	var keptIndex = 0;
 	var lineFound = false;
 	for (var i = 0; i < lineObjects.length; i++) {
-		// var a = worldCoords[0] - lineObjects[i].xWorld;
-		// var b = worldCoords[1] - lineObjects[i].yWorld;
-		// var dist = Math.sqrt((a*a) + (b*b));
-		// if (dist < closestDist) {
-		// 	closestDist = dist;
-		// 	keptIndex = i;
-		// }
-
+		
 		if ((worldCoords[0] > lineObjects[i].xLowerBound && worldCoords[0] < lineObjects[i].xUpperBound) 				// click was inside a line
 			&& (worldCoords[1] > lineObjects[i].yLowerBound && worldCoords[1] < lineObjects[i].yUpperBound)) {
 			
-			//console.log("line found");
 			lineFound = true;
 			keptIndex = i;
 			
 		}
 
 	}
-	//console.log(dist);
 
 	var tempXIndex = lineObjects[keptIndex].xCoord;
 	var tempYIndex = lineObjects[keptIndex].yCoord;
-
-	//console.log(tempXIndex, tempYIndex);
 
 	if (!camWasMoved && lineFound){
 		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3;
 		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex);
 	}
-
-	// var coords = [event.layerX, event.layerY, 1, 1];
-	// glMatrix.vec4.transformMat4(coords, coords, invProj);
-	// console.log("y", coords[1],"x", coords[0]);
-	// console.log(invProj);
 
 };
 
@@ -589,6 +570,7 @@ var mouseDown = function( event ) {
 	canvas.addEventListener("mousemove", mouseMove, false);
 	canvas.addEventListener("mouseup", mouseUp, false);
 
+	camTotalMoved = [0,0];
 	camWasMoved = false;
 
 	startPos[0] = event.layerX;
@@ -600,16 +582,16 @@ var mouseMove = function ( event ) {
 	var deltaX = (event.layerX - startPos[0]) * 0.1;
 	var deltaY = (event.layerY - startPos[1]) * 0.1;
 
-	//console.log( deltaX, deltaY);
+	camTotalMoved[0] += Math.abs(deltaX);
+	camTotalMoved[1] += Math.abs(deltaY);
 
 	camAndLook[0] -= deltaX;
 	camAndLook[1] += deltaY;
-	camWasMoved = true;
+	
+	//camWasMoved = true;
+
 	startPos[0] = event.layerX;
 	startPos[1] = event.layerY;
-
-	//if (((camAndLook[0] - (deltaX)) > 0))
-		
 
 	if (camAndLook[0] < 0 )
 		camAndLook[0] = 0;
@@ -623,17 +605,14 @@ var mouseMove = function ( event ) {
 	if (camAndLook[1] > 0)
 		camAndLook[1] = 0;
 
-	// if ((camAndLook[1] + (deltaY)) > (curPuzzle.h * -10)
-	// 	&& ((camAndLook[1] + (deltaY)) < 0)) {
-		
-		
-		
-	// }
-
-	//console.log(deltaX, deltaY);
 }
 
 var mouseUp = function ( event ) {
+
+	var camDistance = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
+	if (camDistance > 10)
+		camWasMoved = true;
+
 	canvas.removeEventListener("mousemove", mouseMove, false);
 	canvas.removeEventListener("mouseup", mouseUp, false);
 }
@@ -642,6 +621,7 @@ var mouseLeave = function (event) {
 	canvas.removeEventListener("click", click, false);		
 	canvas.removeEventListener("wheel", mouseWheel, false);
 	canvas.removeEventListener("mousedown", mouseDown, false);
+	canvas.removeEventListener("mousemove", mouseMove, false);
 	canvas.removeEventListener("mouseleave", mouseLeave, false);
 
 	canvas.addEventListener("mouseenter", mouseEnter, false);
