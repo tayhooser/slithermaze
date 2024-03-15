@@ -143,7 +143,7 @@ window.onload = function(){
 		//		   -1 -1  2  2  2
 		//		    0  2  2  2 -1
 
-		curPuzzle = new pl.Puzzle(5, 5);
+		curPuzzle = new pl.Puzzle(5,5);
 		curPuzzle.cells[1][2] = [1, false];
 		curPuzzle.cells[2][2] = [2, false];
 		curPuzzle.cells[2][3] = [1, false];
@@ -217,7 +217,6 @@ window.onload = function(){
 
 	var translateX = 0.0;			// used to apply translation to object pos
 	var translateY = 0.0;
-	zoomLevel = zoomSliderHTML.value = curPuzzle.h * 3;
 
 	// Setup the dots. Applies a translation to a new dot object and pushes to a list of objects.
 	for (let i = 0; i < curPuzzle.h + 1; i++) {
@@ -363,6 +362,10 @@ window.onload = function(){
 	lookAt = [camAndLook[0], camAndLook[1], 0.0];
 	vp = glMatrix.mat4.create();
 
+	maxZoom = curPuzzle.h * 4; 
+	zoomSliderHTML.max = maxZoom;
+	zoomLevel = zoomSliderHTML.value = maxZoom;
+
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
 	// https://www.npmjs.com/package/polyline-normals
 
@@ -422,10 +425,6 @@ var render = function () {
 			lineObjects[i].display = 2;
 		}
 		
-		//console.log(lineObjects[i].yCoord, lineObjects[i].xCoord);
-
-		// if (lineObjects[i].type == 2)				
-		// 	gl.bindVertexArray(line.VAO);
 		gl.uniform3fv(colorLoc, lineObjects[i].color);
 
 		glMatrix.mat4.multiply(mvp, vp, lineObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
@@ -443,20 +442,6 @@ var render = function () {
 	}
 
 	for (let i = 0; i < puzzleObjects.length; i++) {
-
-		// if (puzzleObjects[i].type == 1)
-		// 	gl.bindVertexArray(dot.VAO);
-
-		// if (puzzleObjects[i].type == 3) {
-		// 	if (puzzleObjects[i].display == 0)
-		// 		gl.bindVertexArray(zero.VAO);
-		// 	if (puzzleObjects[i].display == 1)
-		// 		gl.bindVertexArray(one.VAO);
-		// 	if (puzzleObjects[i].display == 2)
-		// 		gl.bindVertexArray(two.VAO);
-		// 	if (puzzleObjects[i].display == 3)
-		// 		gl.bindVertexArray(three.VAO);
-		// }
 
 		gl.uniform3fv(colorLoc, puzzleObjects[i].color);
 
@@ -493,6 +478,7 @@ var render = function () {
 
 var camWasMoved = false;
 var camTotalMoved;
+var maxZoom; 
 
 var click = function( event ) {
 
@@ -545,13 +531,19 @@ var click = function( event ) {
 
 };
 
+
+
 var mouseWheel = function( event ) {
 	//console.log( event );
 	event.preventDefault();
-	var zoomAmt = event.wheelDelta * 0.05;
+	var zoomAmt = event.wheelDelta * 0.03;
 
 	if ((zoomLevel - zoomAmt) > 3 ){
 		zoomLevel -= zoomAmt;
+
+		if (zoomLevel > maxZoom)
+			zoomLevel = maxZoom;
+
 		zoomSliderHTML.value = zoomLevel;
 		console.log("zoom = " + zoomLevel);
 	}
@@ -585,8 +577,8 @@ var mouseMove = function ( event ) {
 	camTotalMoved[0] += Math.abs(deltaX);
 	camTotalMoved[1] += Math.abs(deltaY);
 
-	camAndLook[0] -= deltaX;
-	camAndLook[1] += deltaY;
+	camAndLook[0] -= deltaX * (0.1 * zoomLevel);
+	camAndLook[1] += deltaY * (0.1* zoomLevel);
 	
 	//camWasMoved = true;
 
@@ -610,7 +602,7 @@ var mouseMove = function ( event ) {
 var mouseUp = function ( event ) {
 
 	var camDistance = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
-	if (camDistance > 10)
+	if (camDistance > 2)
 		camWasMoved = true;
 
 	canvas.removeEventListener("mousemove", mouseMove, false);
