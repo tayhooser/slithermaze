@@ -462,7 +462,7 @@ export var autoSolver = function(puzzle) {
         }
     }
     // Update the graphic puzzle state
-    g.updateGraphicPuzzleState(puzzle, sl.gLinesArray);
+    
     console.log("Autosolver finished");
 }
 
