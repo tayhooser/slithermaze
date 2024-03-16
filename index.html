@@ -1,78 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>Slithermaze</title>
+<head>
+	<title>Slithermaze</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" type="image/png" href="favicon.png"/>
 	<link rel="stylesheet" href="style.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  </head>
+</head>
   
-  <body>
-	  <div class="title-container">
-	    SLITHERMAZE<br>
-	  </div> 
+<body>
+	<div class="title-container">
+		SLITHERMAZE<br>
+	</div> 
 	  
-	  <div class="puzzle-title">
-	    PUZZLE #0
-	  </div>
-	  
-		<div class="main-container">
+	<div class="puzzle-title">
+		PUZZLE #0
+	</div>
 
-		  <!-- LEFT CONTAINER -->
-			<div class="l-container">
-			  <center>
+	<div class="body2">
+	<div class="main-container" id="mainContainer">
+
+		<!-- LEFT CONTAINER -->
+		<div class="l-container">
+			<center>
 				<button id="undo"><i class="fa fa-undo"></i></button><button id="redo"><i class="fa fa-repeat"></i></button>
 				<button id="zoom"><i class="fa fa-search"></i></button><button id="settings"><i class="fa fa-wrench"></i></button>
-			  </center>
+			</center>
 			  
-			  <!-- dropdown zoom slider -->
-			  <div id="zoom-slider-box" class="zoom">
+			<!-- dropdown zoom slider -->
+			<div id="zoom-slider-box" class="zoom">
 				<div id="zoom-content" class="zoom-content">
 					<input type="range" min="9" max="100" class="slider" id="zoomSlider">
 				</div>
-			  </div>
+			</div>
 			  
-			  <!-- dropdown settings menu -->
-			  <div id="settings-menu" class="settings">
-				<div id="settings-content" class="settings-content">
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACnum"> <label for="ACnum">Auto-cross completed numbers</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACinter"> <label for="ACinter">Auto-cross intersections</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACdead"> <label for="ACdead">Auto-cross dead ends</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACloop"> <label for="ACloop">Auto-cross premature loops</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="highlight"> <label for="highlight">Highlight wrong moves</label></div>
-				</div>
-			  </div>
-			
+			<!-- dropdown settings menu -->
+			<div id="settings-menu" class="settings">
+			<div id="settings-content" class="settings-content">
+				<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACnum"> <label for="ACnum">Auto-cross completed numbers</label></div>
+				<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACinter"> <label for="ACinter">Auto-cross intersections</label></div>
+				<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACdead"> <label for="ACdead">Auto-cross dead ends</label></div>
+				<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACloop"> <label for="ACloop">Auto-cross premature loops</label></div>
+				<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="highlight"> <label for="highlight">Highlight wrong moves</label></div>
 			</div>
-		  
-		    <!-- GAME AREA -->
-			<div class="canvas-container">
-			  <!-- if theres issues about game content being cut off, remove the canvas container class from div -->
-			  <!-- TODO: add slider to dynamically change size of canvas -- helps with accessability and screen sizes -->
-			  <canvas id="game-area" width="600" height="600">
-				Your browser does not support HTML5, sorry!
-			  </canvas>
 			</div>
+		</div>
+
+
+		<!-- GAME AREA -->
+		<div class="canvas-container">
+		<canvas id="game-area" width="600px" height="600px">
+			Your browser does not support HTML5, sorry!
+		</canvas>
+		</div>
 		
-		  <!-- RIGHT CONTAINER -->
-			<div class="r-container">
-			  <button id="hint">HINT</button>
-			  <button id="solution">SOLUTION</button>
-			  <button id="restart">RESTART</button>
-			  <button id="print">PRINT</button>
-			  <button id="tutorial">TUTORIAL</button>
+		<!-- RIGHT CONTAINER -->
+		<div class="r-container">
+			<button id="hint">HINT</button>
+			<button id="solution">SOLUTION</button>
+			<button id="restart">RESTART</button>
+			<button id="print">PRINT</button>
+			<button id="tutorial">TUTORIAL</button>
 			  
-			  <!-- TODO: add dynamic data -->
-			  <div id="timer" class="timer">
+			<div id="timer" class="timer">
 				<span id="hr">00</span>:<span id="min">00</span>:<span id="sec">00</span>
-			  </div>
+			</div>
 			
-			  <div class="leaderboard">
+			<div class="leaderboard">
 				<center>LEADERBOARD</center>
-				  <table width="100%">
-				    <tr>
+				<table width="100%">
+					<tr>
 					  <td>USR1</td>
 					  <td align="right">1:32</td>
 				    </tr>
@@ -80,31 +78,33 @@
 					  <td>USR2</td>
 					  <td align="right">3:49</td>
 				    </tr>
-				  </table>
-				</div>
-			  
-		    </div>
+				</table>
+			</div>
 		</div>
+		
+	</div>
+	  
 	  
 	    <!-- BOTTOM CONTAINER -->
-	    <div class="b-container">
-		  <div id="save-container">
+	<div class="b-container">
+		<div id="save-container">
 			<button class="save-button" id="save"><i class="fa fa-floppy-o"></i></button></div>
-		  <button class="lb-button" id="submit">SUBMIT</button>
-		  <button class="lb-button" id="new-puzzle">NEW PUZZLE</button>
-	    </div>
-	  
-	    <div class="about">
-	      CSUB Senior Project 2024<br>
-		  Keith Lappin, Conner Estes, Taylor Hooser, Daniel Lopez
-	    </div>
-		
-		<!-- JS SCRIPTING -->
-		<script type="module" src="index.js"></script>
-		<script type="module" src="graphics.js"></script>
-		<script type="module" src="logic.js"></script>
-		<script src="gl-matrix-min.js"></script>
-	  
-  </body>
-  
+		<button class="lb-button" id="submit">SUBMIT</button>
+		<button class="lb-button" id="new-puzzle">NEW PUZZLE</button>
+	</div>
+	</div>
+	
+	
+	<div class="about">
+	    CSUB Senior Project 2024<br>
+		Keith Lappin, Conner Estes, Taylor Hooser, Daniel Lopez
+	</div>
+	
+	
+	<!-- JS SCRIPTING -->
+	<script type="module" src="index.js"></script>
+	<script type="module" src="graphics.js"></script>
+	<script type="module" src="logic.js"></script>
+	<script src="gl-matrix-min.js"></script>
+</body>  
 </html>

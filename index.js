@@ -36,6 +36,9 @@ const saveContainerHTML = document.getElementById("save-container"); // for addi
 const submitHTML = document.getElementById('submit');
 const newPuzzleHTML = document.getElementById('new-puzzle');
 
+// used for mobile layout resizing
+const mainContainer = document.getElementById('mainContainer');
+
 // settings
 var ACnum = false;
 var ACinter = false;
@@ -98,6 +101,8 @@ async function getMap(query = { author: 'Taylor' }) {
 // initializes openGL, other functions, and initial board
 window.onload = function(){
 	canvas.addEventListener("mouseenter", mouseEnter, false);
+	//addEventListener("resize", flipLayout());
+	//flipLayout();
 	gl.enable(gl.CULL_FACE);
 	clock();
 
@@ -378,7 +383,7 @@ window.onload = function(){
 };
 
 // looping render call to draw stuff to screen
-var render = function () {
+var render = function() {
 	if (!renderT) return;
 
 	gl.clearColor(R, G, B, 1.0);
@@ -480,7 +485,7 @@ var camWasMoved = false;
 var camTotalMoved;
 var maxZoom; 
 
-var click = function( event ) {
+var click = function(event) {
 
 	var canvasRect = canvas.getBoundingClientRect();
 	var mouseX = event.clientX - canvasRect.left;
@@ -531,9 +536,7 @@ var click = function( event ) {
 
 };
 
-
-
-var mouseWheel = function( event ) {
+var mouseWheel = function(event) {
 	//console.log( event );
 	event.preventDefault();
 	var zoomAmt = event.wheelDelta * 0.03;
@@ -558,7 +561,7 @@ var mouseEnter = function (event) {
 	canvas.removeEventListener("mouseenter", mouseEnter, false);
 };
 
-var mouseDown = function( event ) {
+var mouseDown = function(event) {
 	canvas.addEventListener("mousemove", mouseMove, false);
 	canvas.addEventListener("mouseup", mouseUp, false);
 
@@ -570,7 +573,7 @@ var mouseDown = function( event ) {
 
 };
 
-var mouseMove = function ( event ) {
+var mouseMove = function (event) {
 	var deltaX = (event.layerX - startPos[0]) * 0.1;
 	var deltaY = (event.layerY - startPos[1]) * 0.1;
 
@@ -599,8 +602,7 @@ var mouseMove = function ( event ) {
 
 }
 
-var mouseUp = function ( event ) {
-
+var mouseUp = function (event) {
 	var camDistance = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
 	if (camDistance > 2)
 		camWasMoved = true;
@@ -620,6 +622,78 @@ var mouseLeave = function (event) {
 };
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
+
+// switch between mobile and desktop versions of webpage
+var flipLayout = function() {
+	if (window.innerWidth <= 940){
+		console.log("mobile");
+		mainContainer.innerHTML = "";
+	} else {
+		console.log("desktop");
+		mainContainer.innerHTML = `
+			<!-- LEFT CONTAINER -->
+			<div class="l-container">
+			  <center>
+				<button id="undo"><i class="fa fa-undo"></i></button><button id="redo"><i class="fa fa-repeat"></i></button>
+				<button id="zoom"><i class="fa fa-search"></i></button><button id="settings"><i class="fa fa-wrench"></i></button>
+			  </center>
+			  
+			  <!-- dropdown zoom slider -->
+			  <div id="zoom-slider-box" class="zoom">
+				<div id="zoom-content" class="zoom-content">
+					<input type="range" min="9" max="100" class="slider" id="zoomSlider">
+				</div>
+			  </div>
+			  
+			  <!-- dropdown settings menu -->
+			  <div id="settings-menu" class="settings">
+				<div id="settings-content" class="settings-content">
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACnum"> <label for="ACnum">Auto-cross completed numbers</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACinter"> <label for="ACinter">Auto-cross intersections</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACdead"> <label for="ACdead">Auto-cross dead ends</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACloop"> <label for="ACloop">Auto-cross premature loops</label></div>
+					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="highlight"> <label for="highlight">Highlight wrong moves</label></div>
+				</div>
+			  </div>
+			</div>
+		  
+		    <!-- GAME AREA -->
+			<div class="canvas-container">
+			  <canvas id="game-area" width="600" height="600">
+				Your browser does not support HTML5, sorry!
+			  </canvas>
+			</div>
+		
+		  <!-- RIGHT CONTAINER -->
+			<div class="r-container">
+			  <button id="hint">HINT</button>
+			  <button id="solution">SOLUTION</button>
+			  <button id="restart">RESTART</button>
+			  <button id="print">PRINT</button>
+			  <button id="tutorial">TUTORIAL</button>
+			  
+			  <div id="timer" class="timer">
+				<span id="hr">00</span>:<span id="min">00</span>:<span id="sec">00</span>
+			  </div>
+			
+			  <div class="leaderboard">
+				<center>LEADERBOARD</center>
+				  <table width="100%">
+				    <tr>
+					  <td>USR1</td>
+					  <td align="right">1:32</td>
+				    </tr>
+				    <tr>
+					  <td>USR2</td>
+					  <td align="right">3:49</td>
+				    </tr>
+				  </table>
+				</div>
+		    </div>
+			`
+	}
+}
+//window.onresize = flipLayout;
 
 // runs the timer
 var clock = function(){
@@ -679,21 +753,20 @@ zoomHTML.onclick = function(){
 	var zoomContent = document.getElementById('zoom-content');
 	
     if (zoomSlider.style.height == '0px') { // show menu
-		 //console.log("showing");
         zoomSliderBox.style.height = '40px';
 		zoomSliderBox.style.marginTop = '10px';
+		zoomSliderBox.style.marginBottom = '10px';
 		zoomContent.style.opacity = '1';
 		
     } else if (zoomSliderBox.style.height == '40px'){ // hide menu
-		//console.log("hiding");
         zoomSliderBox.style.height = '0px';
 		zoomSliderBox.style.marginTop = '0px';
 		zoomContent.style.opacity = '0';
 		
     } else { // always falls back to this else block on first click..... dont know why
-		//console.log("showing (else)");
         zoomSliderBox.style.height = '40px';
 		zoomSliderBox.style.marginTop = '10px';
+		zoomSliderBox.style.marginBottom = '10px';
 		zoomContent.style.opacity = '1';
 	}
 	return;
@@ -711,20 +784,27 @@ zoomSliderHTML.oninput = function(){
 settingsHTML.onclick = function(){
 	var settingsMenu = document.getElementById('settings-menu');
 	var settingsContent = document.getElementById('settings-content');
-	
     if (settingsMenu.style.height == '0px') { // show menu
-        settingsMenu.style.height = '280px';
-		settingsMenu.style.marginTop = '10px';
+		if (window.innerWidth <= 768){
+			settingsMenu.style.height = '150px';
+		} else {
+			settingsMenu.style.height = '280px';
+		}
+		settingsMenu.style.marginBottom = '10px';
 		settingsContent.style.opacity = '1';
 		
-    } else if (settingsMenu.style.height == '280px'){ // hide menu
+    } else if (settingsMenu.style.height > '0px'){ // hide menu
         settingsMenu.style.height = '0px';
-		settingsMenu.style.marginTop = '0px';
+		settingsMenu.style.marginBottom = '0px';
 		settingsContent.style.opacity = '0';
 		
     } else { // always falls back to this else block on first click..... dont know why
-        settingsMenu.style.height = '280px';
-		settingsMenu.style.marginTop = '10px';
+        if (window.innerWidth <= 768){
+			settingsMenu.style.height = '150px';
+		} else {
+			settingsMenu.style.height = '280px';
+		}
+		settingsMenu.style.marginBottom = '10px';
 		settingsContent.style.opacity = '1';
 	}
 	return;
