@@ -301,94 +301,169 @@ export var verifySolution = function(puzzle){
 	return true;
 }
 
-// AUTOSOLVER
-// uses patterns recognized on Wikipedia to automatically fill out certain moves an help puzzle completion.
-// link for patterns / strategies : https://en.wikipedia.org/wiki/Slitherlink
 export var autoSolver = function(puzzle) {
-	for (let i = 0; i < puzzle.h; i++) {
+    for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {
+
+			//NODE RULES
+//-----------------------------------------------------------------------------------------------------------------------------------------
+            if (puzzle.nodes && puzzle.nodes[i] && puzzle.nodes[i][j]) {
+                if (puzzle.nodes[i][j].length == 3) {
+                    let numCross = 0;
+                    let visited = [];
+                    let missing = [];
+                    let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
+
+                    for (let k = 0; k < 3; k++) {
+                        if (puzzle.nodes[i][j][k][2] == 0)
+                            numCross++;
+                        visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
+                    }
+
+                    for (let n = 0; n < neighbors.length; n++) {
+                        let neighbor = neighbors[n];
+                        let found = false;
+
+                        for (let v = 0; v < visited.length; v++) {
+                            let visitedNode = visited[v];
+                            if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+                            missing.push(neighbor);
+                        }
+                    }
+
+                    if (numCross == 3 && missing.length == 1) {
+                        placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
+                    }
+
+                } else if (puzzle.nodes[i][j].length == 2) {
+                    let numLines = 0;
+					let numCross = 0;
+                    let visited = [];
+                    let missing = [];
+                    let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
+
+                    for (let k = 0; k < 2; k++) {
+                        if (puzzle.nodes[i][j][k][2] == 1) {
+                            numLines++
+						}
+                        
+						else if (puzzle.nodes[i][j][k][2] == 0) {
+							numCross++;
+						}
+						visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
+                    }
+
+                    for (let n = 0; n < neighbors.length; n++) {
+                        let neighbor = neighbors[n];
+                        let found = false;
+
+                        for (let v = 0; v < visited.length; v++) {
+                            let visitedNode = visited[v];
+                            if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+                            missing.push(neighbor);
+                        }
+                    }
+
+                    if (numCross == 2 && missing.length == 2) {
+                        placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
+						placeLine(puzzle, i, j, missing[1][0], missing[1][1])
+                    }
+                }
+            }
+//END OF NODE RULES
+//----------------------------------------------------------------------------------------------------------------------------------------------
+
+//CELL RULES
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------
+
             // Check if the cell contains a number
             if (puzzle.cells[i][j][0] == 1) {
                 // Check if the cell is in a corner
-				//if (node[i][j])
                 if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
                     // Place crosses at top and left lines of the corner
                     if (i === 0) {
                         // Place cross at top line
-                        placeCross(puzzle, i, j, i+1, j);
+                        placeCross(puzzle, i, j, i + 1, j);
+                    } else if (i == puzzle.h - 1) {
+                        placeCross(puzzle, i - 1, j, i, j);
                     }
-					else if (i == puzzle.h - 1) {
-						placeCross(puzzle, i-1, j,i,j);
-					}
-
 
                     if (j === 0) {
                         // Place cross at left line
-                        placeCross(puzzle, i, j,i,j+1);
+                        placeCross(puzzle, i, j, i, j + 1);
+                    } else if (j == puzzle.w - 1) {
+                        placeCross(puzzle, i, j - 1, i, j);
                     }
-					
-					else if (j == puzzle.w - 1){
-						placeCross(puzzle, i, j-1, i, j);
-
-					}
-
-
                 }
-            }
-			else if (puzzle.cells[i][j][0] == 3  ) {
-				if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-                    // Place crosses at top and left lines of the corner
-					if (i === 0) {
+            } else if (puzzle.cells[i][j][0] == 3) {
+                // Place lines at the corners
+                if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+                    if (i === 0) {
                         // Place line at top line
-                        placeLine(puzzle, i, j, i+1, j);
+                        placeLine(puzzle, i, j, i + 1, j);
+                    } else if (i == puzzle.h - 1) {
+                        placeLine(puzzle, i - 1, j, i, j);
                     }
-					else if (i == puzzle.h - 1) {
-						placeLine(puzzle, i-1, j,i,j);
-					}
-
 
                     if (j === 0) {
                         // Place line at left line
-                        placeLine(puzzle, i, j,i,j+1);
+                        placeLine(puzzle, i, j, i, j + 1);
+                    } else if (j == puzzle.w - 1) {
+                        placeLine(puzzle, i, j - 1, i, j);
                     }
-					
-					else if (j == puzzle.w - 1){
-						placeLine(puzzle, i, j-1, i, j);
-
-					}
-                }		
-
-
-			}
-
-			else if (puzzle.cells[i][j][0] == 2  ) {
-				if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-                    
-					if (i === 0) {
-                        // Place line going out from border
-                        placeLine(puzzle, i, j, i+2, j);
+                }
+            } else if (puzzle.cells[i][j][0] == 2) {
+                // Place lines going out from the borders
+                if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+                    if (i === 0) {
+                        // Place line going out from top border
+                        placeLine(puzzle, i, j, i + 2, j);
+                    } else if (i == puzzle.h - 1) {
+                        // Place line going out from bottom border
+                        placeLine(puzzle, i - 2, j, i - 1, j);
                     }
-					else if (i == puzzle.h - 1) {
-						// Place line going out from border
-						placeLine(puzzle, i-2, j,i-1,j);
-					}
-
 
                     if (j === 0) {
-                        // Place line going out from border
-                        placeLine(puzzle, i, j+1,i,j+2);
+                        // Place line going out from left border
+                        placeLine(puzzle, i, j, i, j + 2);
+                    } else if (j == puzzle.w - 1) {
+                        // Place line going out from right border
+                        placeLine(puzzle, i, j - 2, i, j - 1);
                     }
-					
-					else if (j == puzzle.w - 1){
-						// Place line going out from border
-						placeLine(puzzle, i, j-2, i, j-1);
+                }
+            } else if (puzzle.cells[i][j][0] == 0) {
+                // Place crosses at all corners of the cell
+                placeCross(puzzle, i, j, i + 1, j);
+                placeCross(puzzle, i + 1, j, i + 1, j + 1);
+                placeCross(puzzle, i, j, i, j + 1);
+                placeCross(puzzle, i, j + 1, i + 1, j + 1);
+            }
 
-					}
-                }		
+			//END OF CELL RULES
+//----------------------------------------------------------------------------------------------------------------------------------------------
 
 
-			}	
+
 
         }
     }
+    // Update the graphic puzzle state
+    g.updateGraphicPuzzleState(puzzle, sl.gLinesArray);
+    console.log("Autosolver finished");
 }
+
+
