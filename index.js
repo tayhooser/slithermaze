@@ -895,6 +895,8 @@ hintHTML.onclick = function(){
 // should complete a solution step by step, like an animation
 solutionHTML.onclick = function(){
 	console.log("Solution pressed.");
+	pl.autoSolver(curPuzzle);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 	return;
 };
 
