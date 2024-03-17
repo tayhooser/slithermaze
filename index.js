@@ -101,6 +101,7 @@ async function getMap(query = { author: 'Taylor' }) {
 // initializes openGL, other functions, and initial board
 window.onload = function(){
 	canvas.addEventListener("mouseenter", mouseEnter, false);
+	window.addEventListener("resize", windowResize, false);
 	//addEventListener("resize", flipLayout());
 	//flipLayout();
 	gl.enable(gl.CULL_FACE);
@@ -361,6 +362,10 @@ window.onload = function(){
 		yIndex += 2
 	}
 
+
+	canvas.width = canvas.parentNode.clientWidth;
+	canvas.height = canvas.parentNode.clientHeight;
+	gl.viewport(0, 0, canvas.width, canvas.height);
 	MoB = (curPuzzle.h * 10) / 2;
 	camAndLook = [MoB, -MoB];
 	cameraPosition = [camAndLook[0], camAndLook[1], (1)];
@@ -386,6 +391,8 @@ window.onload = function(){
 var render = function() {
 	if (!renderT) return;
 
+	
+
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -396,9 +403,8 @@ var render = function() {
 	lookAt = [camAndLook[0], camAndLook[1], 0.0];
 	glMatrix.mat4.lookAt(view, cameraPosition, lookAt, up);
 
-	var ortho_size = zoomLevel * 2;				// need also consider the initial zoomLevel set in init()
-
 	// projection setup
+	var ortho_size =(zoomLevel * 2);				// need also consider the initial zoomLevel set in init()
 	projection = glMatrix.mat4.create();
 	projection = glMatrix.mat4.ortho(projection, -ortho_size, ortho_size, -ortho_size, ortho_size, null, 2);
 
@@ -475,6 +481,9 @@ var render = function() {
 			
 		}
 	}
+
+	//console.log(camAndLook);
+	//console.log(canvas.width, canvas.height);
 
 	setTimeout(render, 12);
 };
@@ -620,6 +629,12 @@ var mouseLeave = function (event) {
 
 	canvas.addEventListener("mouseenter", mouseEnter, false);
 };
+
+var windowResize = function() {
+	canvas.width = canvas.parentNode.clientWidth;
+	canvas.height = canvas.parentNode.clientHeight;
+	gl.viewport(0, 0, canvas.width, canvas.height);
+}
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
 
