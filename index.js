@@ -40,11 +40,11 @@ const newPuzzleHTML = document.getElementById('new-puzzle');
 const mainContainer = document.getElementById('mainContainer');
 
 // settings
-var ACnum = false;
-var ACinter = false;
-var ACdead = false;
-var ACloop = false;
-var highlight = false;
+var ACnum = ACnumHTML.checked;
+var ACinter = ACinterHTML.checked;
+var ACdead = ACdeadHTML.checked;
+var ACloop = ACloopHTML.checked;
+var highlight = highlightHTML.checked;
 var zoomLevel;
 
 // webGL globals
@@ -101,12 +101,11 @@ async function getMap(query = { author: 'Taylor' }) {
 // initializes openGL, other functions, and initial board
 window.onload = function(){
 	canvas.addEventListener("mouseenter", mouseEnter, false);
-	//addEventListener("resize", flipLayout());
-	//flipLayout();
 	gl.enable(gl.CULL_FACE);
 	clock();
-
-	if (localStorage.getItem("load1cells") != null){ // if puzzle data exists from last time
+	
+	// load prev puzzle or new one
+	if (localStorage.getItem("load1cells") != null){
 		// find most recent save state #
 		let maxSave = 0;
 		for (let i = 1; i <= 32; i++){
@@ -137,8 +136,6 @@ window.onload = function(){
 			console.log("saveCounter = " + saveCounter);
 		}
 		saveCounter--; // for loop adds extra saveState
-		
-		
 	} else { // load some random puzzle
 		// TEMP: placeholder puzzle for testing algos
 		// see discord for visual solution
@@ -218,7 +215,6 @@ window.onload = function(){
 	two = g.getTwo(gl, program);
 	three = g.getThree(gl, program);
 	cross = g.getCross(gl, program);
-	//console.log("passed");
 
 	var translateX = 0.0;			// used to apply translation to object pos
 	var translateY = 0.0;
@@ -530,8 +526,16 @@ var click = function(event) {
 	var tempYIndex = lineObjects[keptIndex].yCoord;
 
 	if (!camWasMoved && lineFound){
-		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3;
-		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex);
+		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
+		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex); // place line logically
+		// update puzzle state with QOL options
+		for (let i = 0; i < curPuzzle.h + 1; i++){
+			for (let j = 0; j < curPuzzle.w + 1; j++) {
+				if (ACdead)
+					pl.crossDeadEnd(curPuzzle, i, j);
+			}
+		}
+		g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 	}
 
 };
@@ -622,78 +626,6 @@ var mouseLeave = function (event) {
 };
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
-
-// switch between mobile and desktop versions of webpage
-var flipLayout = function() {
-	if (window.innerWidth <= 940){
-		console.log("mobile");
-		mainContainer.innerHTML = "";
-	} else {
-		console.log("desktop");
-		mainContainer.innerHTML = `
-			<!-- LEFT CONTAINER -->
-			<div class="l-container">
-			  <center>
-				<button id="undo"><i class="fa fa-undo"></i></button><button id="redo"><i class="fa fa-repeat"></i></button>
-				<button id="zoom"><i class="fa fa-search"></i></button><button id="settings"><i class="fa fa-wrench"></i></button>
-			  </center>
-			  
-			  <!-- dropdown zoom slider -->
-			  <div id="zoom-slider-box" class="zoom">
-				<div id="zoom-content" class="zoom-content">
-					<input type="range" min="9" max="100" class="slider" id="zoomSlider">
-				</div>
-			  </div>
-			  
-			  <!-- dropdown settings menu -->
-			  <div id="settings-menu" class="settings">
-				<div id="settings-content" class="settings-content">
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACnum"> <label for="ACnum">Auto-cross completed numbers</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACinter"> <label for="ACinter">Auto-cross intersections</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACdead"> <label for="ACdead">Auto-cross dead ends</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="ACloop"> <label for="ACloop">Auto-cross premature loops</label></div>
-					<div class="checkContainer"><input type="checkbox" class="checkReplacer" id="highlight"> <label for="highlight">Highlight wrong moves</label></div>
-				</div>
-			  </div>
-			</div>
-		  
-		    <!-- GAME AREA -->
-			<div class="canvas-container">
-			  <canvas id="game-area" width="600" height="600">
-				Your browser does not support HTML5, sorry!
-			  </canvas>
-			</div>
-		
-		  <!-- RIGHT CONTAINER -->
-			<div class="r-container">
-			  <button id="hint">HINT</button>
-			  <button id="solution">SOLUTION</button>
-			  <button id="restart">RESTART</button>
-			  <button id="print">PRINT</button>
-			  <button id="tutorial">TUTORIAL</button>
-			  
-			  <div id="timer" class="timer">
-				<span id="hr">00</span>:<span id="min">00</span>:<span id="sec">00</span>
-			  </div>
-			
-			  <div class="leaderboard">
-				<center>LEADERBOARD</center>
-				  <table width="100%">
-				    <tr>
-					  <td>USR1</td>
-					  <td align="right">1:32</td>
-				    </tr>
-				    <tr>
-					  <td>USR2</td>
-					  <td align="right">3:49</td>
-				    </tr>
-				  </table>
-				</div>
-		    </div>
-			`
-	}
-}
-//window.onresize = flipLayout;
 
 // runs the timer
 var clock = function(){
@@ -863,10 +795,6 @@ saveHTML.onclick = function(){
 	key = "load" + saveCounter + "nodes";
 	val = JSON.stringify(curPuzzle.nodes);
 	localStorage.setItem(key, val);
-	
-	//console.log("SAVESTATE " + saveCounter + ":");
-	//pl.logPuzzleState(curPuzzle);
-	
 };
 
 // called when user hits a savestate button, HTML side
@@ -911,9 +839,6 @@ restartHTML.onclick = function(){
 	
 	// clear save data
 	localStorage.clear();
-	//saveCounter = 0;
-	
-	// delete load buttons
 	for (let i = 1; i <= saveCounter; i++){
 		let id = "load" + i;
 		//console.log(i);
@@ -929,6 +854,8 @@ restartHTML.onclick = function(){
     document.getElementById('min').innerHTML = "00"; 
     document.getElementById('sec').innerHTML = "00";
 	timer = true;
+	
+	document.getElementById("win").style.display = 'none';
 	
 	return;
 };
@@ -970,11 +897,14 @@ tutorial.onclick = function(){
 // stops timer, checks answer
 submitHTML.onclick = function(){
 	console.log("Submit pressed.");
+	let win = document.getElementById("win");
 	if (pl.verifySolution(curPuzzle)){
 		timer = false;
-		// record current time and display message on screen
+		win.innerHTML = "You win!";
+		win.style.display = 'block';
 	} else {
-		// keep timer going and display message on screen
+		win.innerHTML = "Try again...";
+		win.style.display = 'block';
 	}
 	return;
 };
@@ -982,8 +912,28 @@ submitHTML.onclick = function(){
 // generate new puzzle or select from premade puzzles
 newPuzzleHTML.onclick = function(){
 	console.log("New Puzzle pressed.");
-	// delete save data
+	
+	// clear save data
+	localStorage.clear();
+	for (let i = 1; i <= saveCounter; i++){
+		let id = "load" + i;
+		//console.log(i);
+		document.getElementById(id).remove();
+	}
 	saveCounter = 0;
-	// delete all cookies
+	
+	// restart timer
+	hour = 0; 
+	minute = 0; 
+	second = 0;
+	document.getElementById('hr').innerHTML = "00";
+    document.getElementById('min').innerHTML = "00"; 
+    document.getElementById('sec').innerHTML = "00";
+	timer = true;
+	
+	document.getElementById("win").style.display = 'none';
+	
+	// generate new puzzle
+	// update graphics
 	return;
 };

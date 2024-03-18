@@ -332,6 +332,19 @@ label {
 	font-size: 15px;
 }
 
+/* OTHER ---------------------*/
+.win {
+	display: none;
+	font-size: 16px;
+	font-family: Arial;
+	border: none;
+	border-radius: 5px;
+	padding: 10px;
+	margin-bottom: 10px;
+	color: #ffffff;
+	background-color: #DE9894;
+}
+
 /*CSS for smaller screens, such as mobile */
 @media screen and (max-width: 768px) {
 	.main-container {
@@ -366,10 +379,9 @@ label {
 	}
 	
 	.b-container{
-		position: relative;
 		width: 95%;
 		max-width: 600px;
-		margin: 10px;
+
 	}
 	
 	.canvas-container {

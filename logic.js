@@ -69,6 +69,26 @@ export var arrayIndexOf = function(a, v){
 	return index;
 }
 
+// returns array1 - array2
+// specifically used to find remaining connections for a specific node in certain algorithms
+export var nodeSetDifference = function(neighbors, visited){
+	let missing = [];
+	for (let n = 0; n < neighbors.length; n++) {
+		let neighbor = neighbors[n];
+		let found = false;
+		for (let v = 0; v < visited.length; v++) { // match each node in neighbors to a node in visited
+			let visitedNode = visited[v];
+			if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
+				found = true;
+				break;
+			}
+		}
+	if (!found) // if neighbor not in visited, mark missing
+		missing.push(neighbor);
+	}
+	return missing;
+}
+
 // creates line connection between 2 nodes
 // returns true if connection created successfully or already exists
 export var placeLine = function(puzzle, x1, y1, x2, y2){
@@ -212,6 +232,40 @@ export var countLines = function(puzzle, x, y){
 	return n;
 }
 
+// crosses remaining connections around cell, if applicable
+export var crossCompletedCell = function(puzzle, x, y){
+	if (puzzle.cells[x][y][0] == -1) // unnumbered cell, skip
+		return;
+	if (countLines(puzzle, x, y) != puzzle.cells[x][y][0]) // uncompleted cell, skip
+		return;
+	
+}
+
+// determines if given node is a dead end and crosses it
+export var crossDeadEnd = function(puzzle, x, y){
+	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length != 3) // must have 3 connections
+		return;
+	let numCross = 0;
+	let visited = [];
+	let missing = [];
+	let neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
+
+	// count number crosses around cell
+	for (let i = 0; i < 3; i++) {
+		if (puzzle.nodes[x][y][i][2] == 0){
+			numCross++;
+			visited.push([puzzle.nodes[x][y][i][0], puzzle.nodes[x][y][i][1]]);
+		}
+	}
+	
+	if (numCross != 3) // must have 3 crosses
+		return;
+	
+	// cross remaining edge
+	missing = nodeSetDifference(neighbors, visited);
+	placeCross(puzzle, x, y, missing[0][0], missing[0][1]);
+}
+
 // returns true if puzzle was solved correctly
 export var verifySolution = function(puzzle){
 	// check that all cells surrounded by correct num lines
@@ -313,17 +367,19 @@ export var autoSolver = function(puzzle) {
                     let visited = [];
                     let missing = [];
                     let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
-
+					
+					// count number crosses around cell
                     for (let k = 0; k < 3; k++) {
                         if (puzzle.nodes[i][j][k][2] == 0)
                             numCross++;
                         visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
                     }
 
+					//missing = nodeSetDifference(neighbors, visited);
+					// set difference: missing = neighbors - visited
                     for (let n = 0; n < neighbors.length; n++) {
                         let neighbor = neighbors[n];
                         let found = false;
-
                         for (let v = 0; v < visited.length; v++) {
                             let visitedNode = visited[v];
                             if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
@@ -331,12 +387,11 @@ export var autoSolver = function(puzzle) {
                                 break;
                             }
                         }
-
-                        if (!found) {
+                        if (!found) // if neighbor not in visited, mark missing
                             missing.push(neighbor);
-                        }
                     }
 
+					// cross dead ends
                     if (numCross == 3 && missing.length == 1) {
                         placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
                     }
