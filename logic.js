@@ -310,15 +310,20 @@ export var autoSolver = function(puzzle) {
             if (puzzle.nodes && puzzle.nodes[i] && puzzle.nodes[i][j]) {
                 if (puzzle.nodes[i][j].length == 3) {
                     let numCross = 0;
+					let numLines = 0;
                     let visited = [];
                     let missing = [];
                     let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
 
                     for (let k = 0; k < 3; k++) {
-                        if (puzzle.nodes[i][j][k][2] == 0)
+                        if (puzzle.nodes[i][j][k][2] == 0) {
                             numCross++;
                         visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
                     }
+						else if (puzzle.nodes[i][j][k][2] == 1) {
+							numLines++;
+						}
+					}
 
                     for (let n = 0; n < neighbors.length; n++) {
                         let neighbor = neighbors[n];
@@ -341,7 +346,15 @@ export var autoSolver = function(puzzle) {
                         placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
                     }
 
-                } else if (puzzle.nodes[i][j].length == 2) {
+					else if (numCross == 2 && numLines == 1 ) {
+						placeLine(puzzle, i, j, missing[1][0], missing[1][1]);
+						placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
+
+						
+					}
+
+                } 
+				else if (puzzle.nodes[i][j].length == 2) {
                     let numLines = 0;
 					let numCross = 0;
                     let visited = [];
@@ -380,6 +393,14 @@ export var autoSolver = function(puzzle) {
                         placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
 						placeLine(puzzle, i, j, missing[1][0], missing[1][1])
                     }
+
+					else if (numLines == 2 && missing.length == 2) {
+						placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
+						placeCross(puzzle, i, j, missing[1][0], missing[1][1]);
+					}
+
+					
+
                 }
             }
 //END OF NODE RULES
