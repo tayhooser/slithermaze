@@ -54,6 +54,7 @@ body {
 	aspect-ratio: 1 / 1;
 	margin-left: 10px;
 	margin-right: 10px;
+	z-index: 10;
 }
 
 /* LEFT AREA --------------------------------------------------------*/
