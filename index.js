@@ -100,7 +100,9 @@ async function getMap(query = { author: 'Taylor' }) {
 
 // initializes openGL, other functions, and initial board
 window.onload = function(){
-	canvas.addEventListener("mouseenter", mouseEnter, false);
+	startEventListeners();
+	//addEventListener("resize", flipLayout());
+	//flipLayout();
 	gl.enable(gl.CULL_FACE);
 	clock();
 	
@@ -284,10 +286,10 @@ window.onload = function(){
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
 			//newMesh.xWorld = translateX;
 			//newMesh.yWorld = translateY;
-			newMesh.yLowerBound = translateY - 0.85;
-			newMesh.yUpperBound = translateY + 0.85;
-			newMesh.xUpperBound = translateX + 5.0;
-			newMesh.xLowerBound = translateX - 5.0;
+			newMesh.yLowerBound = translateY - 0.95;
+			newMesh.yUpperBound = translateY + 0.95;
+			newMesh.xUpperBound = translateX + 4.5;
+			newMesh.xLowerBound = translateX - 4.5;
 
 			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
 			glMatrix.mat4.scale(newMesh.scale, newMesh.scale, scaleVec);
@@ -327,10 +329,10 @@ window.onload = function(){
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
 			//newMesh.xWorld = translateX;
 			//newMesh.yWorld = translateY;
-			newMesh.xLowerBound = translateX - 0.85;
-			newMesh.xUpperBound = translateX + 0.85;
-			newMesh.yUpperBound = translateY + 5.0;
-			newMesh.yLowerBound = translateY - 5.0;
+			newMesh.xLowerBound = translateX - 0.95;
+			newMesh.xUpperBound = translateX + 0.95;
+			newMesh.yUpperBound = translateY + 4.5;
+			newMesh.yLowerBound = translateY - 4.5;
 
 			let rotationMat = glMatrix.mat4.create()
 			glMatrix.mat4.fromZRotation(rotationMat, 1.5708)
@@ -488,6 +490,17 @@ var render = function() {
 var camWasMoved = false;
 var camTotalMoved;
 var maxZoom; 
+var lastPinchDist = 0;
+
+var startEventListeners = function(event) {
+	//canvas.addEventListener("mouseenter", mouseEnter, false);
+	window.addEventListener("resize", windowResize, false);
+	canvas.addEventListener("click", click, false);		
+	canvas.addEventListener("pointerdown", pointerDown, false);		
+	canvas.addEventListener("wheel", mouseWheel, { passive: false });
+	canvas.addEventListener("touchstart", touchEvent, {passive: false});
+	//canvas.addEventListener("mouseleave", mouseLeave, false);
+};
 
 var click = function(event) {
 
@@ -565,17 +578,37 @@ var mouseWheel = function(event) {
 	//render();
 };
 
-var mouseEnter = function (event) {
-	canvas.addEventListener("click", click, false);		
-	canvas.addEventListener("mousedown", mouseDown, false);		
-	canvas.addEventListener("wheel", mouseWheel, false);
-	canvas.addEventListener("mouseleave", mouseLeave, false);
-	canvas.removeEventListener("mouseenter", mouseEnter, false);
+var touchEvent = function(event) {
+	//event.preventDefault();
+	console.log(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
+	var firstTouchX = event.changedTouches[0].clientX
+	if (TouchList.length >= 2) {
+		var firstTouchX = event.changedTouches[0].clientX;
+		var firstTouchY = event.changedTouches[0].clientY;
+		var secondTouchX = event.changedTouches[1].clientX;
+		var secondTouchY = event.changedTouches[1].clientY;
+		var xDist = secondTouchX - firstTouchX;
+		var yDist = secondTouchY - firstTouchY;
+		var newDist = Math.sqrt((xDist * xDist) + (yDist * yDist));
+		var deltaDist = newDist - lastPinchDist;
+		lastPinchDist = newDist;
+		zoomLevel += deltaDist;
+
+	}
+
 };
 
-var mouseDown = function(event) {
-	canvas.addEventListener("mousemove", mouseMove, false);
-	canvas.addEventListener("mouseup", mouseUp, false);
+// var mouseEnter = function (event) {
+// 	canvas.addEventListener("click", click, false);		
+// 	canvas.addEventListener("mousedown", pointerDown, false);		
+// 	canvas.addEventListener("wheel", mouseWheel, false);
+// 	//canvas.addEventListener("mouseleave", mouseLeave, false);
+// 	//canvas.removeEventListener("mouseenter", mouseEnter, false);
+// };
+
+var pointerDown = function(event) {
+	canvas.addEventListener("pointermove", pointerMove, { passive: false });
+	canvas.addEventListener("pointerup", pointerUp, false);
 
 	camTotalMoved = [0,0];
 	camWasMoved = false;
@@ -585,7 +618,8 @@ var mouseDown = function(event) {
 
 };
 
-var mouseMove = function (event) {
+var pointerMove = function (event) {
+	//event.preventDefault();
 	var deltaX = (event.layerX - startPos[0]) * 0.1;
 	var deltaY = (event.layerY - startPos[1]) * 0.1;
 
@@ -614,24 +648,24 @@ var mouseMove = function (event) {
 
 }
 
-var mouseUp = function (event) {
-	var camDistance = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
-	if (camDistance > 2)
+var pointerUp = function (event) {
+	var camDistanceMoved = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
+	if (camDistanceMoved > 2)
 		camWasMoved = true;
 
-	canvas.removeEventListener("mousemove", mouseMove, false);
-	canvas.removeEventListener("mouseup", mouseUp, false);
+	canvas.removeEventListener("pointermove", pointerMove, false);
+	canvas.removeEventListener("pointerup", pointerUp, false);
 }
 
-var mouseLeave = function (event) { 
-	canvas.removeEventListener("click", click, false);		
-	canvas.removeEventListener("wheel", mouseWheel, false);
-	canvas.removeEventListener("mousedown", mouseDown, false);
-	canvas.removeEventListener("mousemove", mouseMove, false);
-	canvas.removeEventListener("mouseleave", mouseLeave, false);
+// var mouseLeave = function (event) { 
+// 	canvas.removeEventListener("click", click, false);		
+// 	canvas.removeEventListener("wheel", mouseWheel, false);
+// 	canvas.removeEventListener("mousedown", pointerDown, false);
+// 	canvas.removeEventListener("mousemove", pointerMove, false);
+// 	canvas.removeEventListener("mouseleave", mouseLeave, false);
 
-	canvas.addEventListener("mouseenter", mouseEnter, false);
-};
+// 	//canvas.addEventListener("mouseenter", mouseEnter, false);
+// };
 
 var windowResize = function() {
 	canvas.width = canvas.parentNode.clientWidth;

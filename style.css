@@ -55,6 +55,7 @@ body {
 	margin-left: 10px;
 	margin-right: 10px;
 	z-index: 10;
+	touch-action: none;
 }
 
 /* LEFT AREA --------------------------------------------------------*/
