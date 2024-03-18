@@ -505,6 +505,8 @@ var startEventListeners = function(event) {
 	//canvas.addEventListener("mouseleave", mouseLeave, false);
 };
 
+canvas.onselectstart = function () { return false; };
+
 var click = function(event) {
 	//console.log("click fired!");
 
