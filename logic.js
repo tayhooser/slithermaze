@@ -92,6 +92,12 @@ export var nodeSetDifference = function(neighbors, visited){
 // creates line connection between 2 nodes
 // returns true if connection created successfully or already exists
 export var placeLine = function(puzzle, x1, y1, x2, y2){
+	// boundary constraints
+	if ((x1 < 0) || (x2 < 0) || (y1 < 0) || (y2 < 0))
+		return false;
+	if ((x1 > puzzle.h) || (x2 > puzzle.h) || (y1 > puzzle.w) || (y2 > puzzle.w))
+		return false;
+	
 	// must be 1 node away in either x or y direction, but not both
 	if (((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1))
 		 || ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1))){
@@ -129,6 +135,12 @@ export var placeLine = function(puzzle, x1, y1, x2, y2){
 
 // same as create line, but places a cross instead
 export var placeCross = function(puzzle, x1, y1, x2, y2){
+	// boundary constraints
+	if ((x1 < 0) || (x2 < 0) || (y1 < 0) || (y2 < 0))
+		return false;
+	if ((x1 > puzzle.h) || (x2 > puzzle.h) || (y1 > puzzle.w) || (y2 > puzzle.w))
+		return false;
+	
 	// must be 1 node away in either x or y direction, but not both
 	if (((Math.abs(x1 - x2) != 1) && (Math.abs(y1 - y2) != 1))
 		 || ((Math.abs(x1 - x2) == 1) && (Math.abs(y1 - y2) == 1))){
@@ -242,28 +254,62 @@ export var crossCompletedCell = function(puzzle, x, y){
 }
 
 // determines if given node is a dead end and crosses it
+// returns true if change was made
 export var crossDeadEnd = function(puzzle, x, y){
-	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length != 3) // must have 3 connections
-		return;
-	let numCross = 0;
+	let requiredConns = 0;
+	let neighbors = [];
 	let visited = [];
 	let missing = [];
-	let neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
-
+	
+	// edge/corner cases
+	if (x == 0 && y == 0){ // top left corner
+		requiredConns = 1;
+		neighbors = [[x+1, y], [x, y+1]];
+	} else if (x == 0 && y == puzzle.w) { // top right corner
+		requiredConns = 1;
+		neighbors = [[x+1, y], [x, y-1]];
+	} else if (x == puzzle.h && y == 0) { // bottom left corner
+		requiredConns = 1;
+		neighbors = [[x, y+1], [x-1, y]];
+	} else if (x == puzzle.h && y == puzzle.w) { // bottom right corner
+		requiredConns = 1;
+		neighbors = [[x, y-1], [x-1, y]];
+	} else if (x == 0) { // top edge
+		requiredConns = 2;
+		neighbors = [[x, y-1], [x, y+1], [x+1, y]];
+	} else if (x == puzzle.h){ // bototm edge
+		requiredConns = 2;
+		neighbors = [[x, y-1], [x, y+1], [x-1, y]];
+	} else if (y == 0){ // left edge
+		requiredConns = 2;
+		neighbors = [[x-1, y], [x+1, y], [x, y+1]];
+	} else if (y == puzzle.w){ // right edge
+		requiredConns = 2;
+		neighbors = [[x-1, y], [x+1, y], [x, y-1]];
+	} else { // general case
+		requiredConns = 3;
+		neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
+	}
+	
+	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length != requiredConns)
+		return false;
+	
 	// count number crosses around cell
-	for (let i = 0; i < 3; i++) {
+	let numCross = 0;
+	for (let i = 0; i < requiredConns; i++) {
 		if (puzzle.nodes[x][y][i][2] == 0){
 			numCross++;
 			visited.push([puzzle.nodes[x][y][i][0], puzzle.nodes[x][y][i][1]]);
 		}
 	}
 	
-	if (numCross != 3) // must have 3 crosses
-		return;
+	if (numCross != requiredConns) // must have enough crosses
+		return false;
 	
 	// cross remaining edge
 	missing = nodeSetDifference(neighbors, visited);
 	placeCross(puzzle, x, y, missing[0][0], missing[0][1]);
+	return true;
 }
 
 // returns true if puzzle was solved correctly

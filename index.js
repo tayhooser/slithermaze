@@ -549,11 +549,19 @@ var click = function(event) {
 	if (!camWasMoved && lineFound){
 		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
 		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex); // place line logically
-		// update puzzle state with QOL options
-		for (let i = 0; i < curPuzzle.h + 1; i++){
-			for (let j = 0; j < curPuzzle.w + 1; j++) {
-				if (ACdead)
-					pl.crossDeadEnd(curPuzzle, i, j);
+		
+		// update puzzle state with QOL options ONLY IF line or cross was placed
+		// this is to allow user to erase moves without QOL infinitely triggering
+		if (gLinesArray[tempYIndex][tempXIndex] != 0){
+			let changes = true;
+			while (changes){ // iterate over puzzle multiple times until no changes made
+				changes = false;
+				for (let i = 0; i < curPuzzle.h + 1; i++){
+					for (let j = 0; j < curPuzzle.w + 1; j++) {
+						if (ACdead)
+							changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
+					}
+				}
 			}
 		}
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
