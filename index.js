@@ -490,6 +490,7 @@ var camTotalMoved;
 var maxZoom; 
 var lastPinchDist = 0;
 var ongoingTouches = [];
+var twoTouches = false;
 
 var startEventListeners = function(event) {
 	//canvas.addEventListener("mouseenter", mouseEnter, false);
@@ -601,6 +602,8 @@ var touchStart = function(event) {
 	for (let i = 0; i < touches.length; i++) {
 		ongoingTouches.push(copyTouch(touches[i]));
 	}
+	if (ongoingTouches.length >= 2)
+		twoTouches = true;
 
 };
 
@@ -664,7 +667,10 @@ var touchEnd = function(event) {
 			ongoingTouches.splice(index, 1);
 		}
 	}
+	if (ongoingTouches.length < 2)
+		twoTouches = false;
 	lastPinchDist = 0;
+
 
 };
 
@@ -700,6 +706,7 @@ var pointerDown = function(event) {
 
 var pointerMove = function (event) {
 	//event.preventDefault();
+	if (twoTouches) return;
 	var deltaX = (event.layerX - startPos[0]) * 0.1;
 	var deltaY = (event.layerY - startPos[1]) * 0.1;
 
