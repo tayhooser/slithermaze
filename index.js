@@ -7,9 +7,14 @@ var G = 1.0;
 var B = 1.0;
 
 var saveCounter = 0; // number of savestates
-var curPuzzle;
+var curPuzzle; // current puzzle state
+var puzzleHistory = []; // history of puzzle states -- used for undo/redo
+var maxHistory = 10; // number states to keep track of 
 
-// timer stuff
+// undo/redo variables
+var lastUndo = 0;
+
+// timer variables
 var timer = true; // true = running
 var hour = 0;
 var minute = 0;
@@ -69,6 +74,8 @@ var gHeight;
 var MoB;				// Middle of Board. Used to set the camera position in the center
 var gLinesArray;		// 2D Array that indicates which lines are on/off
 
+var userMoveHistory = [];
+
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
 //function must be async to give us access to await
 async function getMap(query = { author: 'Taylor' }) {
@@ -101,8 +108,6 @@ async function getMap(query = { author: 'Taylor' }) {
 // initializes openGL, other functions, and initial board
 window.onload = function(){
 	startEventListeners();
-	//addEventListener("resize", flipLayout());
-	//flipLayout();
 	gl.enable(gl.CULL_FACE);
 	clock();
 	
@@ -158,6 +163,7 @@ window.onload = function(){
 		curPuzzle.cells[4][1] = [2, false];
 		curPuzzle.cells[4][2] = [2, false];
 		curPuzzle.cells[4][3] = [2, false];
+		updateStateHistory();
 	}
 	
 	gLinesArray = Array(curPuzzle.h);
@@ -553,10 +559,26 @@ var click = function(event) {
 	var tempYIndex = lineObjects[keptIndex].yCoord;
 
 	if (!camWasMoved && lineFound){
+		//updateStateHistory(); // update puzzle state history
 		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
 		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex); // place line logically
+		userMoveHistory.push([tempYIndex, tempXIndex, gLinesArray[tempYIndex][tempXIndex]]); // add line coord to move history
 		
-		// update puzzle state with QOL options ONLY IF line or cross was placed
+		// determine if user is placing a cross by placing a line first
+		// used to undo QOL rules unintentionally triggered by line placement before cross
+		try {
+			if (userMoveHistory[userMoveHistory.length - 1][0] == userMoveHistory[userMoveHistory.length - 2][0] &&
+				userMoveHistory[userMoveHistory.length - 1][1] == userMoveHistory[userMoveHistory.length - 2][1] &&
+				gLinesArray[tempYIndex][tempXIndex] == 2){
+				// undo last auto-done moves
+				//curPuzzle.cells = JSON.parse(JSON.stringify(prevPuzzleState.cells));
+				//curPuzzle.nodes = JSON.parse(JSON.stringify(prevPuzzleState.nodes));
+				
+			}
+		} catch (TypeError) {
+		}
+		
+		// update puzzle state with all QOL options ONLY IF cross or line was placed
 		// this is to allow user to erase moves without QOL infinitely triggering
 		if (gLinesArray[tempYIndex][tempXIndex] != 0){
 			let changes = true;
@@ -566,13 +588,15 @@ var click = function(event) {
 					for (let j = 0; j < curPuzzle.w + 1; j++) {
 						if (ACdead)
 							changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
-						if (ACnum)
+						if (ACnum){
 							changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
+						}
 					}
 				}
 			}
 		}
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+		updateStateHistory(); // update puzzle state history
 	}
 
 };
@@ -794,15 +818,56 @@ var clock = function(){
 	}
 }
 
+// adds current puzzle state to history
+var updateStateHistory = function(){
+	//console.log("UPDATING HISTORY...");
+	let historyCells = JSON.parse(JSON.stringify(curPuzzle.cells));
+	let historyNodes = JSON.parse(JSON.stringify(curPuzzle.nodes));
+	if (puzzleHistory.length != lastUndo){ // remove history past point of last undo
+		let tmp = puzzleHistory.length - lastUndo;
+		for (let i = 0; i < tmp; i++){
+			puzzleHistory.pop();
+		}
+		//console.log("NEW puzzleHistory length (should = undo): " + puzzleHistory.length);
+	}
+	if (puzzleHistory.length == maxHistory) // remove oldest undo state
+		puzzleHistory.shift();
+	puzzleHistory.push([historyCells, historyNodes]);
+	lastUndo = puzzleHistory.length;
+	//console.log("puzzleHistory length: " + puzzleHistory.length);
+	//console.log("lastUndo: " + lastUndo);
+	return;
+}
+
 // called when user hits undo button, HTML side
 undoHTML.onclick = function(){
-	console.log("Undo pressed.");
+	if (lastUndo == puzzleHistory.length) // since last undo state is a copy of the current state
+		lastUndo--;
+	if (lastUndo > 0){ // if there are things to undo
+		let n = lastUndo - 1;
+		curPuzzle.cells = JSON.parse(JSON.stringify(puzzleHistory[n][0]));
+		curPuzzle.nodes = JSON.parse(JSON.stringify(puzzleHistory[n][1]));
+		lastUndo--;
+	}
+	//console.log("puzzleHistory length: " + puzzleHistory.length);
+	//console.log("lastUndo: " + lastUndo);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 	return;
 };
 
 // called when user hits redo button, HTML side
 redoHTML.onclick = function(){
-	console.log("Redo pressed.");
+	if (lastUndo < puzzleHistory.length - 1){ // if there are undos to redo
+		let n = lastUndo + 1;
+		curPuzzle.cells = JSON.parse(JSON.stringify(puzzleHistory[n][0]));
+		curPuzzle.nodes = JSON.parse(JSON.stringify(puzzleHistory[n][1]));
+		lastUndo++;
+	}
+	if (lastUndo == puzzleHistory.length - 1)
+		lastUndo++
+	//console.log("puzzleHistory length: " + puzzleHistory.length);
+	//console.log("lastUndo: " + lastUndo);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 	return;
 };
 
@@ -943,7 +1008,11 @@ var load = function(state){
 // called when user hits hint button, HTML side
 // shows either 1 possible cross or line, depends on current state and puzzle
 hintHTML.onclick = function(){
-	console.log("Hint pressed.");
+	//console.log("Hint pressed.");
+	console.log("puzzleHistory length: " + puzzleHistory.length);
+	console.log("lastUndo: " + lastUndo);
+	let tmp = JSON.stringify(curPuzzle.nodes) == JSON.stringify(puzzleHistory[puzzleHistory.length - 1][1])
+	console.log("curPuzzle == puzzleHistory[last] ? " + tmp);
 	return;
 };
 
@@ -973,6 +1042,11 @@ restartHTML.onclick = function(){
 		document.getElementById(id).remove();
 	}
 	saveCounter = 0;
+	
+	// clear puzzle history (undos)
+	lastUndo = 0;
+	puzzleHistory = [];
+	updateStateHistory();
 	
 	// restart timer
 	hour = 0; 

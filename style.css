@@ -326,6 +326,7 @@ label {
 /*credit with everyones names in corner */
 .about {     
 	position: absolute;
+	display: block;
 	bottom: 10px;
 	right: 10px;
 	text-align: right;

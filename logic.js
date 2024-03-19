@@ -247,7 +247,6 @@ export var countLines = function(puzzle, x, y){
 // crosses remaining connections around cell, if applicable
 // returns true if change was made
 export var crossCompletedCell = function(puzzle, x, y){
-	console.log("ccs");
 	// boundary constraints
 	if ((x < 0) || (y < 0))
 		return false;
