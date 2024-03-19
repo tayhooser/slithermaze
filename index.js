@@ -388,8 +388,6 @@ window.onload = function(){
 var render = function() {
 	if (!renderT) return;
 
-	
-
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -491,18 +489,26 @@ var camWasMoved = false;
 var camTotalMoved;
 var maxZoom; 
 var lastPinchDist = 0;
+var ongoingTouches = [];
 
 var startEventListeners = function(event) {
 	//canvas.addEventListener("mouseenter", mouseEnter, false);
 	window.addEventListener("resize", windowResize, false);
-	canvas.addEventListener("click", click, false);		
-	canvas.addEventListener("pointerdown", pointerDown, false);		
+	canvas.addEventListener("click", click, true);
+	canvas.addEventListener("pointerdown", pointerDown, false);
 	canvas.addEventListener("wheel", mouseWheel, { passive: false });
-	canvas.addEventListener("touchstart", touchEvent, {passive: false});
+
+	canvas.addEventListener("touchstart", touchStart, true);
+	canvas.addEventListener("touchmove", touchMove);
+	canvas.addEventListener("touchend", touchEnd);
+
 	//canvas.addEventListener("mouseleave", mouseLeave, false);
 };
 
+canvas.onselectstart = function () { return false; };
+
 var click = function(event) {
+	//console.log("click fired!");
 
 	var canvasRect = canvas.getBoundingClientRect();
 	var mouseX = event.clientX - canvasRect.left;
@@ -583,29 +589,93 @@ var mouseWheel = function(event) {
 			zoomLevel = maxZoom;
 
 		zoomSliderHTML.value = zoomLevel;
-		console.log("zoom = " + zoomLevel);
+		//console.log("zoom = " + zoomLevel);
 	}
 	//render();
 };
 
-var touchEvent = function(event) {
+var touchStart = function(event) {
 	//event.preventDefault();
-	console.log(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
-	var firstTouchX = event.changedTouches[0].clientX
-	if (TouchList.length >= 2) {
-		var firstTouchX = event.changedTouches[0].clientX;
-		var firstTouchY = event.changedTouches[0].clientY;
-		var secondTouchX = event.changedTouches[1].clientX;
-		var secondTouchY = event.changedTouches[1].clientY;
-		var xDist = secondTouchX - firstTouchX;
-		var yDist = secondTouchY - firstTouchY;
-		var newDist = Math.sqrt((xDist * xDist) + (yDist * yDist));
-		var deltaDist = newDist - lastPinchDist;
-		lastPinchDist = newDist;
-		zoomLevel += deltaDist;
-
+	//console.log(event.changedTouches);
+	var touches = event.changedTouches;
+	for (let i = 0; i < touches.length; i++) {
+		ongoingTouches.push(copyTouch(touches[i]));
 	}
 
+};
+
+var copyTouch = function({identifier, clientX, clientY}){
+	return {identifier, clientX, clientY};
+};
+
+var touchMove = function(event) {
+	//event.preventDefault();
+	//console.log(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
+	//var firstTouchX = event.changedTouches[0].clientX
+	//console.log(event.changedTouches);
+	var touches = event.changedTouches;
+
+	if (ongoingTouches.length == 2) {
+		for (let i = 0; i < touches.length; i++) {
+			var index = ongoingTouchIndexById(touches[i].identifier);
+
+			if (index >= 0) {
+				//console.log("two touches found!");
+				//event.preventDefault();
+				canvas.removeEventListener("pointermove", pointerMove, { passive: false });
+				canvas.removeEventListener("pointerup", pointerUp, false);
+				var firstTouchX = ongoingTouches[0].clientX;
+				var firstTouchY = ongoingTouches[0].clientY;
+				var secondTouchX = ongoingTouches[1].clientX;
+				var secondTouchY = ongoingTouches[1].clientY;
+
+				//console.log(ongoingTouches);
+		
+
+				var xDist = secondTouchX - firstTouchX;
+				var yDist = secondTouchY - firstTouchY;
+				var newDist = Math.sqrt((xDist * xDist) + (yDist * yDist));
+				var deltaDist = newDist - lastPinchDist;
+				lastPinchDist = newDist;
+				
+				if ((zoomLevel - deltaDist) > 3 ) {
+					zoomLevel -= deltaDist * 0.06;
+			
+					if (zoomLevel > maxZoom)
+						zoomLevel = maxZoom;
+			
+					zoomSliderHTML.value = zoomLevel;
+					//console.log("zoom = " + zoomLevel);
+				}
+				ongoingTouches.splice(index, 1, copyTouch(touches[i]));
+			}
+		}
+	}
+
+};
+
+var touchEnd = function(event) {
+	//event.preventDefault();
+	var touches = event.changedTouches;
+
+	for (let i = 0; i < touches.length; i++) {
+		let index = ongoingTouchIndexById(touches[i].identifier);
+		if (index >= 0) {
+			ongoingTouches.splice(index, 1);
+		}
+	}
+	lastPinchDist = 0;
+
+};
+
+var ongoingTouchIndexById = function(idToFind) {
+	for (let i = 0; i < ongoingTouches.length; i++) {
+		var id = ongoingTouches[i].identifier;
+		if (id == idToFind) {
+			return i;
+		}
+	}
+	return -1;
 };
 
 // var mouseEnter = function (event) {
@@ -656,7 +726,7 @@ var pointerMove = function (event) {
 	if (camAndLook[1] > 0)
 		camAndLook[1] = 0;
 
-}
+};
 
 var pointerUp = function (event) {
 	var camDistanceMoved = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
@@ -665,7 +735,7 @@ var pointerUp = function (event) {
 
 	canvas.removeEventListener("pointermove", pointerMove, false);
 	canvas.removeEventListener("pointerup", pointerUp, false);
-}
+};
 
 // var mouseLeave = function (event) { 
 // 	canvas.removeEventListener("click", click, false);		
@@ -681,7 +751,7 @@ var windowResize = function() {
 	canvas.width = canvas.parentNode.clientWidth;
 	canvas.height = canvas.parentNode.clientHeight;
 	gl.viewport(0, 0, canvas.width, canvas.height);
-}
+};
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
 
