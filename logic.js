@@ -90,7 +90,7 @@ export var nodeSetDifference = function(neighbors, visited){
 }
 
 // creates line connection between 2 nodes
-// returns true if connection created successfully or already exists
+// returns true if connection created successfully
 export var placeLine = function(puzzle, x1, y1, x2, y2){
 	// boundary constraints
 	if ((x1 < 0) || (x2 < 0) || (y1 < 0) || (y2 < 0))
@@ -110,7 +110,7 @@ export var placeLine = function(puzzle, x1, y1, x2, y2){
 		let a = puzzle.nodes[x1][y1];
 		if (arrayIndexOf(a, [x2, y2, 1]) != -1){ // line already exists, do nothing
 			//console.log("failed connection: already exists");
-			return true;
+			return false;
 		} else if (arrayIndexOf(a, [x2, y2, 0]) != -1){ // cross exists, remove and continue
 			//console.log("calling removeLine for (" + x1 + ", " + y1 + ") x (" + x2 + ", " + y2 + ")");
 			removeLine(puzzle, x1, y1, x2, y2);
@@ -152,7 +152,7 @@ export var placeCross = function(puzzle, x1, y1, x2, y2){
 	if(puzzle.nodes[x1][y1]){
 		let a = puzzle.nodes[x1][y1];
 		if (arrayIndexOf(a, [x2, y2, 0]) != -1){ // cross already exists, do nothing
-			return true;
+			return false;
 		} else if (arrayIndexOf(a, [x2, y2, 1]) != -1){ // line exists, remove and continue
 			removeLine(puzzle, x1, y1, x2, y2);
 		}
@@ -245,12 +245,38 @@ export var countLines = function(puzzle, x, y){
 }
 
 // crosses remaining connections around cell, if applicable
+// returns true if change was made
 export var crossCompletedCell = function(puzzle, x, y){
-	if (puzzle.cells[x][y][0] == -1) // unnumbered cell, skip
-		return;
-	if (countLines(puzzle, x, y) != puzzle.cells[x][y][0]) // uncompleted cell, skip
-		return;
+	console.log("ccs");
+	// boundary constraints
+	if ((x < 0) || (y < 0))
+		return false;
+	if ((x > puzzle.h-1) || (y > puzzle.w-1))
+		return false;
 	
+	if (puzzle.cells[x][y][0] == -1) // unnumbered cell, skip
+		return false;
+	if (countLines(puzzle, x, y) != puzzle.cells[x][y][0]) // uncompleted cell, skip
+		return false;
+		
+	let changes = false;
+	if (arrayIndexOf(puzzle.nodes[x][y], [x, y+1, 1]) == -1){ // top line
+		let tmp = placeCross(puzzle, x, y, x, y+1);
+		changes = changes || tmp;
+	}
+	if (arrayIndexOf(puzzle.nodes[x][y+1], [x+1, y+1, 1]) == -1){ // right line
+		let tmp =  placeCross(puzzle, x, y+1, x+1, y+1);
+		changes = changes || tmp;
+	}
+	if (arrayIndexOf(puzzle.nodes[x+1][y+1], [x+1, y, 1]) == -1){ // bottom line
+		let tmp = placeCross(puzzle, x+1, y+1, x+1, y);
+		changes = changes || tmp;
+	}
+	if (arrayIndexOf(puzzle.nodes[x+1][y], [x, y, 1]) == -1){ // left line
+		let tmp = placeCross(puzzle, x+1, y, x, y);
+		changes = changes || tmp;
+	}
+	return changes;
 }
 
 // determines if given node is a dead end and crosses it

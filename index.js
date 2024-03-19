@@ -560,6 +560,8 @@ var click = function(event) {
 					for (let j = 0; j < curPuzzle.w + 1; j++) {
 						if (ACdead)
 							changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
+						if (ACnum)
+							changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
 					}
 				}
 			}
