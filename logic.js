@@ -426,190 +426,188 @@ export var verifySolution = function(puzzle){
 	return true;
 }
 
+// Function to handle rules for nodes
+function handleNodeRules(puzzle, i, j) {
+    if (puzzle.nodes && puzzle.nodes[i] && puzzle.nodes[i][j]) {
+        if (puzzle.nodes[i][j].length == 3) {
+            handleNodeWithThree(puzzle, i, j);
+        } else if (puzzle.nodes[i][j].length == 2) {
+            handleNodeWithTwo(puzzle, i, j);
+        }
+    }
+}
+
+// Function to handle rules for nodes with three connections
+function handleNodeWithThree(puzzle, i, j) {
+    let numCross = 0;
+    let numLines = 0;
+    let visited = [];
+    let missing = [];
+    let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
+
+    for (let k = 0; k < 3; k++) {
+        if (puzzle.nodes[i][j][k][2] == 0) {
+            numCross++;
+            visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
+        } else if (puzzle.nodes[i][j][k][2] == 1) {
+            numLines++;
+        }
+    }
+
+    for (let n = 0; n < neighbors.length; n++) {
+        let neighbor = neighbors[n];
+        let found = false;
+
+        for (let v = 0; v < visited.length; v++) {
+            let visitedNode = visited[v];
+            if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            missing.push(neighbor);
+        }
+    }
+
+    if (numCross == 3 && missing.length == 1) {
+        placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
+    } else if (numCross == 2 && numLines == 1) {
+        placeLine(puzzle, i, j, missing[1][0], missing[1][1]);
+        placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
+    }
+}
+
+// Function to handle rules for nodes with two connections
+function handleNodeWithTwo(puzzle, i, j) {
+    let numLines = 0;
+    let numCross = 0;
+    let visited = [];
+    let missing = [];
+    let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
+
+    for (let k = 0; k < 2; k++) {
+        if (puzzle.nodes[i][j][k][2] == 1) {
+            numLines++;
+        } else if (puzzle.nodes[i][j][k][2] == 0) {
+            numCross++;
+        }
+        visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
+    }
+
+    for (let n = 0; n < neighbors.length; n++) {
+        let neighbor = neighbors[n];
+        let found = false;
+
+        for (let v = 0; v < visited.length; v++) {
+            let visitedNode = visited[v];
+            if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            missing.push(neighbor);
+        }
+    }
+
+    if (numCross == 2 && missing.length == 2) {
+        placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
+        placeLine(puzzle, i, j, missing[1][0], missing[1][1]);
+    } else if (numLines == 2 && missing.length == 2) {
+        placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
+        placeCross(puzzle, i, j, missing[1][0], missing[1][1]);
+    }
+}
+
+
+
+
+// Function to handle cell rules
+function handleCellRules(puzzle, i, j) {
+    if (puzzle.cells[i][j][0] == 1) {
+        handleCellWithOne(puzzle, i, j);
+    } else if (puzzle.cells[i][j][0] == 3) {
+        handleCellWithThree(puzzle, i, j);
+    } else if (puzzle.cells[i][j][0] == 2) {
+        handleCellWithTwo(puzzle, i, j);
+    } else if (puzzle.cells[i][j][0] == 0) {
+        handleCellWithZero(puzzle, i, j);
+    }
+}
+
+// Function to handle cell with one
+function handleCellWithOne(puzzle, i, j) {
+    if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+        if (i === 0) {
+            placeCross(puzzle, i, j, i + 1, j);
+        } else if (i == puzzle.h - 1) {
+            placeCross(puzzle, i - 1, j, i, j);
+        }
+
+        if (j === 0) {
+            placeCross(puzzle, i, j, i, j + 1);
+        } else if (j == puzzle.w - 1) {
+            placeCross(puzzle, i, j - 1, i, j);
+        }
+    }
+}
+
+// Function to handle cell with three
+function handleCellWithThree(puzzle, i, j) {
+    if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+        if (i === 0) {
+            placeLine(puzzle, i, j, i + 1, j);
+        } else if (i == puzzle.h - 1) {
+            placeLine(puzzle, i - 1, j, i, j);
+        }
+
+        if (j === 0) {
+            placeLine(puzzle, i, j, i, j + 1);
+        } else if (j == puzzle.w - 1) {
+            placeLine(puzzle, i, j - 1, i, j);
+        }
+    }
+}
+
+// Function to handle cell with two
+function handleCellWithTwo(puzzle, i, j) {
+    if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+        if (i === 0) {
+            placeLine(puzzle, i, j, i + 2, j);
+        } else if (i == puzzle.h - 1) {
+            placeLine(puzzle, i - 2, j, i - 1, j);
+        }
+
+        if (j === 0) {
+            placeLine(puzzle, i, j, i, j + 2);
+        } else if (j == puzzle.w - 1) {
+            placeLine(puzzle, i, j - 2, i, j - 1);
+        }
+    }
+}
+
+// Function to handle cell with zero
+function handleCellWithZero(puzzle, i, j) {
+    placeCross(puzzle, i, j, i + 1, j);
+    placeCross(puzzle, i + 1, j, i + 1, j + 1);
+    placeCross(puzzle, i, j, i, j + 1);
+    placeCross(puzzle, i, j + 1, i + 1, j + 1);
+}
+
+// Main autoSolver function
 export var autoSolver = function(puzzle) {
     for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {
-
-			//NODE RULES
-//-----------------------------------------------------------------------------------------------------------------------------------------
-            if (puzzle.nodes && puzzle.nodes[i] && puzzle.nodes[i][j]) {
-                if (puzzle.nodes[i][j].length == 3) {
-                    let numCross = 0;
-					let numLines = 0;
-                    let visited = [];
-                    let missing = [];
-                    let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
-					
-					// count number crosses around cell
-                    for (let k = 0; k < 3; k++) {
-                        if (puzzle.nodes[i][j][k][2] == 0) {
-                            numCross++;
-                        visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
-                    }
-						else if (puzzle.nodes[i][j][k][2] == 1) {
-							numLines++;
-						}
-					}
-
-					//missing = nodeSetDifference(neighbors, visited);
-					// set difference: missing = neighbors - visited
-                    for (let n = 0; n < neighbors.length; n++) {
-                        let neighbor = neighbors[n];
-                        let found = false;
-                        for (let v = 0; v < visited.length; v++) {
-                            let visitedNode = visited[v];
-                            if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) // if neighbor not in visited, mark missing
-                            missing.push(neighbor);
-                    }
-
-					// cross dead ends
-                    if (numCross == 3 && missing.length == 1) {
-                        placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
-                    }
-
-					else if (numCross == 2 && numLines == 1 ) {
-						placeLine(puzzle, i, j, missing[1][0], missing[1][1]);
-						placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
-
-						
-					}
-
-                } 
-				else if (puzzle.nodes[i][j].length == 2) {
-                    let numLines = 0;
-					let numCross = 0;
-                    let visited = [];
-                    let missing = [];
-                    let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
-
-                    for (let k = 0; k < 2; k++) {
-                        if (puzzle.nodes[i][j][k][2] == 1) {
-                            numLines++
-						}
-                        
-						else if (puzzle.nodes[i][j][k][2] == 0) {
-							numCross++;
-						}
-						visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
-                    }
-
-                    for (let n = 0; n < neighbors.length; n++) {
-                        let neighbor = neighbors[n];
-                        let found = false;
-
-                        for (let v = 0; v < visited.length; v++) {
-                            let visitedNode = visited[v];
-                            if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if (!found) {
-                            missing.push(neighbor);
-                        }
-                    }
-
-                    if (numCross == 2 && missing.length == 2) {
-                        placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
-						placeLine(puzzle, i, j, missing[1][0], missing[1][1])
-                    }
-
-					else if (numLines == 2 && missing.length == 2) {
-						placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
-						placeCross(puzzle, i, j, missing[1][0], missing[1][1]);
-					}
-
-					
-
-                }
-            }
-//END OF NODE RULES
-//----------------------------------------------------------------------------------------------------------------------------------------------
-
-//CELL RULES
-
-
-//----------------------------------------------------------------------------------------------------------------------------------------
-
-            // Check if the cell contains a number
-            if (puzzle.cells[i][j][0] == 1) {
-                // Check if the cell is in a corner
-                if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-                    // Place crosses at top and left lines of the corner
-                    if (i === 0) {
-                        // Place cross at top line
-                        placeCross(puzzle, i, j, i + 1, j);
-                    } else if (i == puzzle.h - 1) {
-                        placeCross(puzzle, i - 1, j, i, j);
-                    }
-
-                    if (j === 0) {
-                        // Place cross at left line
-                        placeCross(puzzle, i, j, i, j + 1);
-                    } else if (j == puzzle.w - 1) {
-                        placeCross(puzzle, i, j - 1, i, j);
-                    }
-                }
-            } else if (puzzle.cells[i][j][0] == 3) {
-                // Place lines at the corners
-                if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-                    if (i === 0) {
-                        // Place line at top line
-                        placeLine(puzzle, i, j, i + 1, j);
-                    } else if (i == puzzle.h - 1) {
-                        placeLine(puzzle, i - 1, j, i, j);
-                    }
-
-                    if (j === 0) {
-                        // Place line at left line
-                        placeLine(puzzle, i, j, i, j + 1);
-                    } else if (j == puzzle.w - 1) {
-                        placeLine(puzzle, i, j - 1, i, j);
-                    }
-                }
-            } else if (puzzle.cells[i][j][0] == 2) {
-                // Place lines going out from the borders
-                if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-                    if (i === 0) {
-                        // Place line going out from top border
-                        placeLine(puzzle, i, j, i + 2, j);
-                    } else if (i == puzzle.h - 1) {
-                        // Place line going out from bottom border
-                        placeLine(puzzle, i - 2, j, i - 1, j);
-                    }
-
-                    if (j === 0) {
-                        // Place line going out from left border
-                        placeLine(puzzle, i, j, i, j + 2);
-                    } else if (j == puzzle.w - 1) {
-                        // Place line going out from right border
-                        placeLine(puzzle, i, j - 2, i, j - 1);
-                    }
-                }
-            } else if (puzzle.cells[i][j][0] == 0) {
-                // Place crosses at all corners of the cell
-                placeCross(puzzle, i, j, i + 1, j);
-                placeCross(puzzle, i + 1, j, i + 1, j + 1);
-                placeCross(puzzle, i, j, i, j + 1);
-                placeCross(puzzle, i, j + 1, i + 1, j + 1);
-            }
-
-			//END OF CELL RULES
-//----------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
+            // Handle node rules
+            handleNodeRules(puzzle, i, j);
+            // Handle cell rules
+            handleCellRules(puzzle, i, j);
         }
     }
     // Update the graphic puzzle state
-    
     console.log("Autosolver finished");
 }
 
