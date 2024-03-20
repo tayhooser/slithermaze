@@ -12,7 +12,7 @@ var puzzleHistory = []; // history of puzzle states -- used for undo/redo
 var maxHistory = 10; // number states to keep track of 
 
 // undo/redo variables
-var lastUndo = 0;
+var lastUndo = -1;
 
 // timer variables
 var timer = true; // true = running
@@ -67,14 +67,13 @@ var view;
 var projection;
 var vp;
 var startPos =  Array(2);
+var prevX, prevY = 0;
 
 //var gLength = puzzleSize + 1;
 var gHeight;
 
 var MoB;				// Middle of Board. Used to set the camera position in the center
 var gLinesArray;		// 2D Array that indicates which lines are on/off
-
-var userMoveHistory = [];
 
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
 //function must be async to give us access to await
@@ -560,24 +559,19 @@ var click = function(event) {
 	var tempYIndex = lineObjects[keptIndex].yCoord;
 
 	if (!camWasMoved && lineFound){
-		//updateStateHistory(); // update puzzle state history
-		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
-		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex); // place line logically
-		userMoveHistory.push([tempYIndex, tempXIndex, gLinesArray[tempYIndex][tempXIndex]]); // add line coord to move history
-		
 		// determine if user is placing a cross by placing a line first
 		// used to undo QOL rules unintentionally triggered by line placement before cross
-		try {
-			if (userMoveHistory[userMoveHistory.length - 1][0] == userMoveHistory[userMoveHistory.length - 2][0] &&
-				userMoveHistory[userMoveHistory.length - 1][1] == userMoveHistory[userMoveHistory.length - 2][1] &&
-				gLinesArray[tempYIndex][tempXIndex] == 2){
-				// undo last auto-done moves
-				//curPuzzle.cells = JSON.parse(JSON.stringify(prevPuzzleState.cells));
-				//curPuzzle.nodes = JSON.parse(JSON.stringify(prevPuzzleState.nodes));
-				
-			}
-		} catch (TypeError) {
+		if (prevX == tempXIndex && prevY == tempYIndex && ((gLinesArray[tempYIndex][tempXIndex] + 1) % 3 == 2)){
+			// undo last state
+			curPuzzle.cells = JSON.parse(JSON.stringify(puzzleHistory[lastUndo-1][0]));
+			curPuzzle.nodes = JSON.parse(JSON.stringify(puzzleHistory[lastUndo-1][1]));
+			lastUndo--;
+			// remove state from history
+			puzzleHistory.pop();
 		}
+		
+		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
+		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex); // place line logically
 		
 		// update puzzle state with all QOL options ONLY IF cross or line was placed
 		// this is to allow user to erase moves without QOL infinitely triggering
@@ -598,6 +592,8 @@ var click = function(event) {
 		}
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 		updateStateHistory(); // update puzzle state history
+		prevX = tempXIndex;
+		prevY = tempYIndex;
 	}
 
 };
@@ -827,37 +823,31 @@ var clock = function(){
 
 // adds current puzzle state to history
 var updateStateHistory = function(){
-	//console.log("UPDATING HISTORY...");
+	// technically dont need to keep track of cells
+	// but removing it causes errors and im not fixing whats not broken
 	let historyCells = JSON.parse(JSON.stringify(curPuzzle.cells));
 	let historyNodes = JSON.parse(JSON.stringify(curPuzzle.nodes));
-	if (puzzleHistory.length != lastUndo){ // remove history past point of last undo
-		let tmp = puzzleHistory.length - lastUndo;
+	if (puzzleHistory.length > lastUndo + 1){ // remove history past point of last undo
+		let tmp = puzzleHistory.length - lastUndo - 1;
 		for (let i = 0; i < tmp; i++){
 			puzzleHistory.pop();
 		}
-		//console.log("NEW puzzleHistory length (should = undo): " + puzzleHistory.length);
 	}
 	if (puzzleHistory.length == maxHistory) // remove oldest undo state
 		puzzleHistory.shift();
 	puzzleHistory.push([historyCells, historyNodes]);
-	lastUndo = puzzleHistory.length;
-	//console.log("puzzleHistory length: " + puzzleHistory.length);
-	//console.log("lastUndo: " + lastUndo);
+	lastUndo = puzzleHistory.length - 1;
 	return;
 }
 
 // called when user hits undo button, HTML side
 undoHTML.onclick = function(){
-	if (lastUndo == puzzleHistory.length) // since last undo state is a copy of the current state
-		lastUndo--;
 	if (lastUndo > 0){ // if there are things to undo
 		let n = lastUndo - 1;
 		curPuzzle.cells = JSON.parse(JSON.stringify(puzzleHistory[n][0]));
 		curPuzzle.nodes = JSON.parse(JSON.stringify(puzzleHistory[n][1]));
 		lastUndo--;
 	}
-	//console.log("puzzleHistory length: " + puzzleHistory.length);
-	//console.log("lastUndo: " + lastUndo);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 	return;
 };
@@ -870,10 +860,6 @@ redoHTML.onclick = function(){
 		curPuzzle.nodes = JSON.parse(JSON.stringify(puzzleHistory[n][1]));
 		lastUndo++;
 	}
-	if (lastUndo == puzzleHistory.length - 1)
-		lastUndo++
-	//console.log("puzzleHistory length: " + puzzleHistory.length);
-	//console.log("lastUndo: " + lastUndo);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 	return;
 };

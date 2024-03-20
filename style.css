@@ -280,7 +280,6 @@ label {
 	margin: auto;
 	margin-top: 15px;
 	margin-bottom: 25px;
-	height: 50px;
 	width: 600px;
 	align-items: flex;
 	justify-content: center;
@@ -327,8 +326,9 @@ label {
 .about {     
 	position: absolute;
 	display: block;
-	bottom: 10px;
-	right: 10px;
+	margin: 10px;
+	bottom: 0px;
+	right: 0px;
 	text-align: right;
 	color: #DE9894;
 	font-family: Arial;
@@ -389,6 +389,10 @@ label {
 	
 	.canvas-container {
 		margin-bottom: 15px;
+	}
+	
+	.about {
+		position: inherit;
 	}
 	
 }
