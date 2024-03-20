@@ -597,6 +597,83 @@ function handleCellWithZero(puzzle, i, j) {
     placeCross(puzzle, i, j + 1, i + 1, j + 1);
 }
 
+function handleCellWithNumber(puzzle, i, j) {
+    // Retrieve the number in the current cell
+    let cellNumber = puzzle.cells[i][j][0];
+    
+    // Count the number of lines around the current cell
+    let numLines = countLines(puzzle, i, j);
+    
+    // If the number of lines equals the number in the cell, place crosses on the remaining edges
+    if (numLines === cellNumber) {
+        // Define potential neighbors for the current cell
+        let neighbors = [
+            [i, j, i, j + 1], // top
+            [i, j + 1, i + 1, j + 1], // right
+            [i + 1, j, i + 1, j + 1], // bottom
+            [i, j, i + 1, j] // left
+        ];
+
+        for (let neighbor of neighbors) {
+            // Check if there is not already a line between the nodes
+            if (arrayIndexOf(puzzle.nodes[neighbor[0]][neighbor[1]], [neighbor[2], neighbor[3], 1]) === -1 &&
+                arrayIndexOf(puzzle.nodes[neighbor[0]][neighbor[1]], [neighbor[2], neighbor[3], 0]) === -1) {
+                // If there's no line and no cross, place a cross
+                placeCross(puzzle, neighbor[0], neighbor[1], neighbor[2], neighbor[3]);
+            }
+        }
+    }
+}
+
+function handleCellWithInverseNumber(puzzle, i, j) {
+    // Retrieve the number in the current cell
+    let cellNumber = puzzle.cells[i][j][0];
+
+    // Count the number of crosses around the current cell
+    let numCrosses = countCrosses(puzzle, i, j);
+
+    // If the number of crosses equals 4 minus the number in the cell, place lines on the remaining edges
+    if (numCrosses === 4 - cellNumber) {
+        // Define potential neighbors for the current cell
+        let neighbors = [
+            [i, j, i, j + 1], // top
+            [i, j + 1, i + 1, j + 1], // right
+            [i + 1, j, i + 1, j + 1], // bottom
+            [i, j, i + 1, j] // left
+        ];
+
+        for (let neighbor of neighbors) {
+            // Check if there is not already a cross or line between the nodes
+            if (arrayIndexOf(puzzle.nodes[neighbor[0]][neighbor[1]], [neighbor[2], neighbor[3], 0]) === -1 &&
+                arrayIndexOf(puzzle.nodes[neighbor[0]][neighbor[1]], [neighbor[2], neighbor[3], 1]) === -1) {
+                // If there's no cross and no line, place a line
+                placeLine(puzzle, neighbor[0], neighbor[1], neighbor[2], neighbor[3]);
+            }
+        }
+    }
+}
+
+// Additional helper function to count crosses around a cell
+function countCrosses(puzzle, x, y) {
+    let numCrosses = 0;
+    if (arrayIndexOf(puzzle.nodes[x][y], [x, y+1, 0]) != -1) // top cross
+        numCrosses++;
+    if (arrayIndexOf(puzzle.nodes[x][y+1], [x+1, y+1, 0]) != -1) // right cross
+        numCrosses++;
+    if (arrayIndexOf(puzzle.nodes[x+1][y+1], [x+1, y, 0]) != -1) // bottom cross
+        numCrosses++;
+    if (arrayIndexOf(puzzle.nodes[x+1][y], [x, y, 0]) != -1) // left cross
+        numCrosses++;
+    return numCrosses;
+}
+
+
+
+
+
+
+
+
 // Main autoSolver function
 export var autoSolver = function(puzzle) {
     for (let i = 0; i < puzzle.h; i++) {
@@ -605,6 +682,10 @@ export var autoSolver = function(puzzle) {
             handleNodeRules(puzzle, i, j);
             // Handle cell rules
             handleCellRules(puzzle, i, j);
+			//handles lines around cells
+			handleCellWithNumber(puzzle,i,j);
+			//handles crosses around cells
+			handleCellWithInverseNumber(puzzle,i,j);
         }
     }
     // Update the graphic puzzle state
