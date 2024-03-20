@@ -403,6 +403,8 @@ window.onload = function(){
 var render = function() {
 	if (!renderT) return;
 
+	var timeStart = Date.now();
+
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -495,7 +497,14 @@ var render = function() {
 	//console.log(camAndLook);
 	//console.log(canvas.width, canvas.height);
 
-	setTimeout(render, 12);
+	
+	var msPassed = Date.now() - timeStart;
+	if (msPassed <= 12) { 			// 0 <= x <= 12
+		setTimeout(render, 12 - msPassed);
+	} else if (msPassed > 12 ) {						
+		setTimeout(render, 0);
+	}
+
 };
 
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
@@ -506,11 +515,15 @@ var maxZoom;
 var lastPinchDist = 0;
 var ongoingTouches = [];
 var twoTouches = false;
+var touchTimer = 0;
+var usingTouchEvents = false;
+var isTouching = false;
+var justPlacedAnX = false;
 
 var startEventListeners = function(event) {
 	//canvas.addEventListener("mouseenter", mouseEnter, false);
 	window.addEventListener("resize", windowResize, false);
-	canvas.addEventListener("click", click, true);
+	//canvas.addEventListener("click", click, true);
 	canvas.addEventListener("pointerdown", pointerDown, false);
 	canvas.addEventListener("wheel", mouseWheel, { passive: false });
 
@@ -518,18 +531,14 @@ var startEventListeners = function(event) {
 	canvas.addEventListener("touchmove", touchMove);
 	canvas.addEventListener("touchend", touchEnd);
 
-	//canvas.addEventListener("mouseleave", mouseLeave, false);
+	canvas.addEventListener("mouseleave", mouseLeave, false);
 };
 
 canvas.onselectstart = function () { return false; };
+canvas.oncontextmenu = function(event) { event.preventDefault(); event.stopPropagation(); }
 
-var click = function(event) {
-	//console.log("click fired!");
-
-	var canvasRect = canvas.getBoundingClientRect();
-	var mouseX = event.clientX - canvasRect.left;
-	var mouseY = event.clientY - canvasRect.top;
-
+// converts canvas coordinates to world coordinates
+var canvasToWorldCoords = function(mouseX, mouseY) {
 	var cSpace = [mouseX, canvas.height - mouseY];
 	cSpace[0] /= canvas.width;
 	cSpace[1] /= canvas.height;
@@ -551,6 +560,38 @@ var click = function(event) {
 	var worldCoords = glMatrix.vec4.create();;
 	glMatrix.vec4.transformMat4(worldCoords, prev, invView);
 
+	return worldCoords;
+};
+
+// called when the puzzle state should be changing somehow
+var click = function(worldCoords, button) {
+	//console.log("click fired!");
+
+	// var canvasRect = canvas.getBoundingClientRect();
+	// var mouseX = event.clientX - canvasRect.left;
+	// var mouseY = event.clientY - canvasRect.top;
+
+	// var cSpace = [mouseX, canvas.height - mouseY];
+	// cSpace[0] /= canvas.width;
+	// cSpace[1] /= canvas.height;
+	// var ndc = [ (cSpace[0] * 2) - 1, (cSpace[1] * 2) - 1 ];
+		
+	// var invProj = glMatrix.mat4.create();
+	// glMatrix.mat4.invert(invProj, projection);
+
+	// var invView = glMatrix.mat4.create();
+	// glMatrix.mat4.invert(invView, view);
+
+	// var tempPrev = glMatrix.vec4.fromValues(ndc[0], ndc[1], 0, 1);
+	
+	// var prev = glMatrix.vec4.create();
+	// glMatrix.vec4.transformMat4(prev, tempPrev, invProj);
+	
+	// prev = glMatrix.vec4.fromValues(prev[0], prev[1], prev[2], 1);
+	
+	// var worldCoords = glMatrix.vec4.create();;
+	// glMatrix.vec4.transformMat4(worldCoords, prev, invView);
+
 	var keptIndex = 0;
 	var lineFound = false;
 	for (var i = 0; i < lineObjects.length; i++) {
@@ -565,7 +606,7 @@ var click = function(event) {
 	var tempXIndex = lineObjects[keptIndex].xCoord;
 	var tempYIndex = lineObjects[keptIndex].yCoord;
 
-	if (!camWasMoved && lineFound){
+	if (!camWasMoved && lineFound) {
 		// determine if user is placing a cross by placing a line first
 		// used to undo QOL rules unintentionally triggered by line placement before cross
 		if (prevX == tempXIndex && prevY == tempYIndex && ((gLinesArray[tempYIndex][tempXIndex] + 1) % 3 == 2)){
@@ -577,8 +618,26 @@ var click = function(event) {
 			puzzleHistory.pop();
 		}
 		
-		gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
-		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex); // place line logically
+		// 0 is left click 2 is right click. If a touch event has been registered then use timer to check
+		// if we are placing a line or cross.
+		if (button == 0 || ((usingTouchEvents ) && (touchTimer < 20)) ) {						//left click
+			if ( gLinesArray[tempYIndex][tempXIndex] == 2 )										// an X is already there
+				gLinesArray[tempYIndex][tempXIndex] = 1;
+			else																				// line or no line is there
+				gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];	// toggles between line and no line
+		}
+		else if (button == 2 || ( (usingTouchEvents ) && (touchTimer >= 50) )) {
+			if (gLinesArray[tempYIndex][tempXIndex] == 1)										// a line is already there
+				gLinesArray[tempYIndex][tempXIndex] = 2;
+			else
+				gLinesArray[tempYIndex][tempXIndex] = 2 - gLinesArray[tempYIndex][tempXIndex];	// toggles between nothing and a cross
+
+			justPlacedAnX = true;
+		}
+
+
+		//gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
+		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex); 			 // place line logically
 		
 		// update puzzle state with all QOL options ONLY IF cross or line was placed
 		// this is to allow user to erase moves without QOL infinitely triggering
@@ -621,9 +680,107 @@ var mouseWheel = function(event) {
 	//render();
 };
 
+// var mouseEnter = function (event) {
+// 	canvas.addEventListener("click", click, false);		
+// 	canvas.addEventListener("mousedown", pointerDown, false);		
+// 	canvas.addEventListener("wheel", mouseWheel, false);
+// 	//canvas.addEventListener("mouseleave", mouseLeave, false);
+// 	//canvas.removeEventListener("mouseenter", mouseEnter, false);
+// };
+
+// pointer events work with mouse or touch events but some events should only work on touch screens
+var pointerDown = function(event) {
+	canvas.addEventListener("pointermove", pointerMove, { passive: false });
+	canvas.addEventListener("pointerup", pointerUp, false);
+
+	camTotalMoved = [0,0];
+	camWasMoved = false;
+
+	startPos[0] = event.layerX;
+	startPos[1] = event.layerY;
+
+	justPlacedAnX = false;
+
+};
+
+// pointer getting moved after a pointer down has been registered
+var pointerMove = function (event) {
+	//event.preventDefault();
+	if (twoTouches) return;
+	var deltaX = (event.layerX - startPos[0]) * 0.1;
+	var deltaY = (event.layerY - startPos[1]) * 0.1;
+
+	camTotalMoved[0] += Math.abs(deltaX);
+	camTotalMoved[1] += Math.abs(deltaY);
+	var camDistanceMoved = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
+	if (camDistanceMoved > 2)
+		camWasMoved = true;
+
+	camAndLook[0] -= deltaX * (0.1 * zoomLevel);
+	camAndLook[1] += deltaY * (0.1* zoomLevel);
+	
+	//camWasMoved = true;
+
+	startPos[0] = event.layerX;
+	startPos[1] = event.layerY;
+
+	if (camAndLook[0] < 0 )
+		camAndLook[0] = 0;
+
+	if (camAndLook[0] > (curPuzzle.w * 10))
+		camAndLook[0] = curPuzzle.w * 10;
+
+	if (camAndLook[1] < (curPuzzle.h * -10))
+		camAndLook[1] = curPuzzle.h * -10;
+
+	if (camAndLook[1] > 0)
+		camAndLook[1] = 0;
+
+};
+
+// mouse click release or taking finger off of touch screen
+var pointerUp = function (event) {
+	var canvasRect = canvas.getBoundingClientRect();
+	var mouseX = event.clientX - canvasRect.left;
+	var mouseY = event.clientY - canvasRect.top;
+	var worldCoords = canvasToWorldCoords(mouseX, mouseY);
+
+	//console.log(" POINTER UP ", event);
+
+	// var camDistanceMoved = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
+	// if ((camDistanceMoved > 2) || (justPlacedAnX))
+	// 	camWasMoved = true;
+	if ((!camWasMoved) && (!justPlacedAnX))
+		click(worldCoords, event.button);
+
+	canvas.removeEventListener("pointermove", pointerMove, false);
+	canvas.removeEventListener("pointerup", pointerUp, false);
+};
+// mouse leaving the canvas
+var mouseLeave = function (event) { 
+	//canvas.removeEventListener("click", click, false);		
+	//canvas.removeEventListener("wheel", mouseWheel, false);
+	//canvas.removeEventListener("mousedown", pointerDown, false);
+	canvas.removeEventListener("pointermove", pointerMove, false);
+	//canvas.removeEventListener("mouseleave", mouseLeave, false);
+
+	//canvas.addEventListener("mouseenter", mouseEnter, false);
+};
+
+// start of a touch event
 var touchStart = function(event) {
 	//event.preventDefault();
 	//console.log(event.changedTouches);
+	usingTouchEvents = true;
+	isTouching = true;
+	justPlacedAnX = false;
+	var canvasRect = canvas.getBoundingClientRect();
+	var mouseX = event.targetTouches[0].clientX - canvasRect.left;
+	var mouseY = event.targetTouches[0].clientY - canvasRect.top;
+	var worldCoords = canvasToWorldCoords(mouseX, mouseY);
+	//console.log(mouseX, mouseY);
+	incrementCounter(worldCoords);
+
 	var touches = event.changedTouches;
 	for (let i = 0; i < touches.length; i++) {
 		ongoingTouches.push(copyTouch(touches[i]));
@@ -633,10 +790,12 @@ var touchStart = function(event) {
 
 };
 
-var copyTouch = function({identifier, clientX, clientY}){
+// helper fuction for tracking touch events
+var copyTouch = function({identifier, clientX, clientY}) {
 	return {identifier, clientX, clientY};
 };
 
+// registered touch starts moving after a touchStart was registered
 var touchMove = function(event) {
 	//event.preventDefault();
 	//console.log(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
@@ -683,8 +842,19 @@ var touchMove = function(event) {
 
 };
 
+// end of a touch event
 var touchEnd = function(event) {
 	//event.preventDefault();
+	isTouching = false;
+	// if (touchTimer < 40) {
+	// 	var canvasRect = canvas.getBoundingClientRect();
+	// 	var mouseX = event.changedTouches[0].clientX - canvasRect.left;
+	// 	var mouseY = event.changedTouches[0].clientY - canvasRect.top;
+	// 	var worldCoords = canvasToWorldCoords(mouseX, mouseY);
+	// 	click(worldCoords, -1);
+	// }
+	touchTimer = 0;
+
 	var touches = event.changedTouches;
 
 	for (let i = 0; i < touches.length; i++) {
@@ -700,6 +870,7 @@ var touchEnd = function(event) {
 
 };
 
+// helper function to keep track of moving touch events
 var ongoingTouchIndexById = function(idToFind) {
 	for (let i = 0; i < ongoingTouches.length; i++) {
 		var id = ongoingTouches[i].identifier;
@@ -710,76 +881,19 @@ var ongoingTouchIndexById = function(idToFind) {
 	return -1;
 };
 
-// var mouseEnter = function (event) {
-// 	canvas.addEventListener("click", click, false);		
-// 	canvas.addEventListener("mousedown", pointerDown, false);		
-// 	canvas.addEventListener("wheel", mouseWheel, false);
-// 	//canvas.addEventListener("mouseleave", mouseLeave, false);
-// 	//canvas.removeEventListener("mouseenter", mouseEnter, false);
-// };
-
-var pointerDown = function(event) {
-	canvas.addEventListener("pointermove", pointerMove, { passive: false });
-	canvas.addEventListener("pointerup", pointerUp, false);
-
-	camTotalMoved = [0,0];
-	camWasMoved = false;
-
-	startPos[0] = event.layerX;
-	startPos[1] = event.layerY;
-
+// counter to track how long a touch event has been going to see if a cross should be placed
+var incrementCounter = function(worldCoords) {
+	touchTimer++;
+	//console.log(touchTimer);
+	if ((touchTimer >= 50) && (!camWasMoved)) {
+		click(worldCoords, -1);
+		//touchTimer = 0;
+	}
+	else if (isTouching)
+		setTimeout(incrementCounter, 1, worldCoords);
 };
 
-var pointerMove = function (event) {
-	//event.preventDefault();
-	if (twoTouches) return;
-	var deltaX = (event.layerX - startPos[0]) * 0.1;
-	var deltaY = (event.layerY - startPos[1]) * 0.1;
-
-	camTotalMoved[0] += Math.abs(deltaX);
-	camTotalMoved[1] += Math.abs(deltaY);
-
-	camAndLook[0] -= deltaX * (0.1 * zoomLevel);
-	camAndLook[1] += deltaY * (0.1* zoomLevel);
-	
-	//camWasMoved = true;
-
-	startPos[0] = event.layerX;
-	startPos[1] = event.layerY;
-
-	if (camAndLook[0] < 0 )
-		camAndLook[0] = 0;
-
-	if (camAndLook[0] > (curPuzzle.w * 10))
-		camAndLook[0] = curPuzzle.w * 10;
-
-	if (camAndLook[1] < (curPuzzle.h * -10))
-		camAndLook[1] = curPuzzle.h * -10;
-
-	if (camAndLook[1] > 0)
-		camAndLook[1] = 0;
-
-};
-
-var pointerUp = function (event) {
-	var camDistanceMoved = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
-	if (camDistanceMoved > 2)
-		camWasMoved = true;
-
-	canvas.removeEventListener("pointermove", pointerMove, false);
-	canvas.removeEventListener("pointerup", pointerUp, false);
-};
-
-// var mouseLeave = function (event) { 
-// 	canvas.removeEventListener("click", click, false);		
-// 	canvas.removeEventListener("wheel", mouseWheel, false);
-// 	canvas.removeEventListener("mousedown", pointerDown, false);
-// 	canvas.removeEventListener("mousemove", pointerMove, false);
-// 	canvas.removeEventListener("mouseleave", mouseLeave, false);
-
-// 	//canvas.addEventListener("mouseenter", mouseEnter, false);
-// };
-
+// used to resize the canvas and viewport after the window size changes
 var windowResize = function() {
 	canvas.width = canvas.parentNode.clientWidth;
 	canvas.height = canvas.parentNode.clientHeight;
