@@ -164,7 +164,6 @@ window.onload = function(){
 		curPuzzle.cells[4][3] = [2, false];
 		updateStateHistory();
 	}
-	
 	gLinesArray = Array(curPuzzle.h);
 	
 	// some browsers do not natively support webgl, try experimental ver
@@ -381,12 +380,23 @@ window.onload = function(){
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
 	// https://www.npmjs.com/package/polyline-normals
 
-	// draw curPuzzle -- used if theres save data present
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	// trigger some of the QOL options
+	let changes = true;
+	while (changes){ // iterate over puzzle multiple times until no changes made
+		changes = false;
+		for (let i = 0; i < curPuzzle.h + 1; i++){
+			for (let j = 0; j < curPuzzle.w + 1; j++) {
+				if (ACdead)
+					changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
+				if (ACnum)
+					changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
+			}
+		}
+	}
 
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 	renderT = true;
 	render();
-	
 };
 
 // looping render call to draw stuff to screen
@@ -544,15 +554,12 @@ var click = function(event) {
 	var keptIndex = 0;
 	var lineFound = false;
 	for (var i = 0; i < lineObjects.length; i++) {
-		
 		if ((worldCoords[0] > lineObjects[i].xLowerBound && worldCoords[0] < lineObjects[i].xUpperBound) 				// click was inside a line
 			&& (worldCoords[1] > lineObjects[i].yLowerBound && worldCoords[1] < lineObjects[i].yUpperBound)) {
 			
 			lineFound = true;
 			keptIndex = i;
-			
 		}
-
 	}
 
 	var tempXIndex = lineObjects[keptIndex].xCoord;
@@ -583,9 +590,8 @@ var click = function(event) {
 					for (let j = 0; j < curPuzzle.w + 1; j++) {
 						if (ACdead)
 							changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
-						if (ACnum){
+						if (ACnum)
 							changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
-						}
 					}
 				}
 			}
@@ -931,7 +937,21 @@ settingsHTML.onclick = function(){
 // toggles auto cross completed numbers
 ACnumHTML.oninput = function() {
 	ACnum = ACnumHTML.checked;
-	console.log("ACnum = " + ACnum);
+	//console.log("ACnum = " + ACnum);
+	// apply rules + update puzzle state
+	let changes = true;
+	while (changes){ // iterate over puzzle multiple times until no changes made
+		changes = false;
+		for (let i = 0; i < curPuzzle.h + 1; i++){
+			for (let j = 0; j < curPuzzle.w + 1; j++) {
+				if (ACdead)
+					changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
+				if (ACnum)
+					changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
+			}
+		}
+	}
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 }
 
 // toggles auto cross intersections
@@ -943,7 +963,21 @@ ACinterHTML.oninput = function() {
 // toggles auto cross dead ends
 ACdeadHTML.oninput = function() {
 	ACdead = ACdeadHTML.checked;
-	console.log("ACdead = " + ACdead);
+	//console.log("ACdead = " + ACdead);
+	// apply rule
+	let changes = true;
+	while (changes){ // iterate over puzzle multiple times until no changes made
+		changes = false;
+		for (let i = 0; i < curPuzzle.h + 1; i++){
+			for (let j = 0; j < curPuzzle.w + 1; j++) {
+				if (ACdead)
+					changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
+				if (ACnum)
+					changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
+			}
+		}
+	}
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 }
 
 // toggles auto cross premature loops

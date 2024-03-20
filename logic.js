@@ -47,6 +47,19 @@ export var logPuzzleState = function(puzzle) {
 	}
 }
 
+// convert puzzle from json to Puzzle class
+// currently just parses cell data
+export var convertPuzzle = function(json) {
+	var data = JSON.parse(json);
+	var puzzle = new Puzzle(data.size, data.size);
+	for (let i = 0; i < data.size; i++){
+		for (let j = 0; j < data.size; j++){
+			puzzle.cells[i][j] = [data.matrix.numbers[i][j], false];
+		}
+	}
+	return puzzle;
+}
+
 // returns index of array v found within array a
 // returns -1 if not found
 export var arrayIndexOf = function(a, v){
@@ -209,19 +222,6 @@ export var clearPuzzle = function(puzzle) {
 			puzzle.nodes[i][j] = [];
 		}
 	}
-}
-
-// convert puzzle from json to Puzzle class
-// currently just parses cell data
-export var convertPuzzle = function(json) {
-	var data = JSON.parse(json);
-	var puzzle = new Puzzle(data.size, data.size);
-	for (let i = 0; i < data.size; i++){
-		for (let j = 0; j < data.size; j++){
-			puzzle.cells[i][j] = [data.matrix.numbers[i][j], false];
-		}
-	}
-	return puzzle;
 }
 
 // generates a new puzzle
