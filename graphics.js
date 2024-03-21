@@ -1008,6 +1008,31 @@ export class crossTemplate {
 	}
 };
 
+export class shadeCellTemplate {
+	vertices;
+	indices;
+	VAO;
+	VBO;
+	IBO;
+	constructor() {
+		this.vertices = [
+			-1.0, -1.0, 0.0,
+			1.0, -1.0, 0.0,
+			1.0, 1.0, 0.0,
+			-1.0, 1.0, 0.0
+		];
+		this.indices = [
+			0, 1, 2,
+			2, 3, 0
+		];
+		
+		this.VAO = 0;
+		this.VBO = 0;
+		this.IBO = 0;
+
+	}
+};
+
 // data for a single object. Can be a line, or circle, or later on can be numbers, or X's
 export class graphicsObj {
 	modelMatrix;		// matrix that holds transformation, rotation, and scale info
@@ -1015,11 +1040,12 @@ export class graphicsObj {
 	rotate;
 	scale;
 	color;
-	type;				// 1 for dot, 2 for line/cross, 3 for cell number
-	display;			// for lines: 0 for nothing, 1 for line, 2 for X. for cells: do the number
+	type;				// 1 for dot, 2 for line/cross, 3 for cell number, 4 for shade cell
+	display;			// for lines: 0 for nothing, 1 for line, 2 for X. for cells: do the number. For shade cell: 0 for off, 1 for on
 	
 	//xWorld;
 	//yWorld;
+	worldCoords;
 	xLowerBound;
 	xUpperBound;
 	yLowerBound;
@@ -1036,6 +1062,7 @@ export class graphicsObj {
 		this.type = -1;
 		this.xCoord = -1;
 		this.yCoord = -1;
+		this.worldCoords = Array(2);
 	}
 };
 
@@ -1092,7 +1119,6 @@ export var getLine = function(gl, program) {
 	
 	//console.log("newLine has been pushed");
 	return newLine;
-
 }
 
 export var getZero = function(gl, program) {
@@ -1228,6 +1254,32 @@ export var getCross = function(gl, program) {
 	//console.log("newCross has been pushed");
 	return newCross;
 
+}
+
+export var getBox = function(gl, program) {
+	var newBox = new shadeCellTemplate();
+
+	newBox.VAO = gl.createVertexArray();
+	gl.bindVertexArray(newBox.VAO);
+	
+	newBox.VBO = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, newBox.VBO);
+
+	// new Float32Array(verticies) --> webGL expects 32 bit, JS encodes as 64 bit
+	// gl.STATIC_DRAW --> triangle shape will not change at all after being drawn
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newBox.vertices), gl.STATIC_DRAW);
+	
+	var posAttribLoc = gl.getAttribLocation(program, "vertPos");
+	gl.vertexAttribPointer(posAttribLoc, 3, gl.FLOAT, gl.FALSE, 3 * Float32Array.BYTES_PER_ELEMENT,	0);
+	
+	gl.enableVertexAttribArray(posAttribLoc);
+	
+	newBox.IBO = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, newBox.IBO);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(newBox.indices), gl.STATIC_DRAW);
+	
+	//console.log("newBox has been pushed");
+	return newBox;
 }
 
 // update graphic state to match logic state

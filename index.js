@@ -61,7 +61,8 @@ var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
 var cameraPosition, lookAt, camAndLook;
 var puzzleObjects = [];				// list of puzzle objects that wont change much like dots and numbers
 var lineObjects = [];				// list of lines that will be interacted with and change
-var dot, line, cross, zero, one, two, three;	// instance of graphic templates
+var cellShades = [];
+var dot, line, cross, zero, one, two, three, box;	// instance of graphic templates
 var renderT = false;
 var view;
 var projection;
@@ -221,6 +222,7 @@ window.onload = function(){
 	two = g.getTwo(gl, program);
 	three = g.getThree(gl, program);
 	cross = g.getCross(gl, program);
+	box = g.getBox(gl, program);
 
 	var translateX = 0.0;			// used to apply translation to object pos
 	var translateY = 0.0;
@@ -245,9 +247,10 @@ window.onload = function(){
 
 	translateX = 5.0;
 	translateY = -5.0;
-	// setup the cell numbers
+	
 	for (let i = 0; i < curPuzzle.h; i++) {
 		for (let j = 0; j < curPuzzle.w; j++) {
+			// setup the cell numbers
 			if (curPuzzle.cells[i][j][0] != -1) {
 
 				let newMesh = new g.graphicsObj();
@@ -262,6 +265,25 @@ window.onload = function(){
 
 				puzzleObjects.push(newMesh);
 			}
+			// // setup the shade cells
+			let newMesh = new g.graphicsObj();
+			newMesh.type = 4;					// 4 for cell shade
+			newMesh.display = 0;				// start toggled off
+			newMesh.color = [0.9, 0.9, 0.9];
+			// newMesh.yLowerBound = translateY - 3;
+			// newMesh.yUpperBound = translateY + 3;
+			// newMesh.xUpperBound = translateX + 3;
+			// newMesh.xLowerBound = translateX - 3;
+			newMesh.worldCoords = [translateX, translateY];
+			
+			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);				// keep same translation as current cell iteration
+			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);		
+
+			let scaleVec = glMatrix.vec3.fromValues(5, 5, 1);
+			glMatrix.mat4.scale(newMesh.modelMatrix, newMesh.modelMatrix, scaleVec);
+
+			cellShades.push(newMesh);
+
 			translateX += 10.0;
 		}
 		translateX = 5.0;
@@ -290,10 +312,11 @@ window.onload = function(){
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
 			//newMesh.xWorld = translateX;
 			//newMesh.yWorld = translateY;
-			newMesh.yLowerBound = translateY - 0.95;
-			newMesh.yUpperBound = translateY + 0.95;
-			newMesh.xUpperBound = translateX + 4.5;
-			newMesh.xLowerBound = translateX - 4.5;
+			// newMesh.yLowerBound = translateY - 0.95;
+			// newMesh.yUpperBound = translateY + 0.95;
+			// newMesh.xUpperBound = translateX + 4.5;
+			// newMesh.xLowerBound = translateX - 4.5;
+			newMesh.worldCoords = [translateX, translateY];
 
 			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
 			glMatrix.mat4.scale(newMesh.scale, newMesh.scale, scaleVec);
@@ -333,10 +356,11 @@ window.onload = function(){
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
 			//newMesh.xWorld = translateX;
 			//newMesh.yWorld = translateY;
-			newMesh.xLowerBound = translateX - 0.95;
-			newMesh.xUpperBound = translateX + 0.95;
-			newMesh.yUpperBound = translateY + 4.5;
-			newMesh.yLowerBound = translateY - 4.5;
+			// newMesh.xLowerBound = translateX - 0.95;
+			// newMesh.xUpperBound = translateX + 0.95;
+			// newMesh.yUpperBound = translateY + 4.5;
+			// newMesh.yLowerBound = translateY - 4.5;
+			newMesh.worldCoords = [translateX, translateY];
 
 			let rotationMat = glMatrix.mat4.create()
 			glMatrix.mat4.fromZRotation(rotationMat, 1.5708)
@@ -373,7 +397,7 @@ window.onload = function(){
 	lookAt = [camAndLook[0], camAndLook[1], 0.0];
 	vp = glMatrix.mat4.create();
 
-	maxZoom = curPuzzle.h * 4; 
+	maxZoom = curPuzzle.h * 3; 
 	zoomSliderHTML.max = maxZoom;
 	zoomLevel = zoomSliderHTML.value = maxZoom;
 
@@ -428,6 +452,17 @@ var render = function() {
 	var colorLoc = gl.getUniformLocation(program, "color");
 	var crossScale = [3.0, 3.0, 1];
 
+	// draw shaded cells
+	for (let i = 0; i < cellShades.length; i++) {
+		if (cellShades[i].display == 0) continue;
+		gl.uniform3fv(colorLoc, cellShades[i].color);
+		glMatrix.mat4.multiply(mvp, vp, cellShades[i].modelMatrix);
+		gl.uniformMatrix4fv(mvpLoc, false, mvp);
+		gl.bindVertexArray(box.VAO);
+		gl.drawElements(gl.TRIANGLES, box.indices.length, gl.UNSIGNED_SHORT, 0);
+
+	}
+
 	// drawing lines and crosses
 	for (let i = 0; i < lineObjects.length; i++) {
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off
@@ -464,6 +499,7 @@ var render = function() {
 		}
 	}
 
+	// drawing dots and numbers
 	for (let i = 0; i < puzzleObjects.length; i++) {
 
 		gl.uniform3fv(colorLoc, puzzleObjects[i].color);
@@ -527,8 +563,8 @@ var startEventListeners = function(event) {
 	canvas.addEventListener("pointerdown", pointerDown, false);
 	canvas.addEventListener("wheel", mouseWheel, { passive: false });
 
-	canvas.addEventListener("touchstart", touchStart, true);
-	canvas.addEventListener("touchmove", touchMove);
+	canvas.addEventListener("touchstart", touchStart, {passive: false});
+	canvas.addEventListener("touchmove", touchMove, {passive: false});
 	canvas.addEventListener("touchend", touchEnd);
 
 	canvas.addEventListener("mouseleave", mouseLeave, false);
@@ -592,11 +628,19 @@ var click = function(worldCoords, button) {
 	// var worldCoords = glMatrix.vec4.create();;
 	// glMatrix.vec4.transformMat4(worldCoords, prev, invView);
 
+	var timeStart = Date.now();
+	
 	var keptIndex = 0;
 	var lineFound = false;
 	for (var i = 0; i < lineObjects.length; i++) {
-		if ((worldCoords[0] > lineObjects[i].xLowerBound && worldCoords[0] < lineObjects[i].xUpperBound) 				// click was inside a line
-			&& (worldCoords[1] > lineObjects[i].yLowerBound && worldCoords[1] < lineObjects[i].yUpperBound)) {
+
+		let xDist = lineObjects[i].worldCoords[0] - worldCoords[0];
+		let yDist = lineObjects[i].worldCoords[1] - worldCoords[1];
+		let dist = Math.sqrt((xDist * xDist) + (yDist * yDist));
+		if (dist < 3) {
+			
+		// if ((worldCoords[0] > lineObjects[i].xLowerBound && worldCoords[0] < lineObjects[i].xUpperBound) 				// click was inside a line
+		// 	&& (worldCoords[1] > lineObjects[i].yLowerBound && worldCoords[1] < lineObjects[i].yUpperBound)) {
 			
 			lineFound = true;
 			keptIndex = i;
@@ -606,7 +650,7 @@ var click = function(worldCoords, button) {
 	var tempXIndex = lineObjects[keptIndex].xCoord;
 	var tempYIndex = lineObjects[keptIndex].yCoord;
 
-	if (!camWasMoved && lineFound) {
+	if (!camWasMoved && lineFound) { 
 		// determine if user is placing a cross by placing a line first
 		// used to undo QOL rules unintentionally triggered by line placement before cross
 		// COMMENTED OUT -- only used in left click mode!
@@ -650,7 +694,18 @@ var click = function(worldCoords, button) {
 		updateStateHistory(); // update puzzle state history
 		prevX = tempXIndex;
 		prevY = tempYIndex;
+
+	} else if (!camWasMoved) {																	// check for click for cell shading
+		for (let i = 0; i < cellShades.length; i++) {
+			let xDist = cellShades[i].worldCoords[0] - worldCoords[0];
+			let yDist = cellShades[i].worldCoords[1] - worldCoords[1];
+			let dist = Math.sqrt((xDist * xDist) + (yDist * yDist));
+			if (dist < 2)
+				cellShades[i].display = 1 - cellShades[i].display;
+		}
 	}
+	var msPassed = Date.now() - timeStart;
+	console.log("click() took ", msPassed, "ms");
 
 };
 
