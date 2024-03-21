@@ -609,6 +609,8 @@ var click = function(worldCoords, button) {
 	if (!camWasMoved && lineFound) {
 		// determine if user is placing a cross by placing a line first
 		// used to undo QOL rules unintentionally triggered by line placement before cross
+		// COMMENTED OUT -- only used in left click mode!
+		/*
 		if (prevX == tempXIndex && prevY == tempYIndex && ((gLinesArray[tempYIndex][tempXIndex] + 1) % 3 == 2)){
 			// undo last state
 			curPuzzle.cells = JSON.parse(JSON.stringify(puzzleHistory[lastUndo-1][0]));
@@ -617,6 +619,7 @@ var click = function(worldCoords, button) {
 			// remove state from history
 			puzzleHistory.pop();
 		}
+		*/
 		
 		// 0 is left click 2 is right click. If a touch event has been registered then use timer to check
 		// if we are placing a line or cross.
@@ -641,20 +644,8 @@ var click = function(worldCoords, button) {
 		
 		// update puzzle state with all QOL options ONLY IF cross or line was placed
 		// this is to allow user to erase moves without QOL infinitely triggering
-		if (gLinesArray[tempYIndex][tempXIndex] != 0){
-			let changes = true;
-			while (changes){ // iterate over puzzle multiple times until no changes made
-				changes = false;
-				for (let i = 0; i < curPuzzle.h + 1; i++){
-					for (let j = 0; j < curPuzzle.w + 1; j++) {
-						if (ACdead)
-							changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
-						if (ACnum)
-							changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
-					}
-				}
-			}
-		}
+		if (gLinesArray[tempYIndex][tempXIndex] != 0)
+			performQOL();
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 		updateStateHistory(); // update puzzle state history
 		prevX = tempXIndex;
@@ -941,6 +932,8 @@ var clock = function(){
 	}
 }
 
+// undo/redo related -------------------
+
 // adds current puzzle state to history
 var updateStateHistory = function(){
 	// technically dont need to keep track of cells
@@ -984,6 +977,8 @@ redoHTML.onclick = function(){
 	return;
 };
 
+// zoom related -------------------
+
 // toggles zoom slider to open/close
 zoomHTML.onclick = function(){
 	//console.log("Zoom pressed.");
@@ -1018,6 +1013,8 @@ zoomSliderHTML.oninput = function(){
 	//console.log("Slider value: " + zoomLevel);
 }
 
+// settings/QOL related -------------------
+
 // toggles settings menu to open/close
 settingsHTML.onclick = function(){
 	var settingsMenu = document.getElementById('settings-menu');
@@ -1048,11 +1045,8 @@ settingsHTML.onclick = function(){
 	return;
 };
 
-// toggles auto cross completed numbers
-ACnumHTML.oninput = function() {
-	ACnum = ACnumHTML.checked;
-	//console.log("ACnum = " + ACnum);
-	// apply rules + update puzzle state
+// performs QOL moves
+var performQOL = function(){
 	let changes = true;
 	while (changes){ // iterate over puzzle multiple times until no changes made
 		changes = false;
@@ -1062,16 +1056,27 @@ ACnumHTML.oninput = function() {
 					changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
 				if (ACnum)
 					changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
+				if (ACinter)
+					changes = changes || pl.crossIntersection(curPuzzle, i, j);
 			}
 		}
 	}
+}
+
+// toggles auto cross completed numbers
+ACnumHTML.oninput = function() {
+	ACnum = ACnumHTML.checked;
+	//console.log("ACnum = " + ACnum);
+	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 }
 
 // toggles auto cross intersections
 ACinterHTML.oninput = function() {
 	ACinter = ACinterHTML.checked;
-	console.log("ACinter = " + ACinter);
+	//console.log("ACinter = " + ACinter);
+	performQOL();
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 }
 
 // toggles auto cross dead ends
@@ -1080,30 +1085,24 @@ ACdeadHTML.oninput = function() {
 	//console.log("ACdead = " + ACdead);
 	// apply rule
 	let changes = true;
-	while (changes){ // iterate over puzzle multiple times until no changes made
-		changes = false;
-		for (let i = 0; i < curPuzzle.h + 1; i++){
-			for (let j = 0; j < curPuzzle.w + 1; j++) {
-				if (ACdead)
-					changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
-				if (ACnum)
-					changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
-			}
-		}
-	}
+	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 }
 
 // toggles auto cross premature loops
 ACloopHTML.oninput = function() {
 	ACloop = ACloopHTML.checked;
-	console.log("ACloop = " + ACloop);
+	//console.log("ACloop = " + ACloop);
+	performQOL();
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 }
 
 // toggles highlight wrong moves
 highlightHTML.oninput = function() {
 	highlight = highlightHTML.checked;
-	console.log("highlight = " + highlight);
+	//console.log("highlight = " + highlight);
+	performQOL();
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 }
 
 // creates new savestate + button
@@ -1171,8 +1170,9 @@ solutionHTML.onclick = function(){
 restartHTML.onclick = function(){
 	//console.log("Restart pressed.");
 	
-	// restart puzzle
+	// restart puzzle, but perform QOL improvements
 	pl.clearPuzzle(curPuzzle);
+	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
 	
 	// clear save data
@@ -1260,7 +1260,6 @@ newPuzzleHTML.onclick = function(){
 	localStorage.clear();
 	for (let i = 1; i <= saveCounter; i++){
 		let id = "load" + i;
-		//console.log(i);
 		document.getElementById(id).remove();
 	}
 	saveCounter = 0;

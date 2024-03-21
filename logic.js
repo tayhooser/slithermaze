@@ -278,6 +278,57 @@ export var crossCompletedCell = function(puzzle, x, y){
 	return changes;
 }
 
+// determines if node is an intersection and crosses leftover connections
+// returns true if change was made
+export var crossIntersection = function (puzzle, x, y){
+	let neighbors = [];
+	let visited = [];
+	let missing = [];
+	
+	// edge/corner cases
+	if (x == 0 && y == 0){ // top left corner
+		return false;
+	} else if (x == 0 && y == puzzle.w) { // top right corner
+		return false;
+	} else if (x == puzzle.h && y == 0) { // bottom left corner
+		return false;
+	} else if (x == puzzle.h && y == puzzle.w) { // bottom right corner
+		return false;
+	} else if (x == 0) { // top edge
+		neighbors = [[x, y-1], [x, y+1], [x+1, y]];
+	} else if (x == puzzle.h){ // bototm edge
+		neighbors = [[x, y-1], [x, y+1], [x-1, y]];
+	} else if (y == 0){ // left edge
+		neighbors = [[x-1, y], [x+1, y], [x, y+1]];
+	} else if (y == puzzle.w){ // right edge
+		neighbors = [[x-1, y], [x+1, y], [x, y-1]];
+	} else { // general case
+		neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
+	}
+	
+	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length != 2) // needs at least 2 connections
+		return false;
+	
+	// count number lines around cell
+	let numLine = 0;
+	for (let i = 0; i < puzzle.nodes[x][y].length; i++) {
+		if (puzzle.nodes[x][y][i][2] == 1){
+			numLine++;
+			visited.push([puzzle.nodes[x][y][i][0], puzzle.nodes[x][y][i][1]]);
+		}
+	}
+	
+	if (numLine != 2) // needs exactly 2 lines
+		return false;
+	
+	// cross remaining edges
+	missing = nodeSetDifference(neighbors, visited);
+	placeCross(puzzle, x, y, missing[0][0], missing[0][1]);
+	if (missing[1])
+		placeCross(puzzle, x, y, missing[1][0], missing[1][1]);
+	return true;
+}
+
 // determines if given node is a dead end and crosses it
 // returns true if change was made
 export var crossDeadEnd = function(puzzle, x, y){
@@ -319,7 +370,7 @@ export var crossDeadEnd = function(puzzle, x, y){
 	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length != requiredConns)
 		return false;
 	
-	// count number crosses around cell
+	// count number crosses around node
 	let numCross = 0;
 	for (let i = 0; i < requiredConns; i++) {
 		if (puzzle.nodes[x][y][i][2] == 0){
