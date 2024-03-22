@@ -77,13 +77,14 @@ var MoB;				// Middle of Board. Used to set the camera position in the center
 var gLinesArray;		// 2D Array that indicates which lines are on/off
 
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
-//function must be async to give us access to await
+//Defaults to an official map by Taylor. Query needs to be in key-value pair
+//Example: { name: 'Mayflower', author: 'Taylor' }
 async function getMap(query = { author: 'Taylor' }) {
     var params = query; 
 
-    //irrelevant to the promise issue, ignore this block
+    
     try {
-        var url = new URL('http://164.90.146.219:5000'), params;
+        var url = new URL('http://slithermaze.com/map'), params;
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
     } catch (error) {
         console.error(error);
@@ -91,15 +92,10 @@ async function getMap(query = { author: 'Taylor' }) {
 
     }
 
-    //await blocks the fetch() until its done, allowing us to actually print its value. Only possible because entire function is labelled "async"
-    //without async, wouldnt be able to remove data from the .then().
     let returning = await fetch(url).then(res => res.json()).then(data => {
         return data;
     });
 
-    //prints okay, value removed from .then()
-    console.log(returning);
-    //because function is asyncronous, returns a promise instead of a value". 
     return returning;
 }
 
