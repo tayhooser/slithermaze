@@ -10,7 +10,7 @@ var curPuzzle; // current puzzle
 
 var saveCounter = 0; // number of savestates
 var puzzleHistory = []; // history of puzzle states -- used for undo/redo
-var maxHistory = 10; // number states to keep track of 
+var maxHistory = 20; // number states to keep track of 
 var lastUndo = -1; // index for last undo move
 
 // timer variables
@@ -423,7 +423,7 @@ window.onload = function(){
 		}
 	}
 
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	renderT = true;
 	render();
 };
@@ -694,7 +694,7 @@ var click = function(worldCoords, button) {
 		// this is to allow user to erase moves without QOL infinitely triggering
 		if (gLinesArray[tempYIndex][tempXIndex] != 0)
 			performQOL();
-		g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 		updateStateHistory(); // update puzzle state history
 		prevX = tempXIndex;
 		prevY = tempYIndex;
@@ -704,8 +704,18 @@ var click = function(worldCoords, button) {
 			let xDist = cellShades[i].worldCoords[0] - worldCoords[0];
 			let yDist = cellShades[i].worldCoords[1] - worldCoords[1];
 			let dist = Math.sqrt((xDist * xDist) + (yDist * yDist));
-			if (dist < 2)
+			if (dist < 2){
 				cellShades[i].display = 1 - cellShades[i].display;
+				let x = Math.floor(i/curPuzzle.w);
+				let y = i%curPuzzle.h;
+				if (cellShades[i].display == 1)
+					curPuzzle.cells[x][y][1] = true;
+				if (cellShades[i].display == 0)
+					curPuzzle.cells[x][y][1] = false;
+				updateStateHistory();
+				//console.log("x = " + x + "; y = " + y);
+				//console.log(cellShades[i].display);
+			}
 		}
 	}
 	var msPassed = Date.now() - timeStart;
@@ -1015,7 +1025,7 @@ undoHTML.onclick = function(){
 		curPuzzle.nodes = JSON.parse(JSON.stringify(puzzleHistory[n][1]));
 		lastUndo--;
 	}
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	return;
 };
 
@@ -1027,7 +1037,7 @@ redoHTML.onclick = function(){
 		curPuzzle.nodes = JSON.parse(JSON.stringify(puzzleHistory[n][1]));
 		lastUndo++;
 	}
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	return;
 };
 
@@ -1120,7 +1130,7 @@ ACnumHTML.oninput = function() {
 	ACnum = ACnumHTML.checked;
 	//console.log("ACnum = " + ACnum);
 	performQOL();
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
 
 // toggles auto cross intersections
@@ -1128,7 +1138,7 @@ ACinterHTML.oninput = function() {
 	ACinter = ACinterHTML.checked;
 	//console.log("ACinter = " + ACinter);
 	performQOL();
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
 
 // toggles auto cross dead ends
@@ -1138,7 +1148,7 @@ ACdeadHTML.oninput = function() {
 	// apply rule
 	let changes = true;
 	performQOL();
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
 
 // toggles auto cross premature loops
@@ -1146,7 +1156,7 @@ ACloopHTML.oninput = function() {
 	ACloop = ACloopHTML.checked;
 	//console.log("ACloop = " + ACloop);
 	performQOL();
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
 
 // toggles highlight wrong moves
@@ -1154,7 +1164,7 @@ highlightHTML.oninput = function() {
 	highlight = highlightHTML.checked;
 	//console.log("highlight = " + highlight);
 	performQOL();
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
 
 // creates new savestate + button
@@ -1192,7 +1202,7 @@ var load = function(state){
 	curPuzzle.nodes = JSON.parse(localStorage.getItem(key));
 	
 	//pl.logPuzzleState(curPuzzle);
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	
 	return;
 };
@@ -1210,7 +1220,7 @@ hintHTML.onclick = function(){
 solutionHTML.onclick = function(){
 	console.log("Solution pressed.");
 	pl.autoSolver(curPuzzle);
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	return;
 };
 
@@ -1222,7 +1232,7 @@ restartHTML.onclick = function(){
 	// restart puzzle, but perform QOL improvements
 	pl.clearPuzzle(curPuzzle);
 	performQOL();
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	
 	// clear save data
 	localStorage.clear();
@@ -1257,7 +1267,7 @@ printHTML.onclick = function(){
 	console.log("Print pressed.");
 	
 	pl.clearPuzzle(curPuzzle);
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	
 	// zoom out + center camera
 	zoomLevel = maxZoom;
@@ -1337,7 +1347,7 @@ newPuzzleHTML.onclick = function(){
 		(map) => {
 			curPuzzle = pl.convertPuzzle(map);
 			pl.logPuzzleState(curPuzzle);
-			//g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+			//g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 		},
 		(issue) => {
 			console.log(issue);

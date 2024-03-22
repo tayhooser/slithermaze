@@ -1283,7 +1283,8 @@ export var getBox = function(gl, program) {
 }
 
 // update graphic state to match logic state
-export var updateGraphicPuzzleState = function(puzzle, gLinesArray){
+export var updateGraphicPuzzleState = function(puzzle, gLinesArray, cellShades){
+	// iterate through nodes connections
 	for (let i = 0; i < 2 * puzzle.h + 1; i++) {
 		for (let j = 0; j < puzzle.w + 1; j++) {
 			if (i%2 == 0){ // horizontal line
@@ -1304,6 +1305,17 @@ export var updateGraphicPuzzleState = function(puzzle, gLinesArray){
 				}
 			}
 		}	
+	}
+	
+	// iterate through cells
+	for (let i = 0; i < puzzle.w * puzzle.h; i++){
+		let x = Math.floor(i/puzzle.w);
+		let y = i%puzzle.h;
+		if (puzzle.cells[x][y][1] == true){
+			cellShades[i].display = 1;
+		} else {
+			cellShades[i].display = 0;
+		}
 	}
 }
 
