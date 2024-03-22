@@ -6,13 +6,12 @@ var R = 1.0;
 var G = 1.0;
 var B = 1.0;
 
+var curPuzzle; // current puzzle
+
 var saveCounter = 0; // number of savestates
-var curPuzzle; // current puzzle state
 var puzzleHistory = []; // history of puzzle states -- used for undo/redo
 var maxHistory = 10; // number states to keep track of 
-
-// undo/redo variables
-var lastUndo = -1;
+var lastUndo = -1; // index for last undo move
 
 // timer variables
 var timer = true; // true = running
@@ -41,16 +40,13 @@ const saveContainerHTML = document.getElementById("save-container"); // for addi
 const submitHTML = document.getElementById('submit');
 const newPuzzleHTML = document.getElementById('new-puzzle');
 
-// used for mobile layout resizing
-const mainContainer = document.getElementById('mainContainer');
-
 // settings
 var ACnum = ACnumHTML.checked;
 var ACinter = ACinterHTML.checked;
 var ACdead = ACdeadHTML.checked;
 var ACloop = ACloopHTML.checked;
 var highlight = highlightHTML.checked;
-var zoomLevel;
+var zoomLevel, minZoom, maxZoom;
 
 // webGL globals
 var canvas = document.getElementById("game-area");
@@ -82,14 +78,12 @@ var gLinesArray;		// 2D Array that indicates which lines are on/off
 async function getMap(query = { author: 'Taylor' }) {
     var params = query; 
 
-    
     try {
         var url = new URL('http://slithermaze.com/map'), params;
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
     } catch (error) {
         console.error(error);
         console.log("failed to bind parameters to URL. Make sure query is in correct format");
-
     }
 
     let returning = await fetch(url).then(res => res.json()).then(data => {
@@ -147,7 +141,7 @@ window.onload = function(){
 		//		   -1 -1  2  1 -1
 		//		   -1 -1  2  2  2
 		//		    0  2  2  2 -1
-
+		
 		curPuzzle = new pl.Puzzle(5,5);
 		curPuzzle.cells[1][2] = [1, false];
 		curPuzzle.cells[2][2] = [2, false];
@@ -159,6 +153,19 @@ window.onload = function(){
 		curPuzzle.cells[4][1] = [2, false];
 		curPuzzle.cells[4][2] = [2, false];
 		curPuzzle.cells[4][3] = [2, false];
+
+		/*
+		getMap({ author: 'Taylor' }).then(
+			(map) => {
+				curPuzzle = pl.convertPuzzle(map);
+				pl.logPuzzleState(curPuzzle);
+				updateStateHistory();
+				//gLinesArray = Array(curPuzzle.h);
+			},
+			(issue) => {
+				console.log(issue);
+		});
+		*/
 		updateStateHistory();
 	}
 	gLinesArray = Array(curPuzzle.h);
@@ -394,7 +401,9 @@ window.onload = function(){
 	vp = glMatrix.mat4.create();
 
 	maxZoom = curPuzzle.h * 3; 
+	minZoom = 5;
 	zoomSliderHTML.max = maxZoom;
+	zoomSliderHTML.min = minZoom;
 	zoomLevel = zoomSliderHTML.value = maxZoom;
 
 	// https://mattdesl.svbtle.com/drawing-lines-is-hard
@@ -543,7 +552,6 @@ var render = function() {
 
 var camWasMoved = false;
 var camTotalMoved;
-var maxZoom; 
 var lastPinchDist = 0;
 var ongoingTouches = [];
 var twoTouches = false;
@@ -706,20 +714,16 @@ var click = function(worldCoords, button) {
 };
 
 var mouseWheel = function(event) {
-	//console.log( event );
 	event.preventDefault();
 	var zoomAmt = event.wheelDelta * 0.03;
-
-	if ((zoomLevel - zoomAmt) > 3 ){
+	if ((zoomLevel - zoomAmt) > minZoom){
 		zoomLevel -= zoomAmt;
-
 		if (zoomLevel > maxZoom)
 			zoomLevel = maxZoom;
-
-		zoomSliderHTML.value = zoomLevel;
-		//console.log("zoom = " + zoomLevel);
+	} else {
+		zoomLevel = minZoom;
 	}
-	//render();
+	zoomSliderHTML.value = zoomLevel;
 };
 
 // var mouseEnter = function (event) {
@@ -870,13 +874,12 @@ var touchMove = function(event) {
 				
 				if ((zoomLevel - deltaDist) > 3 ) {
 					zoomLevel -= deltaDist * 0.06;
-			
 					if (zoomLevel > maxZoom)
 						zoomLevel = maxZoom;
-			
-					zoomSliderHTML.value = zoomLevel;
-					//console.log("zoom = " + zoomLevel);
+				} else {
+					zoomLevel = minZoom;
 				}
+				zoomSliderHTML.value = zoomLevel;
 				ongoingTouches.splice(index, 1, copyTouch(touches[i]));
 			}
 		}
@@ -1032,7 +1035,6 @@ redoHTML.onclick = function(){
 
 // toggles zoom slider to open/close
 zoomHTML.onclick = function(){
-	//console.log("Zoom pressed.");
 	var zoomSliderBox = document.getElementById('zoom-slider-box');
 	var zoomContent = document.getElementById('zoom-content');
 	
@@ -1060,7 +1062,6 @@ zoomHTML.onclick = function(){
 // default 50, range 1-100
 zoomSliderHTML.oninput = function(){
 	zoomLevel = this.value;
-	//render();
 	//console.log("Slider value: " + zoomLevel);
 }
 
@@ -1200,10 +1201,7 @@ var load = function(state){
 // shows either 1 possible cross or line, depends on current state and puzzle
 hintHTML.onclick = function(){
 	//console.log("Hint pressed.");
-	console.log("puzzleHistory length: " + puzzleHistory.length);
-	console.log("lastUndo: " + lastUndo);
-	let tmp = JSON.stringify(curPuzzle.nodes) == JSON.stringify(puzzleHistory[puzzleHistory.length - 1][1])
-	console.log("curPuzzle == puzzleHistory[last] ? " + tmp);
+	console.log(zoomLevel);
 	return;
 };
 
@@ -1260,6 +1258,13 @@ printHTML.onclick = function(){
 	
 	pl.clearPuzzle(curPuzzle);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+	
+	// zoom out + center camera
+	zoomLevel = maxZoom;
+	zoomSliderHTML.value = maxZoom;
+	camAndLook = [MoB, -MoB];
+	cameraPosition = [camAndLook[0], camAndLook[1], (1)];
+	lookAt = [camAndLook[0], camAndLook[1], 0.0];
 	
 	setTimeout(function(){
 		const canvas = document.getElementById('game-area')	
@@ -1326,7 +1331,18 @@ newPuzzleHTML.onclick = function(){
 	
 	document.getElementById("win").style.display = 'none';
 	
-	// generate new puzzle
-	// update graphics
+	// get new puzzle
+	/*
+	getMap({ author: 'Taylor' }).then(
+		(map) => {
+			curPuzzle = pl.convertPuzzle(map);
+			pl.logPuzzleState(curPuzzle);
+			//g.updateGraphicPuzzleState(curPuzzle, gLinesArray);
+		},
+		(issue) => {
+			console.log(issue);
+	});
+	*/
+
 	return;
 };

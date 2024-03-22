@@ -50,7 +50,7 @@ export var logPuzzleState = function(puzzle) {
 // convert puzzle from json to Puzzle class
 // currently just parses cell data
 export var convertPuzzle = function(json) {
-	var data = JSON.parse(json);
+	var data = json;
 	var puzzle = new Puzzle(data.size, data.size);
 	for (let i = 0; i < data.size; i++){
 		for (let j = 0; j < data.size; j++){
