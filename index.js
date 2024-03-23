@@ -882,13 +882,13 @@ var touchMove = function(event) {
 				var deltaDist = newDist - lastPinchDist;
 				lastPinchDist = newDist;
 				
-				if ((zoomLevel - deltaDist) > 3 ) {
-					zoomLevel -= deltaDist * 0.06;
-					if (zoomLevel > maxZoom)
-						zoomLevel = maxZoom;
-				} else {
+				//if ((zoomLevel - deltaDist) > minZoom ) {
+				zoomLevel -= deltaDist * 0.06;
+				if (zoomLevel > maxZoom)
+					zoomLevel = maxZoom;
+				if (zoomLevel < minZoom)
 					zoomLevel = minZoom;
-				}
+				
 				zoomSliderHTML.value = zoomLevel;
 				ongoingTouches.splice(index, 1, copyTouch(touches[i]));
 			}
