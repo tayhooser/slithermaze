@@ -709,9 +709,11 @@ var click = function(worldCoords, button) {
 				let x = Math.floor(i/curPuzzle.w);
 				let y = i%curPuzzle.h;
 				if (cellShades[i].display == 1)
-					curPuzzle.cells[x][y][1] = true;
+					//curPuzzle.cells[x][y][1] = true; // causes issues for some reason idk
+					curPuzzle.cells[x][y] = [curPuzzle.cells[x][y][0], true];
 				if (cellShades[i].display == 0)
-					curPuzzle.cells[x][y][1] = false;
+					//curPuzzle.cells[x][y][1] = false;
+					curPuzzle.cells[x][y] = [curPuzzle.cells[x][y][0], false];
 				updateStateHistory();
 				//console.log("x = " + x + "; y = " + y);
 				//console.log(cellShades[i].display);
@@ -1211,7 +1213,7 @@ var load = function(state){
 // shows either 1 possible cross or line, depends on current state and puzzle
 hintHTML.onclick = function(){
 	//console.log("Hint pressed.");
-	console.log(zoomLevel);
+	pl.logPuzzleState(curPuzzle);
 	return;
 };
 
@@ -1353,6 +1355,9 @@ newPuzzleHTML.onclick = function(){
 			console.log(issue);
 	});
 	*/
-
+	
+	curPuzzle = pl.generatePuzzle(5, 5, 1);
+	pl.logPuzzleState(curPuzzle);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	return;
 };

@@ -1311,6 +1311,7 @@ export var updateGraphicPuzzleState = function(puzzle, gLinesArray, cellShades){
 	for (let i = 0; i < puzzle.w * puzzle.h; i++){
 		let x = Math.floor(i/puzzle.w);
 		let y = i%puzzle.h;
+		//console.log("puzzle.cells[" + x + "][" + y + "][1] == " + puzzle.cells[x][y][1]);
 		if (puzzle.cells[x][y][1] == true){
 			cellShades[i].display = 1;
 		} else {

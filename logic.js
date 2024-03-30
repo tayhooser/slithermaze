@@ -25,10 +25,14 @@ export var logPuzzleState = function(puzzle) {
 	for (let i = 0; i < puzzle.h; i++){ // row
 		tmp = "";
 		for (let j = 0; j < puzzle.w; j++) { // col
+			tmp += ("[" + puzzle.cells[i][j][0] + ",");
 			if (puzzle.cells[i][j][0] != -1)
 				tmp += " ";
-			tmp += puzzle.cells[i][j][0];
-			tmp += " ";
+			if (puzzle.cells[i][j][1] == true){
+				tmp += "1] ";
+			} else {
+				tmp += "0] "
+			}
 		}
 		console.log(tmp);
 	}
@@ -224,9 +228,163 @@ export var clearPuzzle = function(puzzle) {
 	}
 }
 
-// generates a new puzzle
-export var generatePuzzle = function(puzzle, d) {
+// generates a new puzzle by creating a random tree of cells
+export var generatePuzzle = function(h, w, d){
+	let puzzle = new Puzzle(h, w);
+
+	// create a sector in the center of the board from which to choose a starting point
+	let offseti, offsetj;
+	if (h <= 3){
+		offseti = 0;
+	} else {
+		offseti = Math.floor(h / 3);
+	}
+	if (w <= 3){
+		offsetj = 0;
+	} else {
+		offsetj = Math.floor(w / 3);
+	}
+
+	// iterate through sector and choose starting point
+	let p = 1 / ((h - 2*offseti)*(w - 2*offsetj)); // uniform distribution
+	let i, j;
+	loop:
+	for (i = offseti; i < (h - offseti); i++){
+		for (j = offsetj; j < (w - offsetj); j++){
+			if (Math.random() < p)
+				break loop;
+		}
+	}
+	// if finishes loop before selecting start, subtract 1 to remain in bounds
+	if (i == (h - offseti) && j == (h - offseti)){
+		i--;
+		j--;
+	}
+	let root = [i, j];
 	
+	// make random tree around chosen starting point
+	let tree = [root]; // cells inside the finished loop
+	let done = []; // cells that cant have any more leaves added]
+	let cur;
+	//console.log("root = " + root);
+	
+	while (tree.length != done.length){ //until no more moves can be done
+		// choose cell not in done
+		cur = tree[Math.floor(Math.random() * tree.length)];
+		while (arrayIndexOf(done, cur) > -1){
+			cur = tree[Math.floor(Math.random() * tree.length)];
+		}
+		let i = cur[0];
+		let j = cur[1];
+		//console.log("cur = " + cur);
+		
+		// choose random direction to expand in
+		let direction = Math.floor(Math.random() * 4); // 0 = up, 1 = right, 2 = down, 3 = left
+		let cellDone = true;
+		let checkedAll = false;
+		while (!checkedAll){ // iterate until all cases are checked
+			switch(direction){
+				case 0: // up
+					if (i > 0 && // not in top row
+					  (arrayIndexOf(tree, [i-2, j-1]) == -1) &&
+					  (arrayIndexOf(tree, [i-2, j]) == -1) &&
+					  (arrayIndexOf(tree, [i-2, j+1]) == -1) &&
+					  (arrayIndexOf(tree, [i-1, j-1]) == -1) &&
+					  (arrayIndexOf(tree, [i-1, j]) == -1) &&
+					  (arrayIndexOf(tree, [i-1, j+1]) == -1)) {
+						tree.push([i-1, j]); // add cell above cur to tree
+						cellDone = false;
+						checkedAll = true;
+						break;
+					}
+					checkedAll = true;
+				case 1: // right
+					if (j < w-1 && // not in right col
+					  (arrayIndexOf(tree, [i-1, j+1]) == -1) &&
+					  (arrayIndexOf(tree, [i-1, j+2]) == -1) &&
+					  (arrayIndexOf(tree, [i, j+1]) == -1) &&
+					  (arrayIndexOf(tree, [i, j+2]) == -1) &&
+					  (arrayIndexOf(tree, [i+1, j+1]) == -1) &&
+					  (arrayIndexOf(tree, [i+1, j+2]) == -1)) {
+						tree.push([i, j+1]); // add cell right of cur to tree
+						cellDone = false;
+						checkedAll = true;
+						break;
+					}
+				case 2: // down
+					if (i < h-1 && // not in bottom row
+					  (arrayIndexOf(tree, [i+1, j-1]) == -1) &&
+					  (arrayIndexOf(tree, [i+1, j]) == -1) &&
+					  (arrayIndexOf(tree, [i+1, j+1]) == -1) &&
+					  (arrayIndexOf(tree, [i+2, j-1]) == -1) &&
+					  (arrayIndexOf(tree, [i+2, j]) == -1) &&
+					  (arrayIndexOf(tree, [i+2, j+1]) == -1)) {
+						tree.push([i+1, j]); // add cell below cur to tree
+						cellDone = false;
+						checkedAll = true;
+						break;
+					}
+				case 3: // left
+					if (j > 0 && // not in left col
+					  (arrayIndexOf(tree, [i-1, j-2]) == -1) &&
+					  (arrayIndexOf(tree, [i-1, j-1]) == -1) &&
+					  (arrayIndexOf(tree, [i, j-2]) == -1) &&
+					  (arrayIndexOf(tree, [i, j-1]) == -1) &&
+					  (arrayIndexOf(tree, [i+1, j-2]) == -1) &&
+					  (arrayIndexOf(tree, [i+1, j-1]) == -1)) {
+						tree.push([i, j-1]); // add cell left of cur to tree
+						cellDone = false;
+						checkedAll = true;
+					}
+			}
+			direction = 0; // to jump to top of switch statement
+		} // end while
+		if (cellDone){ // if all switch cases fall through
+			done.push([i, j]);
+			//console.log("cur done");
+		}
+	} // end while
+	
+	// shade interior cells of puzzle solution -- for debug only
+	//console.log("tree = " + tree);
+	for (let i = 0; i < h; i++){
+		for (let j = 0; j < w; j++){
+			let tmp = [i, j];
+			if (arrayIndexOf(tree, tmp) > -1){
+				puzzle.cells[i][j] = [-1, true];
+			}
+		}
+	}
+	
+	// add numbers to puzzle
+	for (let i = 0; i < h; i++){
+		for (let j = 0; j < w; j++){
+			//console.log("checking [" + i + ", " + j + "]:");
+			let count = 0;
+			if (arrayIndexOf(tree, [i, j]) != -1){ // shaded: count surrounding unshaded cells
+				if (arrayIndexOf(tree, [i-1, j]) == -1)
+					count++;
+				if (arrayIndexOf(tree, [i+1, j]) == -1)
+					count++;
+				if (arrayIndexOf(tree, [i, j+1]) == -1)
+					count++;
+				if (arrayIndexOf(tree, [i, j-1]) == -1)
+					count++;
+			} else { // unshaded: count surrounding shaded cells
+				if (arrayIndexOf(tree, [i-1, j]) != -1)
+					count++;
+				if (arrayIndexOf(tree, [i+1, j]) != -1)
+					count++;
+				if (arrayIndexOf(tree, [i, j+1]) != -1)
+					count++;
+				if (arrayIndexOf(tree, [i, j-1]) != -1)
+					count++;
+			}
+			//console.log("    count = " + count);
+			puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
+		}
+	}
+	return puzzle;
 }
 
 // returns number of lines around a given cell
