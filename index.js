@@ -160,7 +160,7 @@ window.onload = function(){
 				curPuzzle = pl.convertPuzzle(map);
 				pl.logPuzzleState(curPuzzle);
 				updateStateHistory();
-				//gLinesArray = Array(curPuzzle.h);
+				initPuzzleGraphics(curPuzzle);
 			},
 			(issue) => {
 				console.log(issue);
@@ -168,7 +168,6 @@ window.onload = function(){
 		*/
 		updateStateHistory();
 	}
-	gLinesArray = Array(curPuzzle.h);
 	
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
@@ -238,34 +237,15 @@ window.onload = function(){
 	//renderT = true;
 	//render();
 
-	// TEMPORARY TO TEST initPuzzle()
-	/////////////////////////////////////////////////////////////////////
-	var cellNumbers = [
-						[-1, -1, -1, -1, -1],
-						[-1, -1, 1, -1, -1],
-						[-1, -1, 2, 1, -1],
-						[-1, -1, 2, 2, 2],
-						[0, 2, 3, 2, -1]
-					];
-	var pWidth = 5;
-	var pHeight = 5;
-	/////////////////////////////////////////////////////////////////////
-
-	initPuzzle(pWidth, pHeight, cellNumbers);
+	initPuzzleGraphics(curPuzzle);
 };
 
-var initPuzzle = function(pWidth, pHeight, cellNumbers) {
+// draws puzzle to screen for first time
+// would move to graphics.js if it didnt modify so many global vars
+var initPuzzleGraphics = function(puzzle) {
 	renderT = false;
 
 	// not sure how setting up new cells for logic state should work.
-
-	curPuzzle = new pl.Puzzle(pWidth, pHeight);
-	for (let i = 0; i < pHeight; i++) {
-		for (let j = 0; j < pWidth; j++) {
-			curPuzzle.cells[i][j] = [cellNumbers[i][j], false];
-		}
-	}
-	
 	puzzleObjects = [];
 	lineObjects = [];
 	cellShades = [];
@@ -1378,8 +1358,9 @@ newPuzzleHTML.onclick = function(){
 	});
 	*/
 	
-	curPuzzle = pl.generatePuzzle(5, 5, 1);
+	curPuzzle = pl.generatePuzzle(10, 10, 1);
 	pl.logPuzzleState(curPuzzle);
+	initPuzzleGraphics(curPuzzle);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	return;
 };
