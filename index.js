@@ -227,6 +227,50 @@ window.onload = function(){
 	cross = g.getCross(gl, program);
 	box = g.getBox(gl, program);
 
+	canvas.width = canvas.parentNode.clientWidth;
+	canvas.height = canvas.parentNode.clientHeight;
+	gl.viewport(0, 0, canvas.width, canvas.height);
+	
+	// https://mattdesl.svbtle.com/drawing-lines-is-hard
+	// https://www.npmjs.com/package/polyline-normals
+
+	//g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	//renderT = true;
+	//render();
+
+	// TEMPORARY TO TEST initPuzzle()
+	/////////////////////////////////////////////////////////////////////
+	var cellNumbers = [
+						[-1, -1, -1, -1, -1],
+						[-1, -1, 1, -1, -1],
+						[-1, -1, 2, 1, -1],
+						[-1, -1, 2, 2, 2],
+						[0, 2, 3, 2, -1]
+					];
+	var pWidth = 5;
+	var pHeight = 5;
+	/////////////////////////////////////////////////////////////////////
+
+	initPuzzle(pWidth, pHeight, cellNumbers);
+};
+
+var initPuzzle = function(pWidth, pHeight, cellNumbers) {
+	renderT = false;
+
+	// not sure how setting up new cells for logic state should work.
+
+	curPuzzle = new pl.Puzzle(pWidth, pHeight);
+	for (let i = 0; i < pHeight; i++) {
+		for (let j = 0; j < pWidth; j++) {
+			curPuzzle.cells[i][j] = [cellNumbers[i][j], false];
+		}
+	}
+	
+	puzzleObjects = [];
+	lineObjects = [];
+	cellShades = [];
+	gLinesArray = Array(curPuzzle.h);
+
 	var translateX = 0.0;			// used to apply translation to object pos
 	var translateY = 0.0;
 
@@ -273,10 +317,6 @@ window.onload = function(){
 			newMesh.type = 4;					// 4 for cell shade
 			newMesh.display = 0;				// start toggled off
 			newMesh.color = [0.9, 0.9, 0.9];
-			// newMesh.yLowerBound = translateY - 3;
-			// newMesh.yUpperBound = translateY + 3;
-			// newMesh.xUpperBound = translateX + 3;
-			// newMesh.xLowerBound = translateX - 3;
 			newMesh.worldCoords = [translateX, translateY];
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);				// keep same translation as current cell iteration
@@ -313,12 +353,6 @@ window.onload = function(){
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
-			//newMesh.xWorld = translateX;
-			//newMesh.yWorld = translateY;
-			// newMesh.yLowerBound = translateY - 0.95;
-			// newMesh.yUpperBound = translateY + 0.95;
-			// newMesh.xUpperBound = translateX + 4.5;
-			// newMesh.xLowerBound = translateX - 4.5;
 			newMesh.worldCoords = [translateX, translateY];
 
 			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
@@ -357,12 +391,6 @@ window.onload = function(){
 
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
-			//newMesh.xWorld = translateX;
-			//newMesh.yWorld = translateY;
-			// newMesh.xLowerBound = translateX - 0.95;
-			// newMesh.xUpperBound = translateX + 0.95;
-			// newMesh.yUpperBound = translateY + 4.5;
-			// newMesh.yLowerBound = translateY - 4.5;
 			newMesh.worldCoords = [translateX, translateY];
 
 			let rotationMat = glMatrix.mat4.create()
@@ -380,6 +408,7 @@ window.onload = function(){
 		
 			xIndex++;
 		}
+
 		gLinesArray[gLinesArrayIndex] = tempLines;
 		gLinesArrayIndex += 2;
 
@@ -390,10 +419,6 @@ window.onload = function(){
 		yIndex += 2
 	}
 
-
-	canvas.width = canvas.parentNode.clientWidth;
-	canvas.height = canvas.parentNode.clientHeight;
-	gl.viewport(0, 0, canvas.width, canvas.height);
 	MoB = (curPuzzle.h * 10) / 2;
 	camAndLook = [MoB, -MoB];
 	cameraPosition = [camAndLook[0], camAndLook[1], (1)];
@@ -405,9 +430,6 @@ window.onload = function(){
 	zoomSliderHTML.max = maxZoom;
 	zoomSliderHTML.min = minZoom;
 	zoomLevel = zoomSliderHTML.value = maxZoom;
-
-	// https://mattdesl.svbtle.com/drawing-lines-is-hard
-	// https://www.npmjs.com/package/polyline-normals
 
 	// trigger some of the QOL options
 	let changes = true;

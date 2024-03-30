@@ -1046,10 +1046,10 @@ export class graphicsObj {
 	//xWorld;
 	//yWorld;
 	worldCoords;
-	xLowerBound;
-	xUpperBound;
-	yLowerBound;
-	yUpperBound;
+	//xLowerBound;
+	//xUpperBound;
+	//yLowerBound;
+	//yUpperBound;
 
 	xCoord;				//	coords in line array to determine if a 
 	yCoord;				// 		line should be drawn or not
