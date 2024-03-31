@@ -1140,7 +1140,7 @@ ACnumHTML.oninput = function() {
 // toggles auto cross intersections
 ACinterHTML.oninput = function() {
 	ACinter = ACinterHTML.checked;
-	//console.log("ACinter = " + ACinter);
+	console.log("ACinter = " + ACinter);
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
@@ -1359,7 +1359,7 @@ newPuzzleHTML.onclick = function(){
 	*/
 	
 	curPuzzle = pl.generatePuzzle(10, 10, 1);
-	pl.logPuzzleState(curPuzzle);
+	//pl.logPuzzleState(curPuzzle);
 	initPuzzleGraphics(curPuzzle);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	return;

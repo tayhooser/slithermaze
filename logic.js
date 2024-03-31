@@ -268,7 +268,7 @@ export var generatePuzzle = function(h, w, d){
 	let cur;
 	//console.log("root = " + root);
 	
-	while (tree.length != done.length){ //until no more moves can be done
+	while ((tree.length != done.length) && (tree.length/(h*w) < .55)){ //until no more moves can be done OR puzzle is 50% filled
 		// choose cell not in done
 		cur = tree[Math.floor(Math.random() * tree.length)];
 		while (arrayIndexOf(done, cur) > -1){
@@ -341,11 +341,11 @@ export var generatePuzzle = function(h, w, d){
 		} // end while
 		if (cellDone){ // if all switch cases fall through
 			done.push([i, j]);
-			//console.log("cur done");
 		}
+	console.log("solution mass = " + tree.length / (h*w));
 	} // end while
 	
-	// shade interior cells of puzzle solution -- for debug only
+	// shade interior cells of puzzle solution
 	//console.log("tree = " + tree);
 	for (let i = 0; i < h; i++){
 		for (let j = 0; j < w; j++){
@@ -357,6 +357,8 @@ export var generatePuzzle = function(h, w, d){
 	}
 	
 	// add numbers to puzzle
+	// d = 1 = easy; d = 2 = med; d = 3 = hard
+	p = (-10 * d + 70) / 100;
 	for (let i = 0; i < h; i++){
 		for (let j = 0; j < w; j++){
 			//console.log("checking [" + i + ", " + j + "]:");
@@ -380,8 +382,25 @@ export var generatePuzzle = function(h, w, d){
 				if (arrayIndexOf(tree, [i, j-1]) != -1)
 					count++;
 			}
-			//console.log("    count = " + count);
-			puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
+			if (count == 0){ // always show 0s, since generation algo rarely creates them
+				puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
+			} else if (p == 1 && (count == 1 || count == 3)){ // easier difficulty = more 1s and 3s
+				if (Math.random() < p + .1)
+					puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
+			} else if (p == 2 && (count == 1 || count == 3)){
+				if (Math.random() < p + .05)
+					puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
+			} else {
+				if (Math.random() < p)
+					puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
+			}
+		}
+	}
+	
+	// erase shaded region so user can't see solution
+	for (let i = 0; i < h; i++){
+		for (let j = 0; j < w; j++){
+			puzzle.cells[i][j] = [puzzle.cells[i][j][0], false];
 		}
 	}
 	return puzzle;
@@ -464,27 +483,33 @@ export var crossIntersection = function (puzzle, x, y){
 		neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
 	}
 	
-	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length != 2) // needs at least 2 connections
+	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length < 2) // needs at least 2 connections
 		return false;
-	
+	console.log("cross inter: checking [" + x + ", " + y + "]");
 	// count number lines around cell
 	let numLine = 0;
 	for (let i = 0; i < puzzle.nodes[x][y].length; i++) {
 		if (puzzle.nodes[x][y][i][2] == 1){
 			numLine++;
 			visited.push([puzzle.nodes[x][y][i][0], puzzle.nodes[x][y][i][1]]);
+			console.log("    line connected to " + puzzle.nodes[x][y][i]);
 		}
 	}
 	
 	if (numLine != 2) // needs exactly 2 lines
 		return false;
-	
+	console.log("crossing edges of [" + x + ", " + y + "]");
 	// cross remaining edges
+
 	missing = nodeSetDifference(neighbors, visited);
-	placeCross(puzzle, x, y, missing[0][0], missing[0][1]);
-	if (missing[1])
-		placeCross(puzzle, x, y, missing[1][0], missing[1][1]);
-	return true;
+	let changes = false;
+	if (placeCross(puzzle, x, y, missing[0][0], missing[0][1])){
+		changes = true;
+		if (missing[1])
+			placeCross(puzzle, x, y, missing[1][0], missing[1][1]);
+	}
+
+	return changes;
 }
 
 // determines if given node is a dead end and crosses it
