@@ -230,6 +230,7 @@ export var clearPuzzle = function(puzzle) {
 
 // generates a new puzzle by creating a random tree of cells
 export var generatePuzzle = function(h, w, d){
+	let debug = true;
 	let puzzle = new Puzzle(h, w);
 
 	// create a sector in the center of the board from which to choose a starting point
@@ -342,7 +343,7 @@ export var generatePuzzle = function(h, w, d){
 		if (cellDone){ // if all switch cases fall through
 			done.push([i, j]);
 		}
-	console.log("solution mass = " + tree.length / (h*w));
+	//console.log("solution mass = " + tree.length / (h*w));
 	} // end while
 	
 	// shade interior cells of puzzle solution
@@ -398,9 +399,11 @@ export var generatePuzzle = function(h, w, d){
 	}
 	
 	// erase shaded region so user can't see solution
-	for (let i = 0; i < h; i++){
-		for (let j = 0; j < w; j++){
-			puzzle.cells[i][j] = [puzzle.cells[i][j][0], false];
+	if (!debug){
+		for (let i = 0; i < h; i++){
+			for (let j = 0; j < w; j++){
+				puzzle.cells[i][j] = [puzzle.cells[i][j][0], false];
+			}
 		}
 	}
 	return puzzle;
@@ -485,29 +488,30 @@ export var crossIntersection = function (puzzle, x, y){
 	
 	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length < 2) // needs at least 2 connections
 		return false;
-	console.log("cross inter: checking [" + x + ", " + y + "]");
+	//console.log("cross inter: checking [" + x + ", " + y + "]");
 	// count number lines around cell
 	let numLine = 0;
 	for (let i = 0; i < puzzle.nodes[x][y].length; i++) {
 		if (puzzle.nodes[x][y][i][2] == 1){
 			numLine++;
 			visited.push([puzzle.nodes[x][y][i][0], puzzle.nodes[x][y][i][1]]);
-			console.log("    line connected to " + puzzle.nodes[x][y][i]);
+			//console.log("    line connected to " + puzzle.nodes[x][y][i]);
 		}
 	}
 	
 	if (numLine != 2) // needs exactly 2 lines
 		return false;
-	console.log("crossing edges of [" + x + ", " + y + "]");
+	//console.log("crossing edges of [" + x + ", " + y + "]");
 	// cross remaining edges
 
 	missing = nodeSetDifference(neighbors, visited);
+	//console.log("missing = " + missing);
 	let changes = false;
-	if (placeCross(puzzle, x, y, missing[0][0], missing[0][1])){
+	if (placeCross(puzzle, x, y, missing[0][0], missing[0][1]))
 		changes = true;
-		if (missing[1])
-			placeCross(puzzle, x, y, missing[1][0], missing[1][1]);
-	}
+	if (missing.length == 2 && placeCross(puzzle, x, y, missing[1][0], missing[1][1]))
+		changes = true;
+
 
 	return changes;
 }
@@ -590,15 +594,20 @@ export var verifySolution = function(puzzle){
 	find_start:
 	for (let i = 0; i < puzzle.h + 1; i++){
 		for (let j = 0; j < puzzle.w + 1; j++) {
-			if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0)
+			if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0) // if no connection data, skip
 				continue;
-			start = [i, j];
-			prev = [i, j];
-			cur = [puzzle.nodes[i][j][0][0], puzzle.nodes[i][j][0][1]]; // store coords of 1st connection
-			visited = [prev];
-			break find_start;
+			for (let k = 0; k < puzzle.nodes[i][j].length; k++){
+				if (puzzle.nodes[i][j][k][2] == 1){ // line connection data exists
+					start = [i, j];
+					prev = [i, j];
+					cur = [puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]; // store coords of 1st connection
+					visited = [prev];
+					break find_start;
+				}
+			}
 		}
 	}
+	//console.log("start = " + start);
 	// no starting nodes found. redundant but added just in case
 	if (!start){
 		console.log("INCORRECT SOLUTION: no lines placed");
@@ -616,8 +625,8 @@ export var verifySolution = function(puzzle){
 			if (puzzle.nodes[cur[0]][cur[1]][i][2] == 1)
 				lineConns.push(puzzle.nodes[cur[0]][cur[1]][i]);
 		}
-		
-		// each node should only have 2 connections
+		console.log("linesConns: " + lineConns.length);
+		// each node should only have 2 lines
 		if (lineConns.length != 2){
 			console.log("INCORRECT SOLUTION: dead end or intersection found at nodes[" + cur[0] + "][" + cur[1] + "]");
 			return false;

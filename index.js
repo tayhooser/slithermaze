@@ -1345,6 +1345,11 @@ newPuzzleHTML.onclick = function(){
 	
 	document.getElementById("win").style.display = 'none';
 	
+	// delete current puzzle 
+	for (let e in curPuzzle){
+		delete curPuzzle.e;
+	}
+	
 	// get new puzzle
 	/*
 	getMap({ author: 'Taylor' }).then(
@@ -1357,7 +1362,6 @@ newPuzzleHTML.onclick = function(){
 			console.log(issue);
 	});
 	*/
-	
 	curPuzzle = pl.generatePuzzle(10, 10, 1);
 	//pl.logPuzzleState(curPuzzle);
 	initPuzzleGraphics(curPuzzle);
