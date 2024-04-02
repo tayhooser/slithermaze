@@ -60,6 +60,7 @@ var lineObjects = [];				// list of lines that will be interacted with and chang
 var cellShades = [];
 var dot, line, cross, zero, one, two, three, box;	// instance of graphic templates
 var renderT = false;
+var ortho_size;
 var view;
 var projection;
 var vp;
@@ -142,7 +143,7 @@ window.onload = function(){
 		//		   -1 -1  2  2  2
 		//		    0  2  2  2 -1
 		
-		curPuzzle = new pl.Puzzle(5,5);
+		curPuzzle = new pl.Puzzle(5, 5);
 		curPuzzle.cells[1][2] = [1, false];
 		curPuzzle.cells[2][2] = [2, false];
 		curPuzzle.cells[2][3] = [1, false];
@@ -447,7 +448,7 @@ var render = function() {
 	glMatrix.mat4.lookAt(view, cameraPosition, lookAt, up);
 
 	// projection setup
-	var ortho_size =(zoomLevel * 2);				// need also consider the initial zoomLevel set in init()
+	ortho_size = (zoomLevel * 2);				// need also consider the initial zoomLevel set in init()
 	projection = glMatrix.mat4.create();
 	projection = glMatrix.mat4.ortho(projection, -ortho_size, ortho_size, -ortho_size, ortho_size, null, 2);
 
@@ -540,7 +541,6 @@ var render = function() {
 	//console.log(camAndLook);
 	//console.log(canvas.width, canvas.height);
 
-	
 	var msPassed = Date.now() - timeStart;
 	if (msPassed <= 12) { 			// 0 <= x <= 12
 		setTimeout(render, 12 - msPassed);
@@ -607,33 +607,7 @@ var canvasToWorldCoords = function(mouseX, mouseY) {
 
 // called when the puzzle state should be changing somehow
 var click = function(worldCoords, button) {
-	//console.log("click fired!");
-
-	// var canvasRect = canvas.getBoundingClientRect();
-	// var mouseX = event.clientX - canvasRect.left;
-	// var mouseY = event.clientY - canvasRect.top;
-
-	// var cSpace = [mouseX, canvas.height - mouseY];
-	// cSpace[0] /= canvas.width;
-	// cSpace[1] /= canvas.height;
-	// var ndc = [ (cSpace[0] * 2) - 1, (cSpace[1] * 2) - 1 ];
-		
-	// var invProj = glMatrix.mat4.create();
-	// glMatrix.mat4.invert(invProj, projection);
-
-	// var invView = glMatrix.mat4.create();
-	// glMatrix.mat4.invert(invView, view);
-
-	// var tempPrev = glMatrix.vec4.fromValues(ndc[0], ndc[1], 0, 1);
 	
-	// var prev = glMatrix.vec4.create();
-	// glMatrix.vec4.transformMat4(prev, tempPrev, invProj);
-	
-	// prev = glMatrix.vec4.fromValues(prev[0], prev[1], prev[2], 1);
-	
-	// var worldCoords = glMatrix.vec4.create();;
-	// glMatrix.vec4.transformMat4(worldCoords, prev, invView);
-
 	var timeStart = Date.now();
 	
 	var keptIndex = 0;
@@ -644,9 +618,6 @@ var click = function(worldCoords, button) {
 		let yDist = lineObjects[i].worldCoords[1] - worldCoords[1];
 		let dist = Math.sqrt((xDist * xDist) + (yDist * yDist));
 		if (dist < 3) {
-			
-		// if ((worldCoords[0] > lineObjects[i].xLowerBound && worldCoords[0] < lineObjects[i].xUpperBound) 				// click was inside a line
-		// 	&& (worldCoords[1] > lineObjects[i].yLowerBound && worldCoords[1] < lineObjects[i].yUpperBound)) {
 			
 			lineFound = true;
 			keptIndex = i;
@@ -737,7 +708,9 @@ var mouseWheel = function(event) {
 	} else {
 		zoomLevel = minZoom;
 	}
+	
 	zoomSliderHTML.value = zoomLevel;
+	checkCamBoundary();
 };
 
 // var mouseEnter = function (event) {
@@ -784,6 +757,8 @@ var pointerMove = function (event) {
 	startPos[0] = event.layerX;
 	startPos[1] = event.layerY;
 
+	
+
 	if (camAndLook[0] < 0 )
 		camAndLook[0] = 0;
 
@@ -795,6 +770,8 @@ var pointerMove = function (event) {
 
 	if (camAndLook[1] > 0)
 		camAndLook[1] = 0;
+
+	checkCamBoundary();
 
 };
 
@@ -893,6 +870,7 @@ var touchMove = function(event) {
 				if (zoomLevel < minZoom)
 					zoomLevel = minZoom;
 				
+				checkCamBoundary();
 				zoomSliderHTML.value = zoomLevel;
 				ongoingTouches.splice(index, 1, copyTouch(touches[i]));
 			}
@@ -957,6 +935,28 @@ var windowResize = function() {
 	canvas.width = canvas.parentNode.clientWidth;
 	canvas.height = canvas.parentNode.clientHeight;
 	gl.viewport(0, 0, canvas.width, canvas.height);
+};
+
+// need to check if the edge of the camera is too far passed the edges of the puzzle after moving or zooming
+var checkCamBoundary = function() {
+	var boundaryCushion = (curPuzzle.w);
+	ortho_size = (zoomLevel * 2);
+	// x position has gone too far to the right
+	if ((camAndLook[0] + ortho_size) > ((curPuzzle.w * 10) + boundaryCushion)) {
+		camAndLook[0] = ((curPuzzle.w * 10) + boundaryCushion) - (ortho_size);
+	} 
+	// x position is too far left
+	else if ((camAndLook[0] - ortho_size) < (0 - boundaryCushion)) {
+		camAndLook[0] = (-boundaryCushion + ortho_size);
+	}
+	// y position is too far up
+	if ((camAndLook[1] + ortho_size) > (0 + boundaryCushion)) {
+		camAndLook[1] = boundaryCushion - (ortho_size);
+	}
+	// y position is too far down
+	else if ((camAndLook[1] - ortho_size) < ((curPuzzle.h * -10) - boundaryCushion)) {
+		camAndLook[1] = ((curPuzzle.h * -10) - boundaryCushion) + ortho_size;
+	}
 };
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
@@ -1076,6 +1076,7 @@ zoomHTML.onclick = function(){
 // default 50, range 1-100
 zoomSliderHTML.oninput = function(){
 	zoomLevel = this.value;
+	checkCamBoundary();
 	//console.log("Slider value: " + zoomLevel);
 }
 
