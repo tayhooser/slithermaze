@@ -561,6 +561,7 @@ var touchTimer = 0;
 var usingTouchEvents = false;
 var isTouching = false;
 var justPlacedAnX = false;
+var touchInit = false;
 
 var startEventListeners = function(event) {
 	//canvas.addEventListener("mouseenter", mouseEnter, false);
@@ -835,14 +836,12 @@ var copyTouch = function({identifier, clientX, clientY}) {
 // registered touch starts moving after a touchStart was registered
 var touchMove = function(event) {
 	//event.preventDefault();
-	//console.log(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
-	//var firstTouchX = event.changedTouches[0].clientX
-	//console.log(event.changedTouches);
 	var touches = event.changedTouches;
 
 	if (ongoingTouches.length == 2) {
 		for (let i = 0; i < touches.length; i++) {
 			var index = ongoingTouchIndexById(touches[i].identifier);
+
 
 			if (index >= 0) {
 				//console.log("two touches found!");
@@ -854,17 +853,16 @@ var touchMove = function(event) {
 				var secondTouchX = ongoingTouches[1].clientX;
 				var secondTouchY = ongoingTouches[1].clientY;
 
-				//console.log(ongoingTouches);
-		
-
 				var xDist = secondTouchX - firstTouchX;
 				var yDist = secondTouchY - firstTouchY;
 				var newDist = Math.sqrt((xDist * xDist) + (yDist * yDist));
 				var deltaDist = newDist - lastPinchDist;
+				
+				if (lastPinchDist != 0) {
+					zoomLevel -= deltaDist * 0.06;
+				}
 				lastPinchDist = newDist;
 				
-				//if ((zoomLevel - deltaDist) > minZoom ) {
-				zoomLevel -= deltaDist * 0.06;
 				if (zoomLevel > maxZoom)
 					zoomLevel = maxZoom;
 				if (zoomLevel < minZoom)
@@ -883,13 +881,6 @@ var touchMove = function(event) {
 var touchEnd = function(event) {
 	//event.preventDefault();
 	isTouching = false;
-	// if (touchTimer < 40) {
-	// 	var canvasRect = canvas.getBoundingClientRect();
-	// 	var mouseX = event.changedTouches[0].clientX - canvasRect.left;
-	// 	var mouseY = event.changedTouches[0].clientY - canvasRect.top;
-	// 	var worldCoords = canvasToWorldCoords(mouseX, mouseY);
-	// 	click(worldCoords, -1);
-	// }
 	touchTimer = 0;
 
 	var touches = event.changedTouches;
