@@ -93,6 +93,22 @@ async function getMap(query = { author: 'Taylor' }) {
 
     return returning;
 }
+//Needs string ID from field _id. Call .valueOf() method on field to retrieve.
+//Name entry to be determined.
+async function updateBoard(id, name) {
+    let time = (hour*3600) + (minute*60) + (seconds)
+    fetch("http://slithermaze.com/map", {
+    method: "POST",
+    body: JSON.stringify({
+        id: id,
+        name: name,
+        time: time
+    }),
+    headers: {
+        "Content-type": "application/json; charset=UTF-8"
+    }
+    });
+}
 
 // GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
 
