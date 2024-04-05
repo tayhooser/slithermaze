@@ -59,7 +59,7 @@ var puzzleObjects = [];				// list of puzzle objects that wont change much like 
 var lineObjects = [];				// list of lines that will be interacted with and change
 var cellShades = [];
 var dot, line, cross, zero, one, two, three, box;	// instance of graphic templates
-var renderT = false;
+var shouldRender = false;
 var ortho_size;
 var view;
 var projection;
@@ -160,6 +160,7 @@ window.onload = function(){
 		//		    0  2  2  2 -1
 		
 		curPuzzle = new pl.Puzzle(5, 5);
+		//curPuzzle = pl.generatePuzzle(50, 50, 1);
 		curPuzzle.cells[1][2] = [1, false];
 		curPuzzle.cells[2][2] = [2, false];
 		curPuzzle.cells[2][3] = [1, false];
@@ -251,16 +252,17 @@ window.onload = function(){
 	// https://www.npmjs.com/package/polyline-normals
 
 	//g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-	//renderT = true;
+	//shouldRender = true;
 	//render();
 
 	initPuzzleGraphics(curPuzzle);
+	render();
 };
 
 // draws puzzle to screen for first time
 // would move to graphics.js if it didnt modify so many global vars
 var initPuzzleGraphics = function(puzzle) {
-	renderT = false;
+	shouldRender = false;
 
 	// not sure how setting up new cells for logic state should work.
 	puzzleObjects = [];
@@ -292,6 +294,7 @@ var initPuzzleGraphics = function(puzzle) {
 	translateX = 5.0;
 	translateY = -5.0;
 	
+	// Setup the cell numbers and shade boxes
 	for (let i = 0; i < curPuzzle.h; i++) {
 		for (let j = 0; j < curPuzzle.w; j++) {
 			// setup the cell numbers
@@ -443,13 +446,27 @@ var initPuzzleGraphics = function(puzzle) {
 	}
 
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-	renderT = true;
-	render();
+	shouldRender = true;
+	//render();
 };
+
+
+var renderCalls = 0;
+var stopWatch;
+var startedTimer = false;
 
 // looping render call to draw stuff to screen
 var render = function() {
-	if (!renderT) return;
+	if (!shouldRender) {
+		//clearTimeout(render);
+		//return;
+		setTimeout(render, 100);
+	}
+
+	if (!startedTimer) {
+		stopWatch = Date.now();
+		startedTimer = true;
+	}
 
 	var timeStart = Date.now();
 
@@ -477,9 +494,11 @@ var render = function() {
 	var crossScale = [3.0, 3.0, 1];
 
 	// draw shaded cells
+	var cellShadeColor = [0.9, 0.9, 0.9];
+	gl.uniform3fv(colorLoc, cellShadeColor);
 	for (let i = 0; i < cellShades.length; i++) {
 		if (cellShades[i].display == 0) continue;
-		gl.uniform3fv(colorLoc, cellShades[i].color);
+		//gl.uniform3fv(colorLoc, cellShades[i].color);
 		glMatrix.mat4.multiply(mvp, vp, cellShades[i].modelMatrix);
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);
 		gl.bindVertexArray(box.VAO);
@@ -492,6 +511,7 @@ var render = function() {
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off
 			lineObjects[i].color = [1.0, 1.0, 1.0];											
 			lineObjects[i].display = 0;
+			continue;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
@@ -524,9 +544,11 @@ var render = function() {
 	}
 
 	// drawing dots and numbers
+	var puzzleObjectColor = [0.439, 0.329, 0.302];
+	gl.uniform3fv(colorLoc, puzzleObjectColor);
 	for (let i = 0; i < puzzleObjects.length; i++) {
 
-		gl.uniform3fv(colorLoc, puzzleObjects[i].color);
+		//gl.uniform3fv(colorLoc, puzzleObjects[i].color);
 
 		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
@@ -557,13 +579,25 @@ var render = function() {
 	//console.log(camAndLook);
 	//console.log(canvas.width, canvas.height);
 
+	// var fps = 1000 / (Date.now() - timeStart);
+	// console.log("render calls per second", fps);
+
 	var msPassed = Date.now() - timeStart;
-	if (msPassed <= 12) { 			// 0 <= x <= 12
-		setTimeout(render, 12 - msPassed);
-	} else if (msPassed > 12 ) {						
-		setTimeout(render, 0);
+
+	renderCalls++;
+	if ((Date.now() - stopWatch) >= 1000) {
+		console.log("fps: ", renderCalls);
+		renderCalls = 0;
+		stopWatch = Date.now();
 	}
 
+	// if (msPassed <= 12) { 			// 0 <= x <= 12
+	// 	setTimeout(render, 12 - msPassed);
+	// } else if (msPassed > 12 ) {						
+	// 	setTimeout(render, 0);
+	// }
+
+	setTimeout(render, 1);
 };
 
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
@@ -1370,7 +1404,7 @@ newPuzzleHTML.onclick = function(){
 			console.log(issue);
 	});
 	*/
-	curPuzzle = pl.generatePuzzle(10, 10, 1);
+	curPuzzle = pl.generatePuzzle(100, 100, 1);
 	//pl.logPuzzleState(curPuzzle);
 	initPuzzleGraphics(curPuzzle);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
