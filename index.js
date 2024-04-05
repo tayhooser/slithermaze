@@ -692,16 +692,17 @@ var click = function(worldCoords, button) {
 			puzzleHistory.pop();
 		}
 		*/
+
 		
 		// 0 is left click 2 is right click. If a touch event has been registered then use timer to check
 		// if we are placing a line or cross.
-		if (button == 0 || ((usingTouchEvents ) && (touchTimer < 20)) ) {						//left click
+		if (button == 0 || ((usingTouchEvents ) && (touchTimer < touchCrossThreshold)) ) {						//left click or touch was held less than 100 ms
 			if ( gLinesArray[tempYIndex][tempXIndex] == 2 )										// an X is already there
 				gLinesArray[tempYIndex][tempXIndex] = 1;
 			else																				// line or no line is there
 				gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];	// toggles between line and no line
 		}
-		else if (button == 2 || ( (usingTouchEvents ) && (touchTimer >= 50) )) {
+		else if (button == 2 || ( (usingTouchEvents ) && (touchTimer >= touchCrossThreshold) )) {				// right click or touch was held longer than 100 ms
 			if (gLinesArray[tempYIndex][tempXIndex] == 1)										// a line is already there
 				gLinesArray[tempYIndex][tempXIndex] = 2;
 			else
@@ -709,6 +710,10 @@ var click = function(worldCoords, button) {
 
 			justPlacedAnX = true;
 		}
+		if (isTouching) {
+			console.log("touchTimer after click(): ", touchTimer);
+		}
+		
 
 
 		//gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
@@ -867,8 +872,11 @@ var touchStart = function(event) {
 	var mouseY = event.targetTouches[0].clientY - canvasRect.top;
 	var worldCoords = canvasToWorldCoords(mouseX, mouseY);
 	//console.log(mouseX, mouseY);
-	incrementCounter(worldCoords);
 
+	// track touch duration to see if a line or cross should be placed
+	touchTimerStart = Date.now();
+	incrementCounter(worldCoords);
+	
 	var touches = event.changedTouches;
 	for (let i = 0; i < touches.length; i++) {
 		ongoingTouches.push(copyTouch(touches[i]));
@@ -931,7 +939,6 @@ var touchMove = function(event) {
 var touchEnd = function(event) {
 	//event.preventDefault();
 	isTouching = false;
-	touchTimer = 0;
 
 	var touches = event.changedTouches;
 
@@ -960,15 +967,19 @@ var ongoingTouchIndexById = function(idToFind) {
 };
 
 // counter to track how long a touch event has been going to see if a cross should be placed
+var touchTimer;
+var touchTimerStart;
+var touchCrossThreshold = 250;
 var incrementCounter = function(worldCoords) {
-	touchTimer++;
+	//touchTimer++;
+	touchTimer = Date.now() - touchTimerStart;
 	//console.log(touchTimer);
-	if ((touchTimer >= 50) && (!camWasMoved)) {
+	if ((touchTimer >= touchCrossThreshold) && (!camWasMoved)) {
 		click(worldCoords, -1);
 		//touchTimer = 0;
 	}
 	else if (isTouching)
-		setTimeout(incrementCounter, 1, worldCoords);
+		setTimeout(incrementCounter, 5, worldCoords);
 };
 
 // used to resize the canvas and viewport after the window size changes
@@ -1404,7 +1415,7 @@ newPuzzleHTML.onclick = function(){
 			console.log(issue);
 	});
 	*/
-	curPuzzle = pl.generatePuzzle(100, 100, 1);
+	curPuzzle = pl.generatePuzzle(50, 50, 1);
 	//pl.logPuzzleState(curPuzzle);
 	initPuzzleGraphics(curPuzzle);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
