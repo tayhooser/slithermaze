@@ -984,9 +984,9 @@ var incrementCounter = function(worldCoords) {
 
 // used to resize the canvas and viewport after the window size changes
 var windowResize = function() {
-	canvas.width = canvas.parentNode.clientWidth;
-	canvas.height = canvas.parentNode.clientHeight;
-	gl.viewport(0, 0, canvas.width, canvas.height);
+	//canvas.width = canvas.parentNode.clientWidth;
+	//canvas.height = canvas.parentNode.clientHeight;
+	//gl.viewport(0, 0, canvas.width, canvas.height);
 };
 
 // need to check if the edge of the camera is too far passed the edges of the puzzle after moving or zooming
