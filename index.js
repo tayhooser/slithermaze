@@ -1270,11 +1270,24 @@ hintHTML.onclick = function(){
 
 // called when user hits solution button, HTML side
 // should complete a solution step by step, like an animation
-solutionHTML.onclick = function(){
-	console.log("Solution pressed.");
-	pl.autoSolver(curPuzzle);
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-	return;
+let autosolverActive = false;
+let autosolveTimeout;
+
+solutionHTML.onclick = function() {
+    autosolverActive = !autosolverActive; // Toggle the autosolve state
+    
+    if (autosolverActive) {
+        console.log("Autosolver is now ON.");
+        // Start the autosolver
+        pl.autoSolver(curPuzzle,gLinesArray);
+		g.updateGraphicPuzzleState(curPuzzle,gLinesArray);
+    } else {
+        console.log("Autosolver is now OFF.");
+        // Stop the autosolver
+        if (autosolveTimeout) {
+            clearTimeout(autosolveTimeout);
+        }
+    }
 };
 
 // called when user hits restart button, HTML side
