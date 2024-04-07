@@ -8,7 +8,6 @@ body {
     color: #70544D;
 	background-color: #EAD6C6;
 	margin: 0;
-	
 }
 
 .body2 {
@@ -268,6 +267,19 @@ label {
 	justify-content: center;
 }
 
+/* win/try again message */
+.win {
+	display: none;
+	font-size: 16px;
+	font-family: Arial;
+	border: none;
+	border-radius: 5px;
+	padding: 10px;
+	margin-bottom: 10px;
+	color: #ffffff;
+	background-color: #DE9894;
+}
+
 /* leaderboard under timer */
 .leaderboard {
 	background-color: #ffffff;
@@ -301,6 +313,110 @@ label {
 	cursor: pointer;
 	margin-top: 10px;
 	width: 100%;
+}
+
+ /* container for new puzzle */
+ /* drop down animation*/
+.new-puzzle {
+	display: block;
+	background-color: #ffffff;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	border-radius: 5px;
+	height: 0px;
+	margin-top: 10px;
+	transition: all 1s ease;
+}
+
+/* drop down menu holding new puzzle options */
+.new-puzzle-content {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	padding: 10px;
+	opacity: 0;
+	transition: opacity .5s ease;
+}
+
+/* dropdown selection box for difficulty and size */
+.custom-select {
+  position: relative;
+  font-family: Arial;
+}
+
+.custom-select select {
+  display: none;
+}
+
+/* selected item, appears next to arrow at top */
+.select-selected {
+  background-color: #DE9894;
+}
+
+/* arrow (down) */
+.select-selected:after {
+  position: absolute;
+  content: "";
+  top: 14px;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-color: #fff transparent transparent transparent;
+}
+
+/* arrow (up) */
+.select-selected.select-arrow-active:after {
+  border-color: transparent transparent #fff transparent;
+  top: 7px;
+}
+
+/* options */
+.select-items div,.select-selected {
+  color: #ffffff;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-color: transparent transparent #C36D68 transparent;
+  cursor: pointer;
+}
+
+/* items that can be selected */
+.select-items {
+  position: absolute;
+  background-color: #DE9894;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 99;
+}
+
+/* hide options when closed */
+.select-hide {
+  display: none;
+}
+
+.select-items div:hover, .same-as-selected {
+  background-color: #C36D68;
+} 
+
+/* button to submit newp options and actually get a new puzzle */
+.newp-button {
+	background-color: #70544D;
+	color: white;
+	font-weight: bold;
+	font-size: 16px;
+	font-family: Arial;
+	border: none;
+	border-radius: 5px;
+	padding: 10px;
+	cursor: pointer;
+	margin-top: 10px;
+	width: 93%;
 }
 
 /*  holds save/load buttons */
@@ -344,22 +460,8 @@ label {
 	font-size: 15px;
 }
 
-/* OTHER ---------------------*/
-.win {
-	display: none;
-	font-size: 16px;
-	font-family: Arial;
-	border: none;
-	border-radius: 5px;
-	padding: 10px;
-	margin-bottom: 10px;
-	color: #ffffff;
-	background-color: #DE9894;
-}
-
 /*CSS for smaller screens, such as mobile */
 @media screen and (max-width: 950px) {
-	
 	.l-container {
 		width: 100%;
 		max-width: 670px;

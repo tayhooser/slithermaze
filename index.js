@@ -66,10 +66,23 @@ var projection;
 var vp;
 var startPos =  Array(2);
 var prevX, prevY = 0;
-
-//var gLength = puzzleSize + 1;
+var renderCalls = 0;
+var stopWatch;
+var startedTimer = false;
+var touchTimer;
+var touchTimerStart;
+var touchCrossThreshold = 250;
+var camWasMoved = false;
+var camTotalMoved;
+var lastPinchDist = 0;
+var ongoingTouches = [];
+var twoTouches = false;
+var touchTimer = 0;
+var usingTouchEvents = false;
+var isTouching = false;
+var justPlacedAnX = false;
+var touchInit = false;
 var gHeight;
-
 var MoB;				// Middle of Board. Used to set the camera position in the center
 var gLinesArray;		// 2D Array that indicates which lines are on/off
 
@@ -117,6 +130,7 @@ window.onload = function(){
 	startEventListeners();
 	gl.enable(gl.CULL_FACE);
 	clock();
+	spawnSelectionMenus();
 	
 	// load prev puzzle or new one
 	if (localStorage.getItem("load1cells") != null){
@@ -290,7 +304,6 @@ var initPuzzleGraphics = function(puzzle) {
 		translateY = translateY - 10.0;				// moves the next row of dots down
 	}
 
-
 	translateX = 5.0;
 	translateY = -5.0;
 	
@@ -450,11 +463,6 @@ var initPuzzleGraphics = function(puzzle) {
 	//render();
 };
 
-
-var renderCalls = 0;
-var stopWatch;
-var startedTimer = false;
-
 // looping render call to draw stuff to screen
 var render = function() {
 	if (!shouldRender) {
@@ -584,12 +592,15 @@ var render = function() {
 
 	var msPassed = Date.now() - timeStart;
 
+	// used to check fps
+	/*
 	renderCalls++;
 	if ((Date.now() - stopWatch) >= 1000) {
 		console.log("fps: ", renderCalls);
 		renderCalls = 0;
 		stopWatch = Date.now();
 	}
+	*/
 
 	// if (msPassed <= 12) { 			// 0 <= x <= 12
 	// 	setTimeout(render, 12 - msPassed);
@@ -601,18 +612,6 @@ var render = function() {
 };
 
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
-
-var camWasMoved = false;
-var camTotalMoved;
-var lastPinchDist = 0;
-var ongoingTouches = [];
-var twoTouches = false;
-var touchTimer = 0;
-var usingTouchEvents = false;
-var isTouching = false;
-var justPlacedAnX = false;
-var touchInit = false;
-
 var startEventListeners = function(event) {
 	//canvas.addEventListener("mouseenter", mouseEnter, false);
 	window.addEventListener("resize", windowResize, false);
@@ -658,7 +657,6 @@ var canvasToWorldCoords = function(mouseX, mouseY) {
 
 // called when the puzzle state should be changing somehow
 var click = function(worldCoords, button) {
-	
 	var timeStart = Date.now();
 	
 	var keptIndex = 0;
@@ -849,6 +847,7 @@ var pointerUp = function (event) {
 	canvas.removeEventListener("pointermove", pointerMove, false);
 	canvas.removeEventListener("pointerup", pointerUp, false);
 };
+
 // mouse leaving the canvas
 var mouseLeave = function (event) { 
 	//canvas.removeEventListener("click", click, false);		
@@ -967,9 +966,6 @@ var ongoingTouchIndexById = function(idToFind) {
 };
 
 // counter to track how long a touch event has been going to see if a cross should be placed
-var touchTimer;
-var touchTimerStart;
-var touchCrossThreshold = 250;
 var incrementCounter = function(worldCoords) {
 	//touchTimer++;
 	touchTimer = Date.now() - touchTimerStart;
@@ -1284,8 +1280,6 @@ solutionHTML.onclick = function(){
 // called when user hits restart button, HTML side
 // wipes all lines and crosses from screen
 restartHTML.onclick = function(){
-	//console.log("Restart pressed.");
-	
 	// restart puzzle, but perform QOL improvements
 	pl.clearPuzzle(curPuzzle);
 	performQOL();
@@ -1375,10 +1369,105 @@ submitHTML.onclick = function(){
 	return;
 };
 
-// generate new puzzle or select from premade puzzles
+// drops down menu
 newPuzzleHTML.onclick = function(){
 	console.log("New Puzzle pressed.");
+	var newpMenu = document.getElementById('newp-menu');
+	var newpContent = document.getElementById('newp-content');
+    if (newpMenu.style.height == '0px') { // show menu
+		newpMenu.style.height = '120px';
+		newpMenu.style.marginBottom = '10px';
+		newpContent.style.opacity = '1';
+		
+    } else if (newpMenu.style.height > '0px'){ // hide menu
+        newpMenu.style.height = '0px';
+		newpMenu.style.marginBottom = '0px';
+		newpContent.style.opacity = '0';
+		
+    } else { // always falls back to this else block on first click..... dont know why
+		newpMenu.style.height = '120px';
+		newpMenu.style.marginBottom = '10px';
+		newpContent.style.opacity = '1';
+	}
+	return;
+};
+
+// below code handles dropdown menus
+// https://www.w3schools.com/howto/howto_custom_select.asp
+var spawnSelectionMenus = function() {
+	var curMenu, selectedItem, optionList;
+	var selectMenus = document.getElementsByClassName("custom-select");
+	var numMenus = selectMenus.length;
+	for (let i = 0; i < numMenus; i++) { // for each custom select menu
+		curMenu = selectMenus[i].getElementsByTagName("select")[0];
 	
+		selectedItem = document.createElement("DIV");
+		selectedItem.setAttribute("class", "select-selected");
+		selectedItem.innerHTML = curMenu.options[curMenu.selectedIndex].innerHTML;
+		selectMenus[i].appendChild(selectedItem);
+
+		optionList = document.createElement("DIV");
+		optionList.setAttribute("class", "select-items select-hide");
+	
+		for (let j = 1; j < curMenu.length; j++) { // for each option in menu
+			var item = document.createElement("DIV");
+			item.innerHTML = curMenu.options[j].innerHTML;
+			item.addEventListener("click", function(e) {
+				var selectMenu = this.parentNode.parentNode.getElementsByTagName("select")[0];
+				var selectedOption = this.parentNode.previousSibling;
+				for (let i = 0; i < selectMenu.length; i++) { // for each menu option
+					if (selectMenu.options[i].innerHTML == this.innerHTML) {
+						selectMenu.selectedIndex = i;
+						selectedOption.innerHTML = this.innerHTML;
+						var sas = this.parentNode.getElementsByClassName("same-as-selected"); // option in the list thats the currently selected option
+						for (let j = 0; j < sas.length; j++) {
+							sas[j].removeAttribute("class");
+						}
+						this.setAttribute("class", "same-as-selected");
+						break;
+					}
+				}
+				selectedOption.click();
+			});
+			optionList.appendChild(item);
+		}
+		
+		selectMenus[i].appendChild(optionList);
+		// when menu clicked, close other select menus + open selected menu
+		selectedItem.addEventListener("click", function(e) {
+			e.stopPropagation();
+			closeAllSelect(this);
+			this.nextSibling.classList.toggle("select-hide");
+			this.classList.toggle("select-arrow-active");
+		});
+	}
+
+	// closes all other select menus except current one
+	function closeAllSelect(element) {
+		var arr = [];
+		var canBeSelected = document.getElementsByClassName("select-items");
+		var curSelected = document.getElementsByClassName("select-selected");
+		for (let i = 0; i < curSelected.length; i++) {
+			if (element == curSelected[i]) {
+				arr.push(i)
+			} else {
+				curSelected[i].classList.remove("select-arrow-active");
+			}
+		}
+		
+		for (let i = 0; i < canBeSelected.length; i++) {
+			if (arr.indexOf(i)) {
+				canBeSelected[i].classList.add("select-hide");
+			}
+		}
+	}
+
+	// close all select boxes if clicked outside
+	document.addEventListener("click", closeAllSelect);
+}
+
+// generates puzzles depending on selected parameters
+var newPuzzleHandler = function(type, h, w, d) {
 	// clear save data
 	localStorage.clear();
 	for (let i = 1; i <= saveCounter; i++){
@@ -1403,21 +1492,23 @@ newPuzzleHTML.onclick = function(){
 		delete curPuzzle.e;
 	}
 	
-	// get new puzzle
-	/*
-	getMap({ author: 'Taylor' }).then(
-		(map) => {
-			curPuzzle = pl.convertPuzzle(map);
-			pl.logPuzzleState(curPuzzle);
-			//g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-		},
-		(issue) => {
-			console.log(issue);
-	});
-	*/
-	curPuzzle = pl.generatePuzzle(50, 50, 1);
-	//pl.logPuzzleState(curPuzzle);
-	initPuzzleGraphics(curPuzzle);
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	if (type == "premade"){ // grab premade from server
+		/*
+		getMap({ author: 'Taylor' }).then(
+			(map) => {
+				curPuzzle = pl.convertPuzzle(map);
+				pl.logPuzzleState(curPuzzle);
+				//g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+			},
+			(issue) => {
+				console.log(issue);
+		});
+		*/
+	} else { // generate puzzle
+		curPuzzle = pl.generatePuzzle(h, w, d);
+		//pl.logPuzzleState(curPuzzle);
+		initPuzzleGraphics(curPuzzle);
+		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	}
 	return;
-};
+}

@@ -86,12 +86,39 @@
 				</table>
 			</div>
 		</div>
+		
 		<!-- BOTTOM CONTAINER -->
 		<div class="b-container">
 			<div class="save-container" id="save-container">
 				<button class="save-button" id="save"><i class="fa fa-floppy-o"></i></button></div>
 			<button class="lb-button" id="submit">SUBMIT</button>
 			<button class="lb-button" id="new-puzzle">NEW PUZZLE</button>
+			<!-- dropdown new puzzle menu -->
+			<div id="newp-menu" class="new-puzzle">
+			<div id="newp-content" class="new-puzzle-content">
+				<div class="custom-select" style="width:45%;">
+				<select>
+				<option value="0">Difficulty</option>
+				<option value="1">Easy</option>
+				<option value="2">Medium</option>
+				<option value="3">Hard</option>
+				</select>
+				</div>
+
+				<div class="custom-select" style="width:45%;">
+				<select>
+				<option value="0">Size</option>
+				<option value="1">5x5</option>
+				<option value="2">10x10</option>
+				<option value="3">15x15</option>
+				<option value="3">20x20</option>
+				<option value="3">25x25</option>
+				</select>
+				</div>
+				
+				<button class="newp-button" id="newp">GET NEW PUZZLE</button>
+			</div>
+			</div>
 		</div>
 	</div>
 	</center>
