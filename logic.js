@@ -1030,7 +1030,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 	
 		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
 
-			if (j > 0 && arrayIndexOf([i-1,j,0], puzzle.nodes[i][j]) != -1) {
+			if (j > 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
 				console.log("two crosses detected, both at top left node");
 
 				placeCross(puzzle,i,j,i,j+1);
