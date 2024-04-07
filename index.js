@@ -7,6 +7,7 @@ var G = 1.0;
 var B = 1.0;
 
 var curPuzzle; // current puzzle
+var curPuzzleID; // id of current puzzle, used if pre-made
 
 var saveCounter = 0; // number of savestates
 var puzzleHistory = []; // history of puzzle states -- used for undo/redo
@@ -39,6 +40,8 @@ const saveHTML = document.getElementById('save');
 const saveContainerHTML = document.getElementById("save-container"); // for adding load buttons
 const submitHTML = document.getElementById('submit');
 const newPuzzleHTML = document.getElementById('new-puzzle');
+const getNewpHTML = document.getElementById('get-newp');
+const newpErrHTML = document.getElementById('newp-err');
 
 // settings
 var ACnum = ACnumHTML.checked;
@@ -1371,7 +1374,7 @@ submitHTML.onclick = function(){
 
 // drops down menu
 newPuzzleHTML.onclick = function(){
-	console.log("New Puzzle pressed.");
+	//console.log("New Puzzle pressed.");
 	var newpMenu = document.getElementById('newp-menu');
 	var newpContent = document.getElementById('newp-content');
     if (newpMenu.style.height == '0px') { // show menu
@@ -1467,7 +1470,7 @@ var spawnSelectionMenus = function() {
 }
 
 // generates puzzles depending on selected parameters
-var newPuzzleHandler = function(type, h, w, d) {
+getNewpHTML.onclick = function() {
 	// clear save data
 	localStorage.clear();
 	for (let i = 1; i <= saveCounter; i++){
@@ -1485,12 +1488,57 @@ var newPuzzleHandler = function(type, h, w, d) {
     document.getElementById('sec').innerHTML = "00";
 	timer = true;
 	
+	// hide win/try again msg
 	document.getElementById("win").style.display = 'none';
 	
 	// delete current puzzle 
 	for (let e in curPuzzle){
 		delete curPuzzle.e;
 	}
+	
+	// get info from new puzzle menu
+	var h, w, d, type;
+	var diff = document.getElementById("diff-select").value;
+	var size = document.getElementById("size-select").value;
+	
+	switch (diff) {
+		case '1': // easy
+			d = 1;
+			break;
+		case '2': // med
+			d = 2;
+			break;
+		case '3': // hard
+			d = 3;
+			break;
+		default: // throw error
+			newpErrHTML.innerHTML = "Please select valid difficulty and/or size.";
+			newpErrHTML.style.display = 'block';
+			return;
+	}
+	
+	switch (size) {
+		case '1': // 5x5
+			h = w = 5;
+			break;
+		case '2': // 10x10
+			h = w = 10;
+			break;
+		case '3': // 15x15
+			h = w = 15;
+			break;
+		case '4': // 20x20
+			h = w = 20;
+			break;
+		case '5': // 25x25
+			h = w = 25;
+			break;
+		default: // throw error
+			newpErrHTML.innerHTML = "Please select valid difficulty and/or size.";
+			newpErrHTML.style.display = 'block';
+			return;
+	}
+	newpErrHTML.style.display = 'none';
 	
 	if (type == "premade"){ // grab premade from server
 		/*
@@ -1504,9 +1552,12 @@ var newPuzzleHandler = function(type, h, w, d) {
 				console.log(issue);
 		});
 		*/
+		newpErrHTML.innerHTML = "No pre-made puzzle exists with the given parameters.";
+		newpErrHTML.style.display = 'block';
+		return;
 	} else { // generate puzzle
+		console.log("h = " + h + "; w = " + w + "; d = " + d);
 		curPuzzle = pl.generatePuzzle(h, w, d);
-		//pl.logPuzzleState(curPuzzle);
 		initPuzzleGraphics(curPuzzle);
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	}

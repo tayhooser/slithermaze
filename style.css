@@ -419,6 +419,20 @@ label {
 	width: 93%;
 }
 
+/* holds error msg for newp menu */
+/* win/try again message */
+.newp-err {
+	display: none;
+	font-size: 16px;
+	font-weight: normal;
+	font-family: Arial;
+	border: none;
+	width: 93%;
+	margin-bottom: -10px;
+	margin-top: -5px;
+	color: #DE9894;
+}
+
 /*  holds save/load buttons */
 .save-container {
 	display: flex;

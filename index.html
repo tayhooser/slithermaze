@@ -96,8 +96,8 @@
 			<!-- dropdown new puzzle menu -->
 			<div id="newp-menu" class="new-puzzle">
 			<div id="newp-content" class="new-puzzle-content">
-				<div class="custom-select" style="width:45%;">
-				<select>
+				<div class="custom-select" style="width:47%;">
+				<select id= "diff-select">
 				<option value="0">Difficulty</option>
 				<option value="1">Easy</option>
 				<option value="2">Medium</option>
@@ -105,8 +105,8 @@
 				</select>
 				</div>
 
-				<div class="custom-select" style="width:45%;">
-				<select>
+				<div class="custom-select" style="width:47%;">
+				<select id="size-select">
 				<option value="0">Size</option>
 				<option value="1">5x5</option>
 				<option value="2">10x10</option>
@@ -116,7 +116,8 @@
 				</select>
 				</div>
 				
-				<button class="newp-button" id="newp">GET NEW PUZZLE</button>
+				<div id="newp-err" class="newp-err"> error </div>
+				<button class="newp-button" id="get-newp">GET NEW PUZZLE</button>
 			</div>
 			</div>
 		</div>

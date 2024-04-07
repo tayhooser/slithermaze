@@ -230,7 +230,7 @@ export var clearPuzzle = function(puzzle) {
 
 // generates a new puzzle by creating a random tree of cells
 export var generatePuzzle = function(h, w, d){
-	let debug = true;
+	let debug = false;
 	let puzzle = new Puzzle(h, w);
 
 	// create a sector in the center of the board from which to choose a starting point
