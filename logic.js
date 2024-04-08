@@ -1311,10 +1311,9 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 function RuleFiveForOnes (puzzle,i,j) {
 if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
-	if (puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j+1][0] == 1) {
+	if (puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j+1][0]==1) {
 
 		console.log("two ones detected, top left to bottom right diagonal");
-		console.log(puzzle.cells[i+1][j+1][0])
 
 		if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
 			console.log("left edge crossed on second cell detected");
@@ -1347,7 +1346,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 	}
 
-	else if (puzzle.cells[i][j][0] == 1 && puzzle.cells[i-1][j+1][0])  {
+	else if (puzzle.cells[i][j][0] == 1 && puzzle.cells[i-1][j+1][0]==1)  {
 		console.log("two ones detected, top right to bottom left");
 		console.log(puzzle.cells[i-1][j+1][0]);
 
