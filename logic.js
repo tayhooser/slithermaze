@@ -756,7 +756,7 @@ function handleNodeWithTwo(puzzle, i, j) {
         }
     }
 
-    if (numCross == 2 && missing.length == 2) {
+    if (numCross == 2 && missing.length == 2 && puzzle.cells[i][j][0]==countLines(puzzle,i,j)) {
         placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
         placeLine(puzzle, i, j, missing[1][0], missing[1][1]);
     } else if (numLines == 2 && missing.length == 2) {
@@ -909,7 +909,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 	if (puzzle.cells[i][j][0] == 1) {
         // Check for cross above topleft node
-        if (i >= 0 && arrayIndexOf(puzzle.nodes[i,j,0], [i-1][j]) != -1) {
+        if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
 			console.log("cross detected");
             // Check for coming into the top-left corner of the '2' cell
             if (j > 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
@@ -921,10 +921,10 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
         }
 
 		//checks for bottom right line coming in and bottom right node has a cross below it
-		else if (i >= 0 && arrayIndexOf([i+1,j+1,0], puzzle.nodes[i+2] [j+1]) != -1) {
+		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1,j+1,0]) != -1) {
 			console.log("bottom cross detected");
 
-			if (j > 0 && arrayIndexOf([i+1,j+2,1], puzzle.nodes[i+1][j+1]) != -1) {
+			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j+2],[i+1,j+1,1]) != -1) {
 				console.log("bottom left line detcted")
 				placeCross(puzzle,i,j,i,j+1);
 				placeCross(puzzle,i,j,i+1,j);
@@ -1030,7 +1030,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 	
 		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
+			if (j > 0 && arrayIndexOf([i-1,j,0], puzzle.nodes[i][j]) != -1) {
 				console.log("two crosses detected, both at top left node");
 
 				placeCross(puzzle,i,j,i,j+1);
