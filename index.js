@@ -105,6 +105,9 @@ async function getMap(query = { author: 'Taylor' }) {
 
     let returning = await fetch(url).then(res => res.json()).then(data => {
         return data;
+    })
+	.catch(function(error) {
+        throw 500;
     });
 
     return returning;
