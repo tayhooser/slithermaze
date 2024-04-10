@@ -889,11 +889,12 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
     // Checks if the current cell is a '2'
     if (puzzle.cells[i][j][0] == 2) {
         // Check for 'X' to the left of the '2' cell
-        if (i > 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+        if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
             // Check for a line below the bottom-left corner of the '2' cell
-            if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
+            if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
                 // Place a line on the right edge of the '2' cell
                 placeLine(puzzle, i, j + 1, i + 1, j + 1);
+				placeCross(puzzle,i+2,j,i+1,j);
             }
         }
     }
@@ -904,15 +905,15 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 //for cells with ones, where a line is coming into the cell and a cross is placed outside it
 //multiple permutations exist
 function RuleTwoforOnes(puzzle,i,j) {
-if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
+	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 
 	if (puzzle.cells[i][j][0] == 1) {
         // Check for cross above topleft node
-        if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
+        if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
 			console.log("cross detected");
             // Check for coming into the top-left corner of the '2' cell
-            if (j > 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
+            if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
 				console.log("line detected");
                 // Place a line on the right edge of the '2' cell
                 placeCross(puzzle,i,j+1,i+1,j+1);
@@ -921,10 +922,10 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
         }
 
 		//checks for bottom right line coming in and bottom right node has a cross below it
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1,j+1,0]) != -1) {
+		else if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1,j+1,0]) != -1) {
 			console.log("bottom cross detected");
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j+2],[i+1,j+1,1]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2],[i+1,j+1,1]) != -1) {
 				console.log("bottom left line detcted")
 				placeCross(puzzle,i,j,i,j+1);
 				placeCross(puzzle,i,j,i+1,j);
@@ -933,11 +934,11 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		}
 
 		//checks for top left cross above top left node
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
+		else if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
 			console.log("top right cross detected")
 
 			//checks line coming in to top right node
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i,j+2,1]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i,j+2,1]) != -1) {
 				console.log("top right line detected");
 				placeCross(puzzle,i,j,i+1,j);
 				placeCross(puzzle,i+1,j,i+1,j+1);
@@ -948,11 +949,11 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		}
 
 		//checks for bottom right cross
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j+2, 0]) != -1) {
+		else if (i+1 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j+2, 0]) != -1) {
 			console.log("bottom right cross detected")
 
 			//checks for line coming into bottom right node
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2,j+1,1]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2,j+1,1]) != -1) {
 				console.log("bottom right line detected");
 
 				placeCross(puzzle,i,j,i,j+1);
@@ -967,7 +968,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
 			console.log("cross to the right of top right node");
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i,j+1,1]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i,j+1,1]) != -1) {
 				console.log("line coming in from top to top right node");
 
 				placeCross(puzzle,i,j,i+1,j);
@@ -977,10 +978,10 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		}
 
 
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
+		else if (i < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
 			console.log("bottom cross found on bottom left node");
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1,j,1]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1,j,1]) != -1) {
 				console.log("line coming in to left side of bottom left node");
 
 				placeCross(puzzle,i,j,i,j+1);
@@ -991,10 +992,10 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 		}
 
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
+		else if (i < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
 			console.log("cross to the left detected on bottom left node");
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1,j,1]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1,j,1]) != -1) {
 				console.log("line coming from bottom to bottom left node");
 
 				placeCross(puzzle,i,j,i,j+1);
@@ -1007,7 +1008,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
 			console.log("cross to the left of top left node detected");
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,1]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,1]) != -1) {
 				console.log("line above top left node detected");
 
 				placeCross(puzzle,i,j+1,i+1,j+1);
@@ -1018,19 +1019,20 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		}
 
     }	
+}
 }	
 
 
-}
+
 
 function RuleOneForOnes (puzzle,i,j) {
-if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
-
+	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 	if (puzzle.cells[i][j][0] == 1) {
 	
 		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
+			console.log("yes")
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i-1][j],[i,j,0]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
 				console.log("two crosses detected, both at top left node");
 
 				placeCross(puzzle,i,j,i,j+1);
@@ -1042,9 +1044,9 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 		}
 
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
+		if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
 				console.log("two crosses detected, both at top right node");
 
 				placeCross(puzzle,i,j,i,j+1);
@@ -1055,9 +1057,9 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		}
 
 
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 0]) != -1) {
+		if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 0]) != -1) {
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
 				console.log("two crosses detected, both at bottom right corner");
 
 				placeCross(puzzle,i,j+1,i+1,j+1);
@@ -1067,9 +1069,9 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 		}
 
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
+		if (i+1 <= puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 0]) != -1) {
+			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 0]) != -1) {
 				console.log("two crosses detected, both at bottom left corner");
 
 				placeCross(puzzle,i,j,i+1,j);
@@ -1081,139 +1083,142 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 		
 	}
+	}
+
 
 }
 
-}
 
 function RuleThreeForOnes (puzzle,i,j) {
-if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
+	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
+		
 	
-
-	if (puzzle.cells[i][j][0]== 1) {
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
-			console.log("line coming to left side of top left node")
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
-
-				if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
-					console.log("two crosses found, both inside cell (bottom and right edge)");
-
-					placeCross(puzzle,i-1,j,i,j);
-
-
+		if (puzzle.cells[i][j][0]== 1) {
+	
+			if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
+				console.log("line coming to left side of top left node")
+	
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
+	
+					if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
+						console.log("two crosses found, both inside cell (bottom and right edge)");
+	
+						placeCross(puzzle,i-1,j,i,j);
+	
+	
+					}
+	
 				}
-
+	
 			}
-
-		}
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 1]) != -1) {
-			console.log("line coming to right side of top right node");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-				
-
-				if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
-					console.log("two cross found, both inside cell (left and bottom edge)");
-					placeCross(puzzle,i-1,j+1,i,j+1);
+	
+			if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 1]) != -1) {
+				console.log("line coming to right side of top right node");
+	
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
+					
+	
+					if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
+						console.log("two cross found, both inside cell (left and bottom edge)");
+						placeCross(puzzle,i-1,j+1,i,j+1);
+					}
+	
 				}
-
 			}
-		}
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 1]) != -1) {
-			console.log("line coming to top side of top right node");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-				
-
-				if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
-					console.log("two cross found, both inside cell (left and bottom edge)");
-					placeCross(puzzle,i,j+1,i,j+2);
+	
+			if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 1]) != -1) {
+				console.log("line coming to top side of top right node");
+	
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
+					
+	
+					if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
+						console.log("two cross found, both inside cell (left and bottom edge)");
+						placeCross(puzzle,i,j+1,i,j+2);
+					}
+	
 				}
-
 			}
-		}
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
-			console.log("line coming to left side of bottom left node");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-				
-
-				if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
-					console.log("two cross found, both inside cell (top and right edge)");
-					placeCross(puzzle,i+2,j,i+1,j);
+	
+			if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
+				console.log("line coming to left side of bottom left node");
+	
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+					
+	
+					if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
+						console.log("two cross found, both inside cell (top and right edge)");
+						placeCross(puzzle,i+2,j,i+1,j);
+					}
+	
 				}
-
 			}
-		}
-
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 1]) != -1) {
-			console.log("line coming to bottom side of bottom left node");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-				
-
-				if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
-					console.log("two cross found, both inside cell (top and right edge)");
-					placeCross(puzzle,i+1,j-1,i+1,j);
+	
+	
+			if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 1]) != -1) {
+				console.log("line coming to bottom side of bottom left node");
+	
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+					
+	
+					if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
+						console.log("two cross found, both inside cell (top and right edge)");
+						placeCross(puzzle,i+1,j-1,i+1,j);
+					}
+	
 				}
-
 			}
-		}
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 1]) != -1) {
-			console.log("line coming to right side of bottom right node");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-				
-
-				if (arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-					console.log("two cross found, both inside cell (top and left edge)");
-					placeCross(puzzle,i+2,j+1,i+1,j+1);
+	
+			if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 1]) != -1) {
+				console.log("line coming to right side of bottom right node");
+	
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+					
+	
+					if (arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
+						console.log("two cross found, both inside cell (top and left edge)");
+						placeCross(puzzle,i+2,j+1,i+1,j+1);
+					}
+	
 				}
-
 			}
-		}
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 1]) != -1) {
-			console.log("line coming to bottom side of bottom right node");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-				
-
-				if (arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-					console.log("two cross found, both inside cell (top and left edge)");
-					placeCross(puzzle,i+1,j+2,i+1,j+1);
-
+	
+			if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 1]) != -1) {
+				console.log("line coming to bottom side of bottom right node");
+	
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+					
+	
+					if (arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
+						console.log("two cross found, both inside cell (top and left edge)");
+						placeCross(puzzle,i+1,j+2,i+1,j+1);
+	
+					}
+	
 				}
-
 			}
-		}
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 1]) != -1) {
-			console.log("line coming to top side of top left node");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
-				
-
-				if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
-					console.log("two cross found, both inside cell (right and bottom edge)");
-					placeCross(puzzle,i,j-1,i,j);
+	
+			if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 1]) != -1) {
+				console.log("line coming to top side of top left node");
+	
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
+					
+	
+					if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
+						console.log("two cross found, both inside cell (right and bottom edge)");
+						placeCross(puzzle,i,j-1,i,j);
+					}
+	
 				}
-
 			}
+	
+	
 		}
-
-
 	}
-}
-
-}
+	}
+	
+	
+	
 
 // function that will place a cross between two sets of ones.
 
@@ -1222,7 +1227,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 function RuleFourForOnes (puzzle,i,j) { 
 if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
-	if (puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j][0] == 1) {
+	if (i < puzzle.h-1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j][0] == 1) {
 		console.log("two ones detected, aligned vertically")
 
 		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j+2], [i, j+1, 0]) != -1 ) {
@@ -1262,7 +1267,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 	}
 
-	if (puzzle.cells[i][j][0] == 1 && puzzle.cells[i][j+1][0] == 1) { 
+	if (j < puzzle.w -1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i][j+1][0] == 1) { 
 		console.log("two ones detected, aligned horizontally");
 
 		if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 0]) != -1) {
@@ -1309,77 +1314,78 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 
 function RuleFiveForOnes (puzzle,i,j) {
-if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
-
-	if (puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j+1][0]==1) {
-
-		console.log("two ones detected, top left to bottom right diagonal");
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
-			console.log("left edge crossed on second cell detected");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+2, j+2, 0]) != -1) {
-				console.log("bottom edge crossed on second cell detected");
-
-				placeCross(puzzle,i,j,i,j+1);
-				placeCross(puzzle,i,j,i+1,j);
-
-
+	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
+	
+		if (puzzle.cells[i][j][0] == 1 && i<puzzle.h-1 && j< puzzle.w-1 && puzzle.cells[i+1][j+1][0]==1) {
+	
+			console.log("two ones detected, top left to bottom right diagonal");
+	
+			if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
+				console.log("left edge crossed on second cell detected");
+	
+				if (j > 0 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+2, j+2, 0]) != -1) {
+					console.log("bottom edge crossed on second cell detected");
+	
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j,i+1,j);
+	
+	
+				}
+	
 			}
-
-		}
-
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-			console.log("left edge crossed on 1st cell detected")
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-				console.log("top edge crossed on 1st cell");
-
-				placeCross(puzzle,i+2,j+1,i+2,j+2);
-				placeCross(puzzle,i+2,j+2,i+1,j+2);
-
+	
+			else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+				console.log("left edge crossed on 1st cell detected")
+	
+				if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
+					console.log("top edge crossed on 1st cell");
+	
+					placeCross(puzzle,i+2,j+1,i+2,j+2);
+					placeCross(puzzle,i+2,j+2,i+1,j+2);
+	
+				}
+	
 			}
-
+			
+	
+	
 		}
-		
-
-
+	
+		else if (i > 0 && j + 1 < puzzle.w && puzzle.cells[i][j][0] == 1 && puzzle.cells[i-1][j+1][0] == 1)  {
+			console.log("two ones detected, top right to bottom left");
+			console.log(puzzle.cells[i-1][j+1][0]);
+	
+			if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
+				console.log("left edge crossed on bottem left one");
+	
+				if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
+					console.log("bottom edge crossed on bottem left one");
+	
+					placeCross(puzzle,i-1,j+1,i-1,j+2);
+					placeCross(puzzle,i-1,j+2,i,j+2);
+	
+				}
+	
+			}
+	
+			if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i-1, j+2, 0]) != -1) {
+				console.log("top cross detected on top right one");
+	
+				if (j > 0 && arrayIndexOf(puzzle.nodes[i][j+2], [i-1, j+2, 0]) != -1) {
+					console.log("right cross detected on top right one");
+					
+					placeCross(puzzle,i,j,i+1,j);
+					placeCross(puzzle,i+1,j,i+1,j+1);
+	
+				}
+	
+			}
+	
+		}
+	}
 	}
 
-	else if (puzzle.cells[i][j][0] == 1 && puzzle.cells[i-1][j+1][0]==1)  {
-		console.log("two ones detected, top right to bottom left");
-		console.log(puzzle.cells[i-1][j+1][0]);
 
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-			console.log("left edge crossed on bottem left one");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
-				console.log("bottom edge crossed on bottem left one");
-
-				placeCross(puzzle,i-1,j+1,i-1,j+2);
-				placeCross(puzzle,i-1,j+2,i,j+2);
-
-			}
-
-		}
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i-1, j+2, 0]) != -1) {
-			console.log("top cross detected on top right one");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i][j+2], [i-1, j+2, 0]) != -1) {
-				console.log("right cross detected on top right one");
-				
-				placeCross(puzzle,i,j,i+1,j);
-				placeCross(puzzle,i+1,j,i+1,j+1);
-
-			}
-
-		}
-
-	}
-}
-
-}
 
 
 
@@ -1396,7 +1402,7 @@ export var autoSolver = function(puzzle) {
     for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {
             handleNodeRules(puzzle, i, j);
-            handleCellRules(puzzle, i, j);
+            //handleCellRules(puzzle, i, j);
             crossCompletedCell(puzzle,i,j);
             handleCellWithInverseNumber(puzzle,i,j);
 			crossDeadEnd(puzzle,i,j);
@@ -1420,5 +1426,4 @@ export var autoSolver = function(puzzle) {
 	
 
 }
-
 
