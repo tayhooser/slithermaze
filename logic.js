@@ -768,7 +768,6 @@ function handleNodeWithTwo(puzzle, i, j) {
 
 
 
-// Function to handle cell rules
 function handleCellRules(puzzle, i, j) {
     if (puzzle.cells[i][j][0] == 1) {
         handleCellWithOne(puzzle, i, j);
@@ -783,51 +782,74 @@ function handleCellRules(puzzle, i, j) {
 
 // Function to handle cell with one
 function handleCellWithOne(puzzle, i, j) {
+
+if (puzzle.cells[i][j][0] == 1) {
+
     if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
         if (i === 0) {
-            placeCross(puzzle, i, j, i + 1, j);
+            placeCross(puzzle, i, j, i , j+1);
         } else if (i == puzzle.h - 1) {
-            placeCross(puzzle, i - 1, j, i, j);
+            placeCross(puzzle, i+1, j, i+1, j+1);
         }
 
         if (j === 0) {
-            placeCross(puzzle, i, j, i, j + 1);
+            placeCross(puzzle, i, j, i+1, j);
         } else if (j == puzzle.w - 1) {
-            placeCross(puzzle, i, j - 1, i, j);
+           placeCross(puzzle, i, j+1 , i+1, j+1);
         }
     }
+
+}
 }
 
 // Function to handle cell with three
 function handleCellWithThree(puzzle, i, j) {
+
+if (puzzle.cells[i][j][0] == 3) {
+
     if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-        if (i === 0) {
-            placeLine(puzzle, i, j, i + 1, j);
+		if (i === 0) {
+            placeLine(puzzle, i, j, i , j+1);
         } else if (i == puzzle.h - 1) {
-            placeLine(puzzle, i - 1, j, i, j);
+            placeLine(puzzle, i+1, j, i+1, j+1);
         }
 
         if (j === 0) {
-            placeLine(puzzle, i, j, i, j + 1);
+            placeLine(puzzle, i, j, i+1, j);
         } else if (j == puzzle.w - 1) {
-            placeLine(puzzle, i, j - 1, i, j);
+           placeLine(puzzle, i, j+1 , i+1, j+1);
         }
     }
+
+}
 }
 
 // Function to handle cell with two
 function handleCellWithTwo(puzzle, i, j) {
-    if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-        if (i === 0) {
-            placeLine(puzzle, i, j, i + 2, j);
-        } else if (i == puzzle.h - 1) {
-            placeLine(puzzle, i - 2, j, i - 1, j);
-        }
+    if (puzzle.cells[i][j][0] == 2) {
+        // Check if it's any of the four corners
+        if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
 
-        if (j === 0) {
-            placeLine(puzzle, i, j, i, j + 2);
-        } else if (j == puzzle.w - 1) {
-            placeLine(puzzle, i, j - 2, i, j - 1);
+            // Top left corner
+            if (i == 0 && j == 0) {
+                placeLine(puzzle, i, j+1, i, j+2);
+                placeLine(puzzle, i+1, j, i+2, j);
+            }
+            // Top right corner
+            else if (i == 0 && j == puzzle.w - 1) {
+                placeLine(puzzle, i+1, j+1, i+2, j+1);
+                placeLine(puzzle, i, j, i, j - 1);
+            }
+            // Bottom left corner
+            else if (i == puzzle.h - 1 && j == 0) {
+                placeLine(puzzle, i, j, i - 1, j);
+                placeLine(puzzle, i+1, j+1, i+1, j + 2);
+            }
+            // Bottom right corner
+            else if (i == puzzle.h - 1 && j == puzzle.w - 1) {
+                placeLine(puzzle, i, j+1, i+1, j+1);
+                placeLine(puzzle, i+1, j-1, i+1, j);
+            }
         }
     }
 }
