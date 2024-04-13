@@ -55,6 +55,7 @@ export var logPuzzleState = function(puzzle) {
 // currently just parses cell data
 export var convertPuzzle = function(json) {
 	var data = json;
+	console.log("size = " + data.size);
 	var puzzle = new Puzzle(data.size, data.size);
 	for (let i = 0; i < data.size; i++){
 		for (let j = 0; j < data.size; j++){
@@ -269,7 +270,7 @@ export var generatePuzzle = function(h, w, d){
 	let cur;
 	//console.log("root = " + root);
 	
-	while ((tree.length != done.length) && (tree.length/(h*w) < .55)){ //until no more moves can be done OR puzzle is 50% filled
+	while ((tree.length != done.length) && (tree.length/(h*w) < .60)){ //until no more moves can be done OR puzzle is 60% filled
 		// choose cell not in done
 		cur = tree[Math.floor(Math.random() * tree.length)];
 		while (arrayIndexOf(done, cur) > -1){
@@ -359,7 +360,8 @@ export var generatePuzzle = function(h, w, d){
 	
 	// add numbers to puzzle
 	// d = 1 = easy; d = 2 = med; d = 3 = hard
-	p = (-10 * d + 70) / 100;
+	p = (-10 * d + 80) / 100;
+	let num0s = 0;
 	for (let i = 0; i < h; i++){
 		for (let j = 0; j < w; j++){
 			//console.log("checking [" + i + ", " + j + "]:");
@@ -385,6 +387,7 @@ export var generatePuzzle = function(h, w, d){
 			}
 			if (count == 0){ // always show 0s, since generation algo rarely creates them
 				puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
+				num0s++;
 			} else if (p == 1 && (count == 1 || count == 3)){ // easier difficulty = more 1s and 3s
 				if (Math.random() < p + .1)
 					puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
@@ -405,6 +408,14 @@ export var generatePuzzle = function(h, w, d){
 				puzzle.cells[i][j] = [puzzle.cells[i][j][0], false];
 			}
 		}
+	}
+	
+	// generate new map if easy/med puzzle has no zeros
+	if (d < 3 && num0s < 1){
+		for (let e in puzzle){
+			delete puzzle.e;
+		}
+		puzzle = generatePuzzle(h, w, d);
 	}
 	return puzzle;
 }

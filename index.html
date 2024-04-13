@@ -10,17 +10,28 @@
 </head>
   
 <body>
+	
 	<div class="title-container">
 		SLITHERMAZE<br>
 	</div> 
 	  
-	<div class="puzzle-title">
+	<div id="title" class="puzzle-title">
 		PUZZLE #0
 	</div>
 
 	<div class="body2">
 	<center>
 	<div class="main-container" id="mainContainer">
+	
+		<!-- TUTORIAL -->
+		<div id="tut-screen" class="tutorial">
+			<button id="tut-close" style="position:absolute;right:5px;top:5px;aspect-ratio:1/1"><i class="fa fa-times"></i></button>
+			<center><h2>How to Play</h2></center>
+			The goal is simple: place lines around the lattice of dots such that one large loop is weaved around the board, without branches or dead ends. You can place lines with left click (quick tap on mobile) and place crosses with right click (long tap on mobile). The number within each cell dictates how many lines are required to surround it.
+			<br><br> Below is an example of an empty and completed puzzle.
+			<br><br><img width="150px" height="150px" src="example1.png"><img width="150px" height="150px" src="example2.png">
+			<br><br><button id="tut-play" style="height:40px">Let's play a beginner-friendly puzzle!</button>
+		</div>
 
 		<!-- LEFT CONTAINER -->
 		<div class="l-container">
@@ -51,7 +62,7 @@
 
 		<!-- GAME AREA -->
 		<div class="canvas-container">
-		<canvas id="game-area" width="600px" height="600px">
+		<canvas id="game-area">
 			Your browser does not support HTML5, sorry!
 		</canvas>
 		</div>
@@ -96,6 +107,14 @@
 			<!-- dropdown new puzzle menu -->
 			<div id="newp-menu" class="new-puzzle">
 			<div id="newp-content" class="new-puzzle-content">
+				<div class="custom-select" style="width:96%;">
+				<select id= "type-select">
+				<option value="0">Type</option>
+				<option value="1">Pre-made</option>
+				<option value="2">Randomly Generated</option>
+				</select>
+				</div>
+			
 				<div class="custom-select" style="width:47%;">
 				<select id= "diff-select">
 				<option value="0">Difficulty</option>

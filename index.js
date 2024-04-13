@@ -7,7 +7,7 @@ var G = 1.0;
 var B = 1.0;
 
 var curPuzzle; // current puzzle
-var curPuzzleID; // id of current puzzle, used if pre-made
+var curPuzzleID = 0; // id of current puzzle, used if pre-made
 
 var saveCounter = 0; // number of savestates
 var puzzleHistory = []; // history of puzzle states -- used for undo/redo
@@ -21,6 +21,7 @@ var minute = 0;
 var second = 0;
 
 // HTML elements
+const puzzleTitleHTML = document.getElementById("title");
 const undoHTML = document.getElementById("undo");
 const redoHTML = document.getElementById("redo");
 const zoomHTML = document.getElementById("zoom"); // zoom button
@@ -42,6 +43,9 @@ const submitHTML = document.getElementById('submit');
 const newPuzzleHTML = document.getElementById('new-puzzle');
 const getNewpHTML = document.getElementById('get-newp');
 const newpErrHTML = document.getElementById('newp-err');
+const tutBoxHTML = document.getElementById('tut-screen');
+const tutXHTML = document.getElementById('tut-close');
+const tutPlayHTML = document.getElementById('tut-play');
 
 // settings
 var ACnum = ACnumHTML.checked;
@@ -166,44 +170,11 @@ window.onload = function(){
 			// add listener
 			let id = 'load' + saveCounter;
 			document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
-			
-			console.log("saveCounter = " + saveCounter);
 		}
 		saveCounter--; // for loop adds extra saveState
-	} else { // load some random puzzle
-		// TEMP: placeholder puzzle for testing algos
-		// see discord for visual solution
-		// puzzle: -1 -1 -1 -1 -1
-		//		   -1 -1  1 -1 -1
-		//		   -1 -1  2  1 -1
-		//		   -1 -1  2  2  2
-		//		    0  2  2  2 -1
-		
-		curPuzzle = new pl.Puzzle(5, 5);
-		//curPuzzle = pl.generatePuzzle(50, 50, 1);
-		curPuzzle.cells[1][2] = [1, false];
-		curPuzzle.cells[2][2] = [2, false];
-		curPuzzle.cells[2][3] = [1, false];
-		curPuzzle.cells[3][2] = [2, false];
-		curPuzzle.cells[3][3] = [2, false];
-		curPuzzle.cells[3][4] = [2, false];
-		curPuzzle.cells[4][0] = [0, false];
-		curPuzzle.cells[4][1] = [2, false];
-		curPuzzle.cells[4][2] = [2, false];
-		curPuzzle.cells[4][3] = [2, false];
-
-		/*
-		getMap({ author: 'Taylor' }).then(
-			(map) => {
-				curPuzzle = pl.convertPuzzle(map);
-				pl.logPuzzleState(curPuzzle);
-				updateStateHistory();
-				initPuzzleGraphics(curPuzzle);
-			},
-			(issue) => {
-				console.log(issue);
-		});
-		*/
+	} else { // load random easy 5x5
+		curPuzzle = pl.generatePuzzle(5, 5, 1);
+		puzzleTitleHTML.innerHTML = "Random Easy 5x5";
 		updateStateHistory();
 	}
 	
@@ -1054,7 +1025,7 @@ var clock = function(){
 	}
 }
 
-// undo/redo related -------------------
+// undo/redo/save related -------------------
 
 // adds current puzzle state to history
 var updateStateHistory = function(){
@@ -1099,6 +1070,46 @@ redoHTML.onclick = function(){
 	return;
 };
 
+// creates new savestate + button
+saveHTML.onclick = function(){
+	if (saveCounter < 31){ // max 31 savestates. saves 32+ overwrite save 31
+		saveCounter += 1;
+		console.log("saveCounter (in save func): " + saveCounter);
+	
+		// add button
+		let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\">" + saveCounter + "<\/button>";
+		saveContainerHTML.insertAdjacentHTML('beforeend', insertHTML);
+		
+		// add listener
+		let id = 'load' + saveCounter;
+		document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
+	}
+	
+	// store data in local storage
+	let key = "load" + saveCounter + "cells";
+	let val = JSON.stringify(curPuzzle.cells);
+	localStorage.setItem(key, val);
+	
+	key = "load" + saveCounter + "nodes";
+	val = JSON.stringify(curPuzzle.nodes);
+	localStorage.setItem(key, val);
+};
+
+// called when user hits a savestate button, HTML side
+var load = function(state){
+	console.log("Loaded state " + state);
+	
+	let key = "load" + state + "cells";
+	curPuzzle.cells = JSON.parse(localStorage.getItem(key));
+	key = "load" + state + "nodes";
+	curPuzzle.nodes = JSON.parse(localStorage.getItem(key));
+	
+	//pl.logPuzzleState(curPuzzle);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	
+	return;
+};
+
 // zoom related -------------------
 
 // toggles zoom slider to open/close
@@ -1106,19 +1117,12 @@ zoomHTML.onclick = function(){
 	var zoomSliderBox = document.getElementById('zoom-slider-box');
 	var zoomContent = document.getElementById('zoom-content');
 	
-    if (zoomSlider.style.height == '0px') { // show menu
-        zoomSliderBox.style.height = '40px';
-		zoomSliderBox.style.marginTop = '10px';
-		zoomSliderBox.style.marginBottom = '10px';
-		zoomContent.style.opacity = '1';
-		
-    } else if (zoomSliderBox.style.height == '40px'){ // hide menu
-        zoomSliderBox.style.height = '0px';
+    if (zoomSliderBox.style.maxHeight > '0px'){ // hide menu
+        zoomSliderBox.style.maxHeight = '0px';
 		zoomSliderBox.style.marginTop = '0px';
 		zoomContent.style.opacity = '0';
-		
     } else { // always falls back to this else block on first click..... dont know why
-        zoomSliderBox.style.height = '40px';
+        zoomSliderBox.style.maxHeight = '50px';
 		zoomSliderBox.style.marginTop = '10px';
 		zoomSliderBox.style.marginBottom = '10px';
 		zoomContent.style.opacity = '1';
@@ -1140,26 +1144,13 @@ zoomSliderHTML.oninput = function(){
 settingsHTML.onclick = function(){
 	var settingsMenu = document.getElementById('settings-menu');
 	var settingsContent = document.getElementById('settings-content');
-    if (settingsMenu.style.height == '0px') { // show menu
-		if (window.innerWidth <= 768){
-			settingsMenu.style.height = '150px';
-		} else {
-			settingsMenu.style.height = '280px';
-		}
-		settingsMenu.style.marginBottom = '10px';
-		settingsContent.style.opacity = '1';
-		
-    } else if (settingsMenu.style.height > '0px'){ // hide menu
-        settingsMenu.style.height = '0px';
+    if (settingsMenu.style.maxHeight > '0px'){ // hide menu
+        settingsMenu.style.maxHeight = '0px';
 		settingsMenu.style.marginBottom = '0px';
 		settingsContent.style.opacity = '0';
 		
-    } else { // always falls back to this else block on first click..... dont know why
-        if (window.innerWidth <= 768){
-			settingsMenu.style.height = '150px';
-		} else {
-			settingsMenu.style.height = '280px';
-		}
+    } else { // show menu
+		settingsMenu.style.maxHeight = '300px';
 		settingsMenu.style.marginBottom = '10px';
 		settingsContent.style.opacity = '1';
 	}
@@ -1225,46 +1216,6 @@ highlightHTML.oninput = function() {
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
-
-// creates new savestate + button
-saveHTML.onclick = function(){
-	if (saveCounter < 31){ // max 31 savestates. saves 32+ overwrite save 31
-		saveCounter += 1;
-		console.log("saveCounter (in save func): " + saveCounter);
-	
-		// add button
-		let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\">" + saveCounter + "<\/button>";
-		saveContainerHTML.insertAdjacentHTML('beforeend', insertHTML);
-		
-		// add listener
-		let id = 'load' + saveCounter;
-		document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
-	}
-	
-	// store data in local storage
-	let key = "load" + saveCounter + "cells";
-	let val = JSON.stringify(curPuzzle.cells);
-	localStorage.setItem(key, val);
-	
-	key = "load" + saveCounter + "nodes";
-	val = JSON.stringify(curPuzzle.nodes);
-	localStorage.setItem(key, val);
-};
-
-// called when user hits a savestate button, HTML side
-var load = function(state){
-	console.log("Loaded state " + state);
-	
-	let key = "load" + state + "cells";
-	curPuzzle.cells = JSON.parse(localStorage.getItem(key));
-	key = "load" + state + "nodes";
-	curPuzzle.nodes = JSON.parse(localStorage.getItem(key));
-	
-	//pl.logPuzzleState(curPuzzle);
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-	
-	return;
-};
 
 // called when user hits hint button, HTML side
 // shows either 1 possible cross or line, depends on current state and puzzle
@@ -1366,12 +1317,61 @@ printHTML.onclick = function(){
 	return;
 };
 
+// tutorial related -------
+
 // called when user hits tutorial button, HTML side
-// loads simple puzzle(s) for user to solve as well as tutorial text on screen
-tutorial.onclick = function(){
-	console.log("Tutorial pressed.");
+// shows how to play instructions, along with button to generate easy 5x5 puzzle
+tutorialHTML.onclick = function(){
+	//console.log("Tutorial pressed.");
+	if (tutBoxHTML.style.display == 'block'){  // hide menu
+        tutBoxHTML.style.display == 'none';
+    } else { // always falls back to this else block on first click..... dont know why
+		tutBoxHTML.style.display = 'block';
+	}
 	return;
 };
+
+// closes tutorial screen
+tutXHTML.onclick = function(){
+	tutBoxHTML.style.display = "none";
+}
+
+// generates easy 5x5 puzzle
+tutPlayHTML.onclick = function(){
+	tutBoxHTML.style.display = "none";
+	// clear save data
+	localStorage.clear();
+	for (let i = 1; i <= saveCounter; i++){
+		let id = "load" + i;
+		document.getElementById(id).remove();
+	}
+	saveCounter = 0;
+	
+	// restart timer
+	hour = 0; 
+	minute = 0; 
+	second = 0;
+	document.getElementById('hr').innerHTML = "00";
+    document.getElementById('min').innerHTML = "00"; 
+    document.getElementById('sec').innerHTML = "00";
+	timer = true;
+	
+	// hide win/try again msg
+	document.getElementById("win").style.display = 'none';
+	
+	// delete current puzzle 
+	for (let e in curPuzzle){
+		delete curPuzzle.e;
+	}
+	
+	// new 5x5 puzzle
+	puzzleTitleHTML.innerHTML = "Random Easy 5x5";
+	curPuzzleID = 0;
+	curPuzzle = pl.generatePuzzle(5, 5, 1);
+	initPuzzleGraphics(curPuzzle);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	return;
+}
 
 // stops timer, checks answer
 submitHTML.onclick = function(){
@@ -1390,21 +1390,14 @@ submitHTML.onclick = function(){
 
 // drops down menu
 newPuzzleHTML.onclick = function(){
-	//console.log("New Puzzle pressed.");
 	var newpMenu = document.getElementById('newp-menu');
 	var newpContent = document.getElementById('newp-content');
-    if (newpMenu.style.height == '0px') { // show menu
-		newpMenu.style.height = '120px';
-		newpMenu.style.marginBottom = '10px';
-		newpContent.style.opacity = '1';
-		
-    } else if (newpMenu.style.height > '0px'){ // hide menu
-        newpMenu.style.height = '0px';
+	if (newpMenu.style.maxHeight > '0px'){  // hide menu
+        newpMenu.style.maxHeight = '0px';
 		newpMenu.style.marginBottom = '0px';
 		newpContent.style.opacity = '0';
-		
-    } else { // always falls back to this else block on first click..... dont know why
-		newpMenu.style.height = '120px';
+    } else { // show
+		newpMenu.style.maxHeight = '300px';
 		newpMenu.style.marginBottom = '10px';
 		newpContent.style.opacity = '1';
 	}
@@ -1487,6 +1480,7 @@ var spawnSelectionMenus = function() {
 
 // generates puzzles depending on selected parameters
 getNewpHTML.onclick = function() {
+	var newpMenu = document.getElementById('newp-menu');
 	// clear save data
 	localStorage.clear();
 	for (let i = 1; i <= saveCounter; i++){
@@ -1513,9 +1507,23 @@ getNewpHTML.onclick = function() {
 	}
 	
 	// get info from new puzzle menu
-	var h, w, d, type;
+	var h, w, d, t;
+	var type = document.getElementById("type-select").value;
 	var diff = document.getElementById("diff-select").value;
 	var size = document.getElementById("size-select").value;
+	
+	switch (type) {
+		case '1': // pre-made
+			t = "premade";
+			break;
+		case '2': // generated
+			t = "generated";
+			break;
+		default: // error
+			newpErrHTML.innerHTML = "Please select valid type, difficulty, and/or size.";
+			newpErrHTML.style.display = 'block';
+			return;
+	}
 	
 	switch (diff) {
 		case '1': // easy
@@ -1528,7 +1536,7 @@ getNewpHTML.onclick = function() {
 			d = 3;
 			break;
 		default: // throw error
-			newpErrHTML.innerHTML = "Please select valid difficulty and/or size.";
+			newpErrHTML.innerHTML = "Please select valid type, difficulty, and/or size.";
 			newpErrHTML.style.display = 'block';
 			return;
 	}
@@ -1550,29 +1558,54 @@ getNewpHTML.onclick = function() {
 			h = w = 25;
 			break;
 		default: // throw error
-			newpErrHTML.innerHTML = "Please select valid difficulty and/or size.";
+			newpErrHTML.innerHTML = "Please select valid type, difficulty, and/or size.";
 			newpErrHTML.style.display = 'block';
 			return;
 	}
 	newpErrHTML.style.display = 'none';
 	
-	if (type == "premade"){ // grab premade from server
-		/*
-		getMap({ author: 'Taylor' }).then(
+	if (t == "premade"){ // grab premade from server
+		// convert difficulty to english
+		switch (d) {
+		case 1: // easy
+			d = "easy";
+			break;
+		case 2: // med
+			d = "medium";
+			break;
+		case 3: // hard
+			d = "hard";
+			break;
+		}
+		
+		getMap({ difficulty: d, size: w }).then(
 			(map) => {
-				curPuzzle = pl.convertPuzzle(map);
-				pl.logPuzzleState(curPuzzle);
-				//g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+				try {
+					curPuzzleID = map._id;
+					puzzleTitleHTML.innerHTML = map.name;
+					curPuzzle = pl.convertPuzzle(map);
+					initPuzzleGraphics(curPuzzle);
+					g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+				} catch {
+					newpErrHTML.innerHTML = "Something went wrong, try again later.";
+					newpErrHTML.style.display = 'block';
+				}
 			},
 			(issue) => {
 				console.log(issue);
+				newpErrHTML.innerHTML = "No pre-made puzzle exists with given settings.";
+				newpErrHTML.style.display = 'block';
 		});
-		*/
-		newpErrHTML.innerHTML = "No pre-made puzzle exists with the given parameters.";
-		newpErrHTML.style.display = 'block';
 		return;
 	} else { // generate puzzle
 		console.log("h = " + h + "; w = " + w + "; d = " + d);
+		let difficulty = "Easy";
+		if (d == 2)
+			difficulty = "Medium";
+		if (d == 3)
+			difficulty = "Hard";
+		puzzleTitleHTML.innerHTML = "Random " + difficulty + " " + h + "x" + w;
+		curPuzzleID = 0;
 		curPuzzle = pl.generatePuzzle(h, w, d);
 		initPuzzleGraphics(curPuzzle);
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
