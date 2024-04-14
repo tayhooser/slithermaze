@@ -2052,46 +2052,43 @@ function handleSpecialDiags (puzzle,i,j) {
 
 // Main autoSolver function
 export var autoSolver = function(puzzle) {
+    let changesMade;
+    do {
+        changesMade = false; // Reset flag at the start of each iteration
 
-    for (let i = 0; i < puzzle.h; i++) {
-        for (let j = 0; j < puzzle.w; j++) {
-			
-			handleCellRules(puzzle, i, j);
-            handleCellWithInverseNumber(puzzle,i,j);
-			applyTwoAdjacentRule(puzzle,i,j);
-			
-			handleRulesForOnes(puzzle,i,j);
-			performStandardOperations(puzzle,i,j);
-			
+        for (let i = 0; i < puzzle.h; i++) {
+            for (let j = 0; j < puzzle.w; j++) {
+                // Store the current state of the puzzle for comparison after applying rules
+                const snapshotBefore = JSON.stringify(puzzle);
 
-			
-			handleRulesForThrees(puzzle,i,j);
-			performStandardOperations(puzzle,i,j);
-			
+                handleCellRules(puzzle, i, j);
+                handleCellWithInverseNumber(puzzle, i, j);
+                applyTwoAdjacentRule(puzzle, i, j);
+                handleRulesForOnes(puzzle, i, j);
+                performStandardOperations(puzzle, i, j);
+                handleRulesForThrees(puzzle, i, j);
+                performStandardOperations(puzzle, i, j);
+                handleDiags(puzzle, i, j);
+                performStandardOperations(puzzle, i, j);
+                handleSpecialDiags(puzzle, i, j);
+                handleNodeRules(puzzle, i, j);
+                handleCellWithInverseNumber(puzzle, i, j);
+                performStandardOperations(puzzle, i, j);
 
-			
-
-			handleDiags(puzzle,i,j);
-			
-			performStandardOperations(puzzle,i,j);
-
-			
-			handleSpecialDiags(puzzle,i,j);
-
-			handleNodeRules(puzzle,i,j);
-
-			handleCellWithInverseNumber(puzzle,i,j);
-			
-			performStandardOperations(puzzle,i,j);
-
+                // Compare the state of the puzzle before and after applying rules
+                const snapshotAfter = JSON.stringify(puzzle);
+                if (snapshotBefore !== snapshotAfter) {
+                    changesMade = true; // A change was made, so we'll need another iteration
+                }
+            }
         }
-		
-    }
-	
-	
-	console.log("autosolver finished");
-			
-	
 
+        // If changes were made, the loop will continue; otherwise, it will exit
+    } while (changesMade);
+
+    // After applying all rules until no more changes can be made, try to complete the puzzle
+    completePuzzle(puzzle);
+
+    console.log("AutoSolver finished");
 }
 
