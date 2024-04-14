@@ -2086,8 +2086,7 @@ export var autoSolver = function(puzzle) {
         // If changes were made, the loop will continue; otherwise, it will exit
     } while (changesMade);
 
-    // After applying all rules until no more changes can be made, try to complete the puzzle
-    completePuzzle(puzzle);
+    
 
     console.log("AutoSolver finished");
 }
