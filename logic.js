@@ -687,7 +687,7 @@ function handleNodeRules(puzzle, i, j) {
         if (puzzle.nodes[i][j].length == 3) {
             handleNodeWithThree(puzzle, i, j);
         } else if (puzzle.nodes[i][j].length == 2) {
-            handleNodeWithTwo(puzzle, i, j);
+            //handleNodeWithTwo(puzzle, i, j);
         }
     }
 }
@@ -787,9 +787,7 @@ function handleCellRules(puzzle, i, j) {
         handleCellWithThree(puzzle, i, j);
     } else if (puzzle.cells[i][j][0] == 2) {
         handleCellWithTwo(puzzle, i, j);
-    } else if (puzzle.cells[i][j][0] == 0) {
-        handleCellWithZero(puzzle, i, j);
-    }
+    } 
 }
 
 // Function to handle cell with one
@@ -859,20 +857,15 @@ function handleCellWithTwo(puzzle, i, j) {
             }
             // Bottom right corner
             else if (i == puzzle.h - 1 && j == puzzle.w - 1) {
-                placeLine(puzzle, i, j+1, i+1, j+1);
+                placeLine(puzzle, i, j+1, i-1, j+1);
                 placeLine(puzzle, i+1, j-1, i+1, j);
             }
         }
     }
 }
 
-// Function to handle cell with zero
-function handleCellWithZero(puzzle, i, j) {
-    placeCross(puzzle, i, j, i + 1, j);
-    placeCross(puzzle, i + 1, j, i + 1, j + 1);
-    placeCross(puzzle, i, j, i, j + 1);
-    placeCross(puzzle, i, j + 1, i + 1, j + 1);
-}
+
+
 
 
 
@@ -923,9 +916,9 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
     // Checks if the current cell is a '2'
     if (puzzle.cells[i][j][0] == 2) {
         // Check for 'X' to the left of the '2' cell
-        if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+        if (i >= 0 && j +1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
             // Check for a line below the bottom-left corner of the '2' cell
-            if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
+            if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
                 // Place a line on the right edge of the '2' cell
                 placeLine(puzzle, i, j + 1, i + 1, j + 1);
 				placeCross(puzzle,i+2,j,i+1,j);
@@ -959,7 +952,7 @@ function RuleTwoforOnes(puzzle,i,j) {
 		else if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1,j+1,0]) != -1) {
 			console.log("bottom cross detected");
 
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2],[i+1,j+1,1]) != -1) {
+			if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+2],[i+1,j+1,1]) != -1) {
 				console.log("bottom left line detcted")
 				placeCross(puzzle,i,j,i,j+1);
 				placeCross(puzzle,i,j,i+1,j);
@@ -972,7 +965,7 @@ function RuleTwoforOnes(puzzle,i,j) {
 			console.log("top right cross detected")
 
 			//checks line coming in to top right node
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i,j+2,1]) != -1) {
+			if (j >= 0 && j+1< puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1], [i,j+2,1]) != -1) {
 				console.log("top right line detected");
 				placeCross(puzzle,i,j,i+1,j);
 				placeCross(puzzle,i+1,j,i+1,j+1);
@@ -987,7 +980,7 @@ function RuleTwoforOnes(puzzle,i,j) {
 			console.log("bottom right cross detected")
 
 			//checks for line coming into bottom right node
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2,j+1,1]) != -1) {
+			if (j >= 0 && i+1<puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2,j+1,1]) != -1) {
 				console.log("bottom right line detected");
 
 				placeCross(puzzle,i,j,i,j+1);
@@ -999,10 +992,10 @@ function RuleTwoforOnes(puzzle,i,j) {
 
 		}
 
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
+		else if (i >= 0 && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
 			console.log("cross to the right of top right node");
 
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i,j+1,1]) != -1) {
+			if (j >= 0 && i-1>= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i,j+1,1]) != -1) {
 				console.log("line coming in from top to top right node");
 
 				placeCross(puzzle,i,j,i+1,j);
@@ -1012,7 +1005,7 @@ function RuleTwoforOnes(puzzle,i,j) {
 		}
 
 
-		else if (i < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
+		else if (i < puzzle.h+1 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
 			console.log("bottom cross found on bottom left node");
 
 			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1,j,1]) != -1) {
@@ -1026,10 +1019,10 @@ function RuleTwoforOnes(puzzle,i,j) {
 
 		}
 
-		else if (i < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
+		else if (i < puzzle.h+1 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
 			console.log("cross to the left detected on bottom left node");
 
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1,j,1]) != -1) {
+			if (j >= 0 && i+2<puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j], [i+1,j,1]) != -1) {
 				console.log("line coming from bottom to bottom left node");
 
 				placeCross(puzzle,i,j,i,j+1);
@@ -1042,7 +1035,7 @@ function RuleTwoforOnes(puzzle,i,j) {
 		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
 			console.log("cross to the left of top left node detected");
 
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,1]) != -1) {
+			if (j >= 0 && i-1 >- 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,1]) != -1) {
 				console.log("line above top left node detected");
 
 				placeCross(puzzle,i,j+1,i+1,j+1);
@@ -1063,10 +1056,10 @@ function RuleOneForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 	if (puzzle.cells[i][j][0] == 1) {
 	
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
+		if (i >= 0 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
 			console.log("yes")
 
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
+			if (j >= 0 && i-1 >=0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
 				console.log("two crosses detected, both at top left node");
 
 				placeCross(puzzle,i,j,i,j+1);
@@ -1078,7 +1071,7 @@ function RuleOneForOnes (puzzle,i,j) {
 
 		}
 
-		if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
+		if (i-1 >= 0 && j+1<puzzle.w && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
 
 			if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
 				console.log("two crosses detected, both at top right node");
@@ -1091,9 +1084,9 @@ function RuleOneForOnes (puzzle,i,j) {
 		}
 
 
-		if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 0]) != -1) {
+		if (i+2 < puzzle.h+1 && j < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 0]) != -1) {
 
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
+			if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
 				console.log("two crosses detected, both at bottom right corner");
 
 				placeCross(puzzle,i,j+1,i+1,j+1);
@@ -1103,9 +1096,9 @@ function RuleOneForOnes (puzzle,i,j) {
 
 		}
 
-		if (i+1 <= puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
+		if (i+1 <= puzzle.h+1 && j-1 >-0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
 
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 0]) != -1) {
+			if (j >= 0 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 0]) != -1) {
 				console.log("two crosses detected, both at bottom left corner");
 
 				placeCross(puzzle,i,j,i+1,j);
@@ -1129,10 +1122,10 @@ function RuleThreeForOnes (puzzle,i,j) {
 	
 		if (puzzle.cells[i][j][0]== 1) {
 	
-			if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
+			if (i >= 0 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
 				console.log("line coming to left side of top left node")
 	
-				if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
+				if (j >= 0 && i+1< puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
 	
 					if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
 						console.log("two crosses found, both inside cell (bottom and right edge)");
@@ -1146,10 +1139,10 @@ function RuleThreeForOnes (puzzle,i,j) {
 	
 			}
 	
-			if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 1]) != -1) {
+			if (i >= 0 && j+2 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 1]) != -1) {
 				console.log("line coming to right side of top right node");
 	
-				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
+				if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
 					
 	
 					if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
@@ -1160,7 +1153,7 @@ function RuleThreeForOnes (puzzle,i,j) {
 				}
 			}
 	
-			if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 1]) != -1) {
+			if (i-1 >= 0 && j+1<puzzle.w &&  arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 1]) != -1) {
 				console.log("line coming to top side of top right node");
 	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
@@ -1174,7 +1167,7 @@ function RuleThreeForOnes (puzzle,i,j) {
 				}
 			}
 	
-			if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
+			if (i >= 0 &&  j-1 >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
 				console.log("line coming to left side of bottom left node");
 	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
@@ -1203,7 +1196,7 @@ function RuleThreeForOnes (puzzle,i,j) {
 				}
 			}
 	
-			if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 1]) != -1) {
+			if (i >= 0 && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 1]) != -1) {
 				console.log("line coming to right side of bottom right node");
 	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
@@ -1217,7 +1210,7 @@ function RuleThreeForOnes (puzzle,i,j) {
 				}
 			}
 	
-			if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 1]) != -1) {
+			if (i+2 < puzzle.h+1 && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 1]) != -1) {
 				console.log("line coming to bottom side of bottom right node");
 	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
@@ -1235,7 +1228,7 @@ function RuleThreeForOnes (puzzle,i,j) {
 			if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 1]) != -1) {
 				console.log("line coming to top side of top left node");
 	
-				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
+				if (j >= 0 &&  i+1 < puzzle.h && j+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
 					
 	
 					if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
@@ -1259,7 +1252,7 @@ function RuleThreeForOnes (puzzle,i,j) {
 //LEFT OFF HERE RESUME TOMORROW
 
 function RuleFourForOnes (puzzle,i,j) { 
-if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
+if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w) {
 
 	if (i < puzzle.h-1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j][0] == 1) {
 		console.log("two ones detected, aligned vertically")
@@ -1304,7 +1297,7 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 	if (j < puzzle.w -1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i][j+1][0] == 1) { 
 		console.log("two ones detected, aligned horizontally");
 
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 0]) != -1) {
+		if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 0]) != -1) {
 			console.log("first top cross detected");
 
 			if (j > 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
@@ -1321,10 +1314,10 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 
 		}
 
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
+		else if (i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
 			console.log("first bottom cross detected");
 
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2, j+1, 0]) != -1) {
+			if (j >= 0 &&i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2, j+1, 0]) != -1) {
 				console.log("second bottom cross detected");
 
 				if (arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
@@ -1354,10 +1347,10 @@ function RuleFiveForOnes (puzzle,i,j) {
 	
 			console.log("two ones detected, top left to bottom right diagonal");
 	
-			if (i >= 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
+			if (i >= 0 &&  j+2< puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
 				console.log("left edge crossed on second cell detected");
 	
-				if (j > 0 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+2, j+2, 0]) != -1) {
+				if (j > 0 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+2, j+2, 0]) != -1) {
 					console.log("bottom edge crossed on second cell detected");
 	
 					placeCross(puzzle,i,j,i,j+1);
@@ -1368,7 +1361,7 @@ function RuleFiveForOnes (puzzle,i,j) {
 	
 			}
 	
-			else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+			else if (i >= 0 && j +1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
 				console.log("left edge crossed on 1st cell detected")
 	
 				if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
@@ -1392,7 +1385,7 @@ function RuleFiveForOnes (puzzle,i,j) {
 			if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
 				console.log("left edge crossed on bottem left one");
 	
-				if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
+				if (j > 0 && i+1< puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
 					console.log("bottom edge crossed on bottem left one");
 	
 					placeCross(puzzle,i-1,j+1,i-1,j+2);
@@ -1421,35 +1414,676 @@ function RuleFiveForOnes (puzzle,i,j) {
 
 
 
+//applies to 3s and zeros
+function RuleOneforThrees (puzzle,i,j) {
+
+ 
+
+	// checks top row and cell below, to ensure we dont go out of bounds
+	// if there is a zero below and our current cell is a 3 then place lines
+	if (i+1 < puzzle.h && puzzle.cells[i][j][0] == 3 & puzzle.cells[i+1][j][0] == 0 && i == 0) {
+		placeLine(puzzle,i,j,i,j+1);
+		placeLine(puzzle,i,j,i+1,j);
+		placeLine(puzzle,i,j+1,i+1,j+1);
+		placeLine(puzzle,i+1,j-1,i+1,j);
+		placeLine(puzzle,i+1,j+2,i+1,j+1)
+		}
+
+		//checks everything else and makes sure the cell above a 3 isnt a zero 
+		//checks to see if the cell below the three is a 0
+		// if so, place lines
+		
+	if (i-1 >= 0 && i+1 < puzzle.h && puzzle.cells[i][j][0] == 3 && puzzle.cells[i+1][j][0] == 0 && puzzle.cells[i-1][j][0]!=0) {
+		placeLine(puzzle,i,j,i,j+1);
+		placeLine(puzzle,i,j,i+1,j);
+		placeLine(puzzle,i,j+1,i+1,j+1);
+		placeLine(puzzle,i+1,j-1,i+1,j);
+		placeLine(puzzle,i+1,j+2,i+1,j+1)
+	}
+
+	//checks bottom row to esnure we dont go out of bounds 
+	//checks if there is a zero above a cell with a three, if so, place lines
+
+	
+	if (i-1 >= 0 && puzzle.cells[i][j][0] == 3 && puzzle.cells[i-1][j][0] == 0 && i == puzzle.h-1) {
+		placeLine(puzzle,i+1,j,i+1,j+1);
+		placeLine(puzzle,i,j+1,i+1,j+1);
+		placeLine(puzzle,i,j,i+1,j );
+		placeLine(puzzle,i,j-1,i,j);
+		placeLine(puzzle,i,j+1,i,j+2);
+	}
+
+	//checks everything else, checks to make sure that there is not a zero below the three
+	// checks to see if there is a zero above the three
+	// if so, place lines
+	
+	if (i-1 >=0 && i+1< puzzle.h && puzzle.cells[i][j][0] == 3 && puzzle.cells[i-1][j][0] == 0 & puzzle.cells[i+1][j][0]!=0) {
+		placeLine(puzzle,i+1,j,i+1,j+1);
+		placeLine(puzzle,i,j+1,i+1,j+1);
+		placeLine(puzzle,i,j,i+1,j );
+		placeLine(puzzle,i,j-1,i,j);
+		placeLine(puzzle,i,j+1,i,j+2);
+	}
+
+	// perm where a 0 is to the left of a 3
+	
+	if (j-1>=0 && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j-1][0]== 0) {
+		placeLine(puzzle,i-1,j,i,j);
+		placeLine(puzzle,i+1,j,i+1,j+1)
+		placeLine(puzzle,i,j+1,i+1,j+1);
+		placeLine(puzzle,i,j,i,j+1);
+		placeLine(puzzle,i+1,j,i+2,j);
+
+	}
+
+	//perm where a 0 is to the right of a 3
+
+	
+	if (j+1 < puzzle.w && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j+1][0] == 0) {
+		placeLine(puzzle,i,j,i+1,j);
+		placeLine(puzzle,i,j,i,j+1);
+		placeLine(puzzle,i,j+1,i-1,j+1);
+		placeLine(puzzle,i+1,j,i+1,j+1);
+		placeLine(puzzle,i+1,j+1,i+2,j+1);
+	} 
+
+	
+
+}
+
+	function RuleTwoForThrees (puzzle,i,j) {
+
+		if (j+1 < puzzle.w && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j+1][0] == 3) {
+			if (j+2 < puzzle.w && puzzle.cells[i][j+2][0]!=0) {
+
+			console.log("passed");
+			placeLine(puzzle,i,j,i+1,j);
+			placeLine(puzzle,i,j+1,i+1,j+1);
+			placeLine(puzzle,i,j+2,i+1,j+2);
+			placeCross(puzzle,i-1,j+1,i,j+1);
+			placeCross(puzzle,i+1,j+1,i+2,j+1);
+
+
+		}
+
+	}
+}
+	
+// rule for where a three 3 is adjacent to a zero diagonally
+function RuleThreeForThrees (puzzle,i,j) {
+
+if (puzzle.cells[i][j][0] == 3) {
+
+
+	if ( j-1 >= 0 && i+1 < puzzle.h &&  puzzle.cells[i+1][j-1][0] == 0) {
+		placeLine(puzzle,i,j,i+1,j);
+		placeLine(puzzle,i+1,j,i+1,j+1);
+		placeCross(puzzle,i+1,j-1,i+1,j);
+		placeCross(puzzle,i+1,j,i+2,j);
+
+	}
+
+	if (j+1< puzzle.w && i+1< puzzle.h && puzzle.cells[i+1][j+1][0] == 0) {
+		placeLine(puzzle,i,j+1,i+1,j+1);
+		placeLine(puzzle,i+1,j,i+1,j+1);
+		placeCross(puzzle,i+1,j+1,i+1,j+2);
+		placeCross(puzzle,i+1,j+1,i+2,j+1);
+
+	}
+
+	if (i-1>=0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 0) {
+		placeLine(puzzle,i,j+1,i+1,j+1);
+		placeLine(puzzle,i,j,i,j+1);
+		placeCross(puzzle,i-1,j+1,i,j+1);
+		placeCross(puzzle,i,j+1,i,j+2);
+		
+
+
+
+	}
+
+
+	if (i-1>=0 && j-1>=0 && puzzle.cells[i-1][j-1][0] == 0) {
+		placeLine(puzzle,i,j,i+1,j);
+		placeLine(puzzle,i,j,i,j+1);
+		placeCross(puzzle,i,j,i,j-1);
+		placeCross(puzzle,i-1,j,i,j);
+
+
+
+	}
+
+}
+	
+
+}
+
+function RuleFourforThrees(puzzle,i,j) {
+	
+
+			if (puzzle.cells[i][j][0] == 3) {				
+				// Check for a line below the bottom-left corner of the '3' cell
+					if (i+1 < puzzle.h && j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
+						// Place lines
+						console.log("rule four");
+						placeLine(puzzle, i, j, i, j + 1);
+						placeLine(puzzle,i,j+1,i+1,j+1);
+						placeCross(puzzle,i+1,j,i+2,j);
+					}
+
+					//perm 1
+					if (i+1 < puzzle.h && i+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+1],[i+1,j+2,1])!= -1) {
+						placeLine(puzzle,i,j,i,j+1);
+						placeLine(puzzle,i,j,i+1,j);
+						placeCross(puzzle,i+1,j+1,i+2,j+1);
+					}
+
+					//perm 2
+					if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j],[i,j,1])!= -1) {
+						placeLine(puzzle,i,j+1,i+1,j+1);
+						placeLine(puzzle,i+1,j,i+1,j+1);
+						placeCross(puzzle,i,j-1,i,j);
+
+					}
+
+					//perm 3
+					if (i+2 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1],[i+1,j+1,1])!= -1) {
+						placeLine(puzzle,i,j,i,j+1);
+						placeLine(puzzle,i,j,i+1,j);
+						placeCross(puzzle,i+1,j+1,i+1,j+2);
+
+					}
+				}
+				
+	
+		}
+
+
+
+// handles threes placed diagonally
+  function DiagThrees(puzzle,i,j) {
+	
+	if (puzzle.cells[i][j][0] == 3) {
+
+		if (j+1 < puzzle.w && i+1 < puzzle.h && puzzle.cells[i+1][j+1][0] == 3) {
+
+			placeLine(puzzle,i,j,i+1,j);
+			placeLine(puzzle,i,j,i,j+1);
+			placeLine(puzzle,i+2,j+1,i+2,j+2);
+			placeLine(puzzle,i+1,j+2,i+2,j+2);
+
+
+		}
+
+		if (j-1 >=0 && i+1< puzzle.h && puzzle.cells[i+1][j-1][0] == 3) {
+			placeLine(puzzle,i,j,i,j+1);
+			placeLine(puzzle,i,j+1,i+1,j+1);
+			placeLine(puzzle,i+1,j-1,i+2,j-1);
+			placeLine(puzzle,i+2,j-1,i+2,j);
+
+		}
+
+	}
+
+  }
+
+  function DiagThrees2 (puzzle,i,j) {
+
+	if (puzzle.cells[i][j][0] == 3) {
+
+		if (j+1 < puzzle.w && i+1 < puzzle.h && puzzle.cells[i+1][j+1][0] == 2) {
+
+			if (i+2 < puzzle.h && j+2 < puzzle.w && puzzle.cells[i+2][j+2][0] == 3) {
+
+				placeLine(puzzle,i,j,i+1,j);
+				placeLine(puzzle,i,j,i,j+1);
+				placeLine(puzzle,i+3,j+2,i+3,j+3);
+				placeLine(puzzle,i+2,j+3,i+3,j+3);
+			}
+
+		}
+
+		if (j-1 >= 0 && i+1 < puzzle.h && puzzle.cells[i+1][j-1][0] == 2) {
+			console.log("valid");
+			//console.log(puzzle.cells[i+2][j-2])
+
+			if (i+2 < puzzle.h && j-2 >= 0 && puzzle.cells[i+2][j-2][0] == 3) {
+				console.log("valid too");
+
+				placeLine(puzzle,i,j,i,j+1);
+				placeLine(puzzle,i,j+1,i+1,j+1);
+				placeLine(puzzle,i+2,j-2,i+3,j-2);
+				placeLine(puzzle,i+3,j-2,i+3,j-1);
+				
+
+
+			}
+
+			
+			
+
+		} 
+
+	}
+  }
+
+  //deals with diagonal twos
+function DiagTwos (puzzle,i,j) {
+
+
+	if (puzzle.cells[i][j][0] == 2) {
+		
+		
+		// perm 1
+		if ( i-1>=0 && j-1 >=0 && puzzle.cells[i-1][j-1][0] == 2) {
+			console.log("ok");
+
+			if ( i+1 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+1],[i+2,j+1,1])!= -1) {
+				console.log("passes");
+				if ( arrayIndexOf(puzzle.nodes[i+1][j+1],[i+1,j+2,1])!= -1) {
+					console.log("pass");
+					placeLine(puzzle,i,j,i+1,j);
+					placeLine(puzzle,i,j,i,j+1);
+					placeLine(puzzle, i-1,j-1,i,j-1);
+					placeLine(puzzle,i-1,j-1,i-1,j);
+
+
+				}
+
+
+			}
+
+		}
+
+		//perm 2
+		if (i+1 < puzzle.h && j+1 < puzzle.w && puzzle.cells[i+1][j+1][0] == 2) {
+			
+
+			if ( i-1 >=0 && j >=0 && arrayIndexOf(puzzle.nodes[i][j], [i-1,j,1])!= -1) {
+				
+
+				if ( j-1 >=0 && arrayIndexOf(puzzle.nodes[i][j], [i,j-1,1])!= -1) {
+					
+					placeLine(puzzle,i+1,j,i+1,j+1);
+					placeLine(puzzle,i,j+1,i+1,j+1);
+					placeLine(puzzle,i+1,j+2,i+2,j+2);
+					placeLine(puzzle,i+2,j+1,i+2,j+2);
+
+
+
+				}
+
+			}
+
+		}
+
+		// perm 3
+		if ( i-1>=0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 2) {
+		
+			if ( i+1 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j-1,1])!= -1) {
+				
+				if ( arrayIndexOf(puzzle.nodes[i+1][j],[i+2,j,1])!= -1) {
+					
+					placeLine(puzzle,i,j,i,j+1);
+					placeLine(puzzle,i,j+1,i+1,j+1);
+					placeLine(puzzle, i-1,j+1,i-1,j+2);
+					placeLine(puzzle,i-1,j+2,i,j+2);
+
+
+				}
+
+
+			}
+
+		}
+
+		//perm 4
+		if (i+1 < puzzle.h && j-1 >= 0 && puzzle.cells[i+1][j-1][0] == 2) {
+			
+
+			if ( i-1 >=0 && j >=0 && arrayIndexOf(puzzle.nodes[i][j+1], [i-1,j+1,1])!= -1) {
+				
+
+				if ( j-1 >=0 && arrayIndexOf(puzzle.nodes[i][j+1], [i,j+2,1])!= -1) {
+					
+					placeLine(puzzle,i,j,i+1,j);
+					placeLine(puzzle,i+1,j,i+1,j+1);
+					placeLine(puzzle,i+1,j-1,i+2,j-1);
+					placeLine(puzzle,i+2,j-1,i+2,j);
+
+
+
+				}
+
+			}
+
+		}
+		
+
+	}
+}
+
+function Diag2sand3s(puzzle,i,j) {
+
+	// perm 1
+
+	if (puzzle.cells[i][j][0] == 2) {
+
+		if ( i+1 < puzzle.h && j+1 < puzzle.w && puzzle.cells[i+1][j+1][0] == 2) {
+
+			if (i+2 < puzzle.h && j+2 < puzzle.w && puzzle.cells[i+2][j+2][0] == 3) {
+
+				if (arrayIndexOf(puzzle.nodes[i][j],[i-1,j,1])!=-1) {
+
+					placeLine(puzzle, i+2,j+3,i+3,j+3);
+					placeLine(puzzle,i+3,j+2,i+3,j+3);
+
+				}
+
+			}
+
+		}
+		
+		//perm 2
+
+		if (i+1 < puzzle.h && j-1>= 0 && puzzle.cells[i+1][j-1][0] == 2) {
+			
+
+			if (i+2 < puzzle.h && j-2 >=0 && puzzle.cells[i+2][j-2][0] == 3) {
+			
+
+
+				if (i-1>=0 && j < puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1],[i-1,j+1,1])!= -1) {
+
+				
+
+					placeLine(puzzle,i+2,j-2,i+3,j-2);
+					placeLine(puzzle,i+3,j-2,i+3,j-1);
+
+
+				}
+			}
+
+
+		}
+
+		//perm 3
+		if (i-1 >=0 && j-1>=0 && puzzle.cells[i-1][j-1][0] == 2) {
+			
+
+			if (i-2 >= 0 && j-2>=0 && puzzle.cells[i-2][j-2][0] == 3) {
+				
+
+				if ( arrayIndexOf(puzzle.nodes[i+1][j+1],[i+2,j+1,1])!= - 1) {
+					
+					placeLine(puzzle,i-2,j-2,i-2,j-1);
+					placeLine(puzzle,i-2,j-2,i-1,j-2);
+
+				}
+			}
+
+		}
+
+
+		//perm 4
+
+		if (i-1 >=0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 2) {
+
+			if ( i-2 >= 0 && j+2 < puzzle.w && puzzle.cells[i-2][j+2][0] == 3) {
+
+				if (i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j],[i+2,j,1])!= -1) {
+
+					placeLine(puzzle,i-2,j+2,i-2,j+3);
+					placeLine(puzzle,i-2,j+3,i-1,j+3);
+
+				}
+
+			}
+
+
+		}
+
+		
+
+	
+	}
+
+}
+
+function Diag3sand1s (puzzle,i,j) {
+
+	if (puzzle.cells[i][j][0] == 1) {
+
+	
+		//perm 1
+		if (i-1 >=0 && j-1 >= 0 && puzzle.cells[i-1][j-1][0]== 3) {
+			if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,0] )!= -1) {
+				
+
+				if (arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,0])!= -1) {
+
+					placeLine(puzzle,i-1,j-1,i-1,j); 
+					placeLine(puzzle,i-1,j-1,i,j-1);
+				}
+			}
+		}
+
+		//perm 2
+
+		if (i-1 >=0 && j+1< puzzle.w && puzzle.cells[i-1][j+1][0] == 3) {
+
+			if (arrayIndexOf(puzzle.nodes[i][j],[i+1,j,0])!= -1) {
+
+				if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1,j+1,0])!= -1) {
+
+					placeLine(puzzle,i-1,j+1,i-1,j+2);
+					placeLine(puzzle,i-1,j+2,i,j+2);
+
+
+				}
+
+			}
+
+		}
+
+		//perm 3
+
+		if (i+1 < puzzle.h && j-1 >=0 && puzzle.cells[i+1][j-1][0] == 3) {
+
+			if (arrayIndexOf(puzzle.nodes[i][j],[i,j+1,0])!= -1) {
+
+				if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,0])!= -1) {
+
+					placeLine(puzzle,i+1,j-1,i+2,j-1);
+					placeLine(puzzle,i+2,j-1,i+2,j);
+
+				}
+
+			}
+
+		}
+
+		//perm 4
+
+		if (i+1 < puzzle.h && j+1 < puzzle.w && puzzle.cells[i+1][j+1][0] == 3) {
+
+			if (arrayIndexOf(puzzle.nodes[i][j],[i,j+1,0])!= -1) {
+
+				if (arrayIndexOf(puzzle.nodes[i][j],[i+1,j,0])!= -1) {
+
+					placeLine(puzzle,i+1,j+2,i+2,j+2);
+					placeLine(puzzle,i+2,j+1,i+2,j+2);
+
+				}
+
+			}
+
+		}
 
 
 
 
+	}
+
+}
+
+//left off here, resume when back.
+function InverseDiag3sand1s (puzzle,i,j) {
+
+	if (puzzle.cells[i][j][0] == 3) {
+
+		//perm 1
+		if(i+1 < puzzle.h && j+1 < puzzle.w && puzzle.cells[i+1][j+1][0] == 1) {
+
+			if (arrayIndexOf(puzzle.nodes[i][j],[i+1,j,1])!= -1) {
+				
+
+				if (arrayIndexOf(puzzle.nodes[i][j],[i,j+1,1])!= -1) {
+					
+
+					placeCross(puzzle,i+1,j+2,i+2,j+2);
+					placeCross(puzzle,i+2,j+2,i+2,j+1);
+
+				}
+
+			}
+
+		}
+
+		//perm 2
+		if (i+1 < puzzle.h && j-1 >= 0 && puzzle.cells[i+1][j-1][0] == 1 ) {
+			
+
+			if (arrayIndexOf(puzzle.nodes[i][j], [i,j+1,1]) !=-1) {
+				
+				if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,1])!= -1) {
+					
+					placeCross(puzzle,i+1,j-1,i+2,j-1);
+					placeCross(puzzle,i+2,j-1,i+2,j);
+
+				}
+
+			}
 
 
+		}
+
+		//perm 3
+		if (i-1 >= 0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 1) {
+
+			if (arrayIndexOf(puzzle.nodes[i][j],[i+1,j,1])!= -1) {
+				
+				if (arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,1])!= -1) {
+					
+					placeCross(puzzle,i-1,j+1,i-1,j+2);
+					placeCross(puzzle,i-1,j+2,i,j+2);
+
+				}
 
 
+			}
+
+		}
+
+		//perm 4
+
+		if (i-1 >= 0 && j-1 >= 0 && puzzle.cells[i-1][j-1][0] == 1) {
+
+			if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,1])!= -1) {
+
+				if (arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,1])!= -1) {
+
+					placeCross(puzzle,i-1,j-1,i-1,j);
+					placeCross(puzzle,i-1,j-1,i,j-1);
+
+				}
+
+			}
+
+		}
+
+
+	}
+
+
+}
+
+
+function performStandardOperations(puzzle, i, j) {
+	crossDeadEnd(puzzle, i, j);
+	crossIntersection(puzzle, i, j);
+	crossCompletedCell(puzzle, i, j);
+}
+
+function handleRulesForOnes (puzzle,i,j) {
+
+			RuleOneForOnes(puzzle,i,j);
+			RuleTwoforOnes(puzzle,i,j);
+			RuleThreeForOnes(puzzle,i,j);
+			RuleFourForOnes (puzzle,i,j);
+			RuleFiveForOnes(puzzle,i,j);
+
+}
+
+
+function handleRulesForThrees (puzzle,i,j) {
+			RuleOneforThrees(puzzle,i,j);
+			RuleTwoForThrees(puzzle,i,j);
+			RuleThreeForThrees(puzzle,i,j);
+			RuleFourforThrees(puzzle,i,j);
+
+
+}
+
+function handleDiags (puzzle,i,j) {
+			DiagThrees(puzzle,i,j);
+			DiagThrees2(puzzle,i,j);
+			DiagTwos(puzzle,i,j);
+
+
+}
+
+function handleSpecialDiags (puzzle,i,j) {
+	Diag2sand3s(puzzle,i,j);
+	Diag3sand1s(puzzle,i,j);
+	InverseDiag3sand1s (puzzle,i,j);
+
+}
 
 // Main autoSolver function
 export var autoSolver = function(puzzle) {
 
     for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {
-            handleNodeRules(puzzle, i, j);
-            //handleCellRules(puzzle, i, j);
-            crossCompletedCell(puzzle,i,j);
+			
+			handleCellRules(puzzle, i, j);
             handleCellWithInverseNumber(puzzle,i,j);
-			crossDeadEnd(puzzle,i,j);
-			crossIntersection(puzzle,i,j);
 			applyTwoAdjacentRule(puzzle,i,j);
-			RuleOneForOnes(puzzle,i,j);
-			RuleTwoforOnes(puzzle,i,j);
-			RuleThreeForOnes(puzzle,i,j);
-			RuleFourForOnes (puzzle,i,j);
-			RuleFiveForOnes(puzzle,i,j);
 			
+			handleRulesForOnes(puzzle,i,j);
+			performStandardOperations(puzzle,i,j);
 			
-				
+
+			
+			handleRulesForThrees(puzzle,i,j);
+			performStandardOperations(puzzle,i,j);
+			
+
+			
+
+			handleDiags(puzzle,i,j);
+			
+			performStandardOperations(puzzle,i,j);
+
+			
+			handleSpecialDiags(puzzle,i,j);
+
+			handleNodeRules(puzzle,i,j);
+
+			handleCellWithInverseNumber(puzzle,i,j);
+			
+			performStandardOperations(puzzle,i,j);
+
         }
 		
     }
