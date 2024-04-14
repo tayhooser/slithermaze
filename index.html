@@ -18,6 +18,10 @@
 	<div id="title" class="puzzle-title">
 		PUZZLE #0
 	</div>
+	
+	<!-- makes import/export js work -->
+	<a id="anchor" style="display:none"></a>
+	<input id='fileHTML' type='file' hidden/>
 
 	<div class="body2">
 	<center>
@@ -72,8 +76,12 @@
 			<button id="hint">HINT</button>
 			<button id="solution">SOLUTION</button>
 			<button id="restart">RESTART</button>
+			<button id="tutorial">HOW TO PLAY</button>
 			<button id="print">PRINT</button>
-			<button id="tutorial">TUTORIAL</button>
+			<button id="import">IMPORT</button>
+			<button id="export">EXPORT</button>
+			
+			<div id="import-err" class="import-err"> error </div>
 			  
 			<div id="timer" class="timer">
 				<span id="hr">00</span>:<span id="min">00</span>:<span id="sec">00</span>

@@ -37,6 +37,9 @@ const solutionHTML = document.getElementById('solution');
 const restartHTML = document.getElementById('restart');
 const printHTML = document.getElementById('print');
 const tutorialHTML = document.getElementById('tutorial');
+const importHTML = document.getElementById('import');
+const exportHTML = document.getElementById('export');
+const importErrHTML = document.getElementById('import-err');
 const saveHTML = document.getElementById('save');
 const saveContainerHTML = document.getElementById("save-container"); // for adding load buttons
 const submitHTML = document.getElementById('submit');
@@ -94,8 +97,8 @@ var MoB;				// Middle of Board. Used to set the camera position in the center
 var gLinesArray;		// 2D Array that indicates which lines are on/off
 
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
-//Defaults to an official map by Taylor. Query needs to be in key-value pair
-//Example: { name: 'Mayflower', author: 'Taylor' }
+// gets map from server
+//example use: { name: 'Mayflower', author: 'Taylor' }
 async function getMap(query = { author: 'Taylor' }) {
     var params = query; 
 
@@ -116,6 +119,7 @@ async function getMap(query = { author: 'Taylor' }) {
 
     return returning;
 }
+
 //Needs string ID from field _id. Call .valueOf() method on field to retrieve.
 //Name entry to be determined.
 async function updateBoard(id, name) {
@@ -133,7 +137,7 @@ async function updateBoard(id, name) {
     });
 }
 
-// GRAPHICS CLASSES AND FUNCTIONS ----------------------------------------------------------------------------------------------
+// GRAPHICS FUNCTIONS ----------------------------------------------------------------------------------------------
 
 // initializes openGL, other functions, and initial board
 window.onload = function(){
@@ -177,6 +181,8 @@ window.onload = function(){
 		puzzleTitleHTML.innerHTML = "Random Easy 5x5";
 		updateStateHistory();
 	}
+	
+	//pl.logPuzzleState(curPuzzle);
 	
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
@@ -288,6 +294,7 @@ var initPuzzleGraphics = function(puzzle) {
 	for (let i = 0; i < curPuzzle.h; i++) {
 		for (let j = 0; j < curPuzzle.w; j++) {
 			// setup the cell numbers
+			//console.log("initPuzzleGraphics: curPuzzle.cells[i][j][0] = " + curPuzzle.cells[i][j][0]);
 			if (curPuzzle.cells[i][j][0] != -1) {
 
 				let newMesh = new g.graphicsObj();
@@ -1322,7 +1329,6 @@ printHTML.onclick = function(){
 // called when user hits tutorial button, HTML side
 // shows how to play instructions, along with button to generate easy 5x5 puzzle
 tutorialHTML.onclick = function(){
-	//console.log("Tutorial pressed.");
 	if (tutBoxHTML.style.display == 'block'){  // hide menu
         tutBoxHTML.style.display == 'none';
     } else { // always falls back to this else block on first click..... dont know why
@@ -1373,6 +1379,111 @@ tutPlayHTML.onclick = function(){
 	return;
 }
 
+// exports current puzzle as json to share with others
+exportHTML.onclick = function(){
+	let name = puzzleTitleHTML.innerHTML;
+	let difficulty = (name.slice(7)).toLowerCase();
+	difficulty = difficulty.substring(0, difficulty.indexOf(' '));
+	let size = curPuzzle.h;
+	let numbers = Array(curPuzzle.h).fill().map(e =>
+				  Array(curPuzzle.w));
+	for (let i = 0; i < curPuzzle.h; i++){
+		for (let j = 0; j < curPuzzle.w; j++){
+			numbers[i][j] = curPuzzle.cells[i][j][0];
+		}
+	}
+	let filename = "puzzle.json";
+	
+	// json contents
+	let data = {
+		"name": name,
+		"author": "Random",
+		"difficulty": difficulty,
+		"size": size,
+		"matrix": {
+			"map": [],
+			"numbers": numbers
+		}
+	};
+	var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+	//console.log("attempting download...");
+	let anchor = document.getElementById('anchor');
+	anchor.setAttribute("href", dataStr);
+	anchor.setAttribute("download", filename);
+	anchor.click();
+}
+
+// import puzzle from json
+importHTML.onclick = function(){
+	let err = "";
+	let fileHTML = document.getElementById('fileHTML');
+	importErrHTML.style.display = 'none';
+	fileHTML.click();
+
+	fileHTML.onchange = function(e){
+		let reader = new FileReader(e);
+        reader.onload = function(){
+			let filePuzzleJSON = JSON.parse(reader.result);
+			let tmp;
+			try {
+				tmp = pl.convertPuzzle(filePuzzleJSON);
+			} catch {
+				console.log("error reading json");
+				importErrHTML.innerHTML = "Problem reading file.";
+				importErrHTML.style.display = 'block';
+				return;
+			}
+			// clear save data
+			localStorage.clear();
+			for (let i = 1; i <= saveCounter; i++){
+				let id = "load" + i;
+				document.getElementById(id).remove();
+			}
+			saveCounter = 0;
+			
+			// restart timer
+			hour = 0; 
+			minute = 0; 
+			second = 0;
+			document.getElementById('hr').innerHTML = "00";
+			document.getElementById('min').innerHTML = "00"; 
+			document.getElementById('sec').innerHTML = "00";
+			timer = true;
+			
+			// hide win/try again msg
+			document.getElementById("win").style.display = 'none';
+			
+			// delete current puzzle 
+			for (let e in curPuzzle){
+				delete curPuzzle.e;
+			}
+			
+			puzzleTitleHTML.innerHTML = filePuzzleJSON.name;
+			curPuzzleID = 0;
+		
+			// create new puzzle
+			curPuzzle = tmp;
+			//pl.logPuzzleState(curPuzzle);
+			initPuzzleGraphics(curPuzzle);
+			g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+
+		};
+		let fileType = fileHTML.files[0].name.slice(-5);
+		if (fileType != ".json"){
+			importErrHTML.innerHTML = ".json files only.";
+			importErrHTML.style.display = 'block';
+			return;
+		}
+		
+		try {
+			reader.readAsText(fileHTML.files[0]); // calls above function
+		} catch {
+			importErrHTML.innerHTML = "An error occured.";
+			importErrHTML.style.display = 'block';
+		}
+	}
+}
+
 // stops timer, checks answer
 submitHTML.onclick = function(){
 	console.log("Submit pressed.");
@@ -1387,6 +1498,8 @@ submitHTML.onclick = function(){
 	}
 	return;
 };
+
+// new puzzle related -------
 
 // drops down menu
 newPuzzleHTML.onclick = function(){
@@ -1598,7 +1711,6 @@ getNewpHTML.onclick = function() {
 		});
 		return;
 	} else { // generate puzzle
-		console.log("h = " + h + "; w = " + w + "; d = " + d);
 		let difficulty = "Easy";
 		if (d == 2)
 			difficulty = "Medium";
