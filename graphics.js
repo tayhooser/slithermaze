@@ -1,33 +1,35 @@
 import * as pl from './logic.js';
 
 // source for vertex shader
-export var vertexShaderText =
-[
-"precision mediump float;",
-"",
-"attribute vec2 vertPos;",
-"uniform mat4 mvp;",
-"uniform vec3 color;",
-"varying mediump vec3 col;",
-"void main()",
-"{",
-"col = color;",
-"mediump vec4 fPos = vec4(vertPos, 0.0, 1.0);",
-"fPos = mvp * fPos;",
-"gl_Position = mvp * vec4(vertPos, 0.0, 1.0);",
-"}"
-].join("\n");
+export var vertexShaderText = `
+
+precision mediump float;
+
+attribute vec2 vertPos;
+uniform mat4 mvp;
+uniform vec3 color;
+uniform float weight;
+varying mediump vec3 col;
+void main()
+{
+	vec3 bgColor = vec3(1.0, 1.0, 1.0); 
+	col = mix(bgColor, color, weight);
+	mediump vec4 fPos = vec4(vertPos, 0.0, 1.0);
+	fPos = mvp * fPos;
+	gl_Position = mvp * vec4(vertPos, 0.0, 1.0);
+}
+`;
 
 // source for fragment shader
-export var fragmentShaderText =
-[
-"precision mediump float;",
-"varying mediump vec3 col;",
-"void main()",
-"{",
-" gl_FragColor = vec4(col, 1.0);",
-"}"
-].join("\n");
+export var fragmentShaderText = `
+
+precision mediump float;
+varying mediump vec3 col;
+void main()
+{
+	gl_FragColor = vec4(col, 1.0);
+}
+`
 
 // dot graphic only made once and reused to draw multiple lines
 export class circleTemplate {
@@ -1042,17 +1044,10 @@ export class graphicsObj {
 	color;
 	type;				// 1 for dot, 2 for line/cross, 3 for cell number, 4 for shade cell
 	display;			// for lines: 0 for nothing, 1 for line, 2 for X. for cells: do the number. For shade cell: 0 for off, 1 for on
-	
-	//xWorld;
-	//yWorld;
-	worldCoords;
-	//xLowerBound;
-	//xUpperBound;
-	//yLowerBound;
-	//yUpperBound;
-
+	worldCoords;		// object's position in the world
+	lastClicked;		// timestamp of last time the object was toggled
 	xCoord;				//	coords in line array to determine if a 
-	yCoord;				// 		line should be drawn or not
+	yCoord;				// 	line should be drawn or not
 	constructor() {
 		this.modelMatrix = glMatrix.mat4.create();
 		this.translate = glMatrix.mat4.create();
@@ -1060,6 +1055,7 @@ export class graphicsObj {
 		this.scale = glMatrix.mat4.create();
 		this.color = [0.439, 0.329, 0.302];
 		this.type = -1;
+		this.lastClicked = Date.now()
 		this.xCoord = -1;
 		this.yCoord = -1;
 		this.worldCoords = Array(2);

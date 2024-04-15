@@ -483,6 +483,7 @@ var render = function() {
 	var mvp = glMatrix.mat4.create();
 	var mvpLoc = gl.getUniformLocation(program, "mvp");			// location of "mvp" in shader program
 	var colorLoc = gl.getUniformLocation(program, "color");
+	var weightLoc = gl.getUniformLocation(program, "weight");
 	var crossScale = [3.0, 3.0, 1];
 
 	// draw shaded cells
@@ -500,6 +501,15 @@ var render = function() {
 
 	// drawing lines and crosses
 	for (let i = 0; i < lineObjects.length; i++) {
+
+		var time = Date.now();
+		var mixWeight = 1;
+		var timeSinceToggled = time - lineObjects[i].lastClicked
+		if (timeSinceToggled < 150) {
+			mixWeight = timeSinceToggled / 150;
+		}
+		gl.uniform1f(weightLoc, mixWeight);
+
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off
 			lineObjects[i].color = [1.0, 1.0, 1.0];											
 			lineObjects[i].display = 0;
@@ -536,12 +546,21 @@ var render = function() {
 	}
 
 	// drawing dots and numbers
+
+	// just pass in the puzzle color once since the same color will always be used for these
 	var puzzleObjectColor = [0.439, 0.329, 0.302];
 	gl.uniform3fv(colorLoc, puzzleObjectColor);
+
 	for (let i = 0; i < puzzleObjects.length; i++) {
 
 		//gl.uniform3fv(colorLoc, puzzleObjects[i].color);
-
+		var time = Date.now();
+		var mixWeight = 1;
+		var timeSinceToggled = time - puzzleObjects[i].lastClicked
+		if (timeSinceToggled < 500) {
+			mixWeight = timeSinceToggled / 500;
+		}
+		gl.uniform1f(weightLoc, mixWeight);
 		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
 
@@ -659,6 +678,7 @@ var click = function(worldCoords, button) {
 
 	var tempXIndex = lineObjects[keptIndex].xCoord;
 	var tempYIndex = lineObjects[keptIndex].yCoord;
+	lineObjects[keptIndex].lastClicked = Date.now();
 
 	if (!camWasMoved && lineFound) { 
 		// determine if user is placing a cross by placing a line first
