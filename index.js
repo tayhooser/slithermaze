@@ -494,6 +494,10 @@ var render = function() {
 	for (let i = 0; i < cellShades.length; i++) {
 		if (cellShades[i].display == 0) continue;
 		//gl.uniform3fv(colorLoc, cellShades[i].color);
+
+		let mixWeight = g.getMixWeight(cellShades[i].lastClicked, 150);
+		gl.uniform1f(weightLoc, mixWeight);
+
 		glMatrix.mat4.multiply(mvp, vp, cellShades[i].modelMatrix);
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);
 		gl.bindVertexArray(box.VAO);
@@ -504,12 +508,7 @@ var render = function() {
 	// drawing lines and crosses
 	for (let i = 0; i < lineObjects.length; i++) {
 
-		var time = Date.now();
-		var mixWeight = 1;
-		var timeSinceToggled = time - lineObjects[i].lastClicked
-		if (timeSinceToggled < 150) {
-			mixWeight = timeSinceToggled / 150;
-		}
+		let mixWeight = g.getMixWeight(lineObjects[i].lastClicked, 150);
 		gl.uniform1f(weightLoc, mixWeight);
 
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off
@@ -556,12 +555,8 @@ var render = function() {
 	for (let i = 0; i < puzzleObjects.length; i++) {
 
 		//gl.uniform3fv(colorLoc, puzzleObjects[i].color);
-		var time = Date.now();
-		var mixWeight = 1;
-		var timeSinceToggled = time - puzzleObjects[i].lastClicked
-		if (timeSinceToggled < 500) {
-			mixWeight = timeSinceToggled / 500;
-		}
+		
+		let mixWeight = g.getMixWeight(puzzleObjects[i].lastClicked, 500)
 		gl.uniform1f(weightLoc, mixWeight);
 		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
@@ -675,12 +670,13 @@ var click = function(worldCoords, button) {
 			
 			lineFound = true;
 			keptIndex = i;
+			break;
 		}
 	}
 
 	var tempXIndex = lineObjects[keptIndex].xCoord;
 	var tempYIndex = lineObjects[keptIndex].yCoord;
-	lineObjects[keptIndex].lastClicked = Date.now();
+	
 
 	if (!camWasMoved && lineFound) { 
 		// determine if user is placing a cross by placing a line first
@@ -700,6 +696,7 @@ var click = function(worldCoords, button) {
 		
 		// 0 is left click 2 is right click. If a touch event has been registered then use timer to check
 		// if we are placing a line or cross.
+		lineObjects[keptIndex].lastClicked = Date.now();
 		if (button == 0 || ((usingTouchEvents ) && (touchTimer < touchCrossThreshold)) ) {		//left click or touch was held less than 100 ms
 			if ( gLinesArray[tempYIndex][tempXIndex] == 2 )										// an X is already there
 				gLinesArray[tempYIndex][tempXIndex] = 1;
@@ -739,6 +736,7 @@ var click = function(worldCoords, button) {
 			let dist = Math.sqrt((xDist * xDist) + (yDist * yDist));
 			if (dist < 2){
 				cellShades[i].display = 1 - cellShades[i].display;
+				cellShades[i].lastClicked = Date.now();
 				let x = Math.floor(i/curPuzzle.w);
 				let y = i%curPuzzle.h;
 				if (cellShades[i].display == 1)
@@ -748,6 +746,7 @@ var click = function(worldCoords, button) {
 					//curPuzzle.cells[x][y][1] = false;
 					curPuzzle.cells[x][y] = [curPuzzle.cells[x][y][0], false];
 				updateStateHistory();
+				break;
 				//console.log("x = " + x + "; y = " + y);
 				//console.log(cellShades[i].display);
 			}

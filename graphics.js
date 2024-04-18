@@ -1343,3 +1343,13 @@ export var updateLogicConnection = function(puzzle, gLinesArray, i, j){
 	}
 
 }
+
+export var getMixWeight = function(lastClickedTime, fadeInterval) {
+	var time = Date.now();
+	var mixWeight = 1;
+	var timeSinceToggled = time - lastClickedTime
+	if (timeSinceToggled < fadeInterval) {
+		mixWeight = timeSinceToggled / fadeInterval;
+	}
+	return mixWeight;
+}
