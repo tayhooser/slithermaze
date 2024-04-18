@@ -14,6 +14,8 @@ var puzzleHistory = []; // history of puzzle states -- used for undo/redo
 var maxHistory = 20; // number states to keep track of 
 var lastUndo = -1; // index for last undo move
 
+var solverUsed = false; // keeps track of whether the user used an autosolver on curPuzzle
+
 // timer variables
 var timer = true; // true = running
 var hour = 0;
@@ -698,13 +700,13 @@ var click = function(worldCoords, button) {
 		
 		// 0 is left click 2 is right click. If a touch event has been registered then use timer to check
 		// if we are placing a line or cross.
-		if (button == 0 || ((usingTouchEvents ) && (touchTimer < touchCrossThreshold)) ) {						//left click or touch was held less than 100 ms
+		if (button == 0 || ((usingTouchEvents ) && (touchTimer < touchCrossThreshold)) ) {		//left click or touch was held less than 100 ms
 			if ( gLinesArray[tempYIndex][tempXIndex] == 2 )										// an X is already there
 				gLinesArray[tempYIndex][tempXIndex] = 1;
 			else																				// line or no line is there
 				gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];	// toggles between line and no line
 		}
-		else if (button == 2 || ( (usingTouchEvents ) && (touchTimer >= touchCrossThreshold) )) {				// right click or touch was held longer than 100 ms
+		else if (button == 2 || ( (usingTouchEvents ) && (touchTimer >= touchCrossThreshold) )) {	// right click or touch was held longer than 100 ms
 			if (gLinesArray[tempYIndex][tempXIndex] == 1)										// a line is already there
 				gLinesArray[tempYIndex][tempXIndex] = 2;
 			else
@@ -1248,7 +1250,8 @@ highlightHTML.oninput = function() {
 // shows either 1 possible cross or line, depends on current state and puzzle
 hintHTML.onclick = function(){
 	//console.log("Hint pressed.");
-	pl.logPuzzleState(curPuzzle);
+	//pl.logPuzzleState(curPuzzle);
+	
 	return;
 };
 
@@ -1264,7 +1267,9 @@ solutionHTML.onclick = function() {
         console.log("Autosolver is now ON.");
         // Start the autosolver
         pl.autoSolver(curPuzzle,gLinesArray);
-		g.updateGraphicPuzzleState(curPuzzle,gLinesArray);
+		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+		updateStateHistory();
+		solverUsed = true;
     } else {
         console.log("Autosolver is now OFF.");
         // Stop the autosolver
@@ -1295,6 +1300,8 @@ restartHTML.onclick = function(){
 	lastUndo = 0;
 	puzzleHistory = [];
 	updateStateHistory();
+	
+	solverUsed = false;
 	
 	// restart timer
 	hour = 0; 
@@ -1508,16 +1515,35 @@ importHTML.onclick = function(){
 submitHTML.onclick = function(){
 	console.log("Submit pressed.");
 	let win = document.getElementById("win");
-	if (pl.verifySolution(curPuzzle)){
-		timer = false;
-		win.innerHTML = "You win!";
-		win.style.display = 'block';
-	} else {
+	let verify = pl.verifySolution(curPuzzle);
+	if (!verify){
 		win.innerHTML = "Try again...";
 		win.style.display = 'block';
+		return;
 	}
+	
+	timer = false;
+	
+	if (curPuzzleID == 0){ // random puzzle, do not get leaderboard info
+		win.innerHTML = "You win!"
+		win.style.display = 'block';
+		return;
+	}
+	
+	win.innerHTML = "You win!" + 
+					"<input type=\"text\" id=\"player-name\" placeholder=\"Name\">" +
+					"<input type=\"submit\" id=\"leaderboard-submit\" value=\"Submit\">";
+	win.style.display = 'block';
+	document.getElementById("leaderboard-submit").addEventListener("click", submitScore);
 	return;
 };
+
+// sends leaderboard score to server
+var submitScore = function(){
+	name = document.getElementById("player-name").value;
+	console.log(name + " has time of " + hour + ":" + minute + ":" + second);
+	win.innerHTML = "You win!"
+}
 
 // new puzzle related -------
 
@@ -1713,22 +1739,21 @@ getNewpHTML.onclick = function() {
 		
 		getMap({ difficulty: d, size: w }).then(
 			(map) => {
-				try {
-					curPuzzleID = map._id;
-					puzzleTitleHTML.innerHTML = map.name;
-					curPuzzle = pl.convertPuzzle(map);
-					initPuzzleGraphics(curPuzzle);
-					g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-				} catch {
-					newpErrHTML.innerHTML = "Something went wrong, try again later.";
+				if (!(curPuzzleID = map._id)){
+					newpErrHTML.innerHTML = "No pre-made puzzle exists with given settings.";
 					newpErrHTML.style.display = 'block';
+					return;
 				}
+				puzzleTitleHTML.innerHTML = map.name;
+				curPuzzle = pl.convertPuzzle(map);
+				initPuzzleGraphics(curPuzzle);
+				g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 			},
 			(issue) => {
 				console.log(issue);
-				newpErrHTML.innerHTML = "No pre-made puzzle exists with given settings.";
+				newpErrHTML.innerHTML = "Something went wrong, try again later.";
 				newpErrHTML.style.display = 'block';
-		});
+			});
 		return;
 	} else { // generate puzzle
 		let difficulty = "Easy";
@@ -1740,6 +1765,8 @@ getNewpHTML.onclick = function() {
 		curPuzzleID = 0;
 		curPuzzle = pl.generatePuzzle(h, w, d);
 		initPuzzleGraphics(curPuzzle);
+		usedSolver = false;
+		timer = true;
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	}
 	return;

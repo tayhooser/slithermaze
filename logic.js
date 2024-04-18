@@ -55,10 +55,11 @@ export var logPuzzleState = function(puzzle) {
 // currently just parses cell data
 export var convertPuzzle = function(json) {
 	var data = json;
-	//console.log("size = " + data.size);
-	var puzzle = new Puzzle(data.size, data.size);
-	for (let i = 0; i < data.size; i++){
-		for (let j = 0; j < data.size; j++){
+	var size = parseInt(data.size);
+	console.log(size);
+	var puzzle = new Puzzle(size, size);
+	for (let i = 0; i < puzzle.h; i++){
+		for (let j = 0; j < puzzle.w; j++){
 			puzzle.cells[i][j] = [data.matrix.numbers[i][j], false];
 			//console.log(puzzle.cells[i][j]);
 		}

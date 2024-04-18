@@ -338,6 +338,37 @@ label {
 	background-color: #DE9894;
 }
 
+/* input form for leaderboard */
+input[type=text] {
+  width: 100%;
+  padding: 5px 20px;
+  margin-top: 5px;
+  display: inline-block;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: #70544D;
+  font-size: 16px;
+  font-family: Arial;
+}
+
+input[type=submit] {
+  width: 100%;
+  background-color: #C36D68;
+  color: white;
+  padding: 5px 20px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: Arial;
+}
+
+input[type=submit]:hover {
+	background-color: #70544D;
+}
+
 /* leaderboard under timer */
 .leaderboard {
 	background-color: #ffffff;
