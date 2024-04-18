@@ -1050,8 +1050,8 @@ var clock = function(){
         document.getElementById('sec').innerHTML = secString;
 		
 		second++;
-		setTimeout(clock, 1000); // calls Timer() after 1 second
 	}
+	setTimeout(clock, 1000); // calls Timer() after 1 second
 }
 
 // undo/redo/save related -------------------
