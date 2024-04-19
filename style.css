@@ -1,12 +1,12 @@
 /* 
-BROWN:		#70544D
+BROWN:		#674D46
 TAN:		#EAD6C6
-PINK:		#DE9894
-DARK PINK:	#C36D68
+PINK:		#D47C77
+DARK PINK:	#B64E49
 */
 
 body {
-    color: #70544D;
+    color: #674D46;
 	background-color: #EAD6C6;
 	margin: 0;
 }
@@ -19,7 +19,7 @@ body {
 /* TITLE BAR --------------------------------------------------------*/
 .title-container {
 	color: white;
-	background-color: #70544D;
+	background-color: #674D46;
 	display: flex;
     align-items: flex;
 	margin: 0px;
@@ -59,7 +59,7 @@ body {
 	overflow: hidden;
 	aspect-ratio: 1 / 1;
 	touch-action: none;
-	z-index: 4;
+	z-index: 2;
 }
 
 /* tutorial screen */
@@ -72,7 +72,7 @@ body {
 	height: fit-content;
 	top: 150px;
 	border-radius: 20px;
-	background-color: #DE9894;
+	background-color: #D47C77;
 	color: #ffffff;
 	font-size: 15px;
 	font-family: Arial;
@@ -85,7 +85,7 @@ body {
 
 .tutorial button {
 	background-color: #ffffff;
-	color: #DE9894;
+	color: #D47C77;
 	font-weight: bold;
 	font-size: 20px;
 	font-family: Arial;
@@ -96,7 +96,7 @@ body {
 }
 
 .tutorial button:hover {
-	background-color: #C36D68;
+	background-color: #B64E49;
 	color: #ffffff;
 }
 
@@ -107,7 +107,7 @@ body {
 	font-family: Arial;
 	border: none;
 	width: 100%;
-	color: #C36D68;
+	color: #B64E49;
 	margin-bottom: 5px;
 }
 
@@ -119,7 +119,7 @@ body {
 }
  /*undo, redo, zoom, wrench */
 .l-container button {
-	background-color: #70544D;
+	background-color: #674D46;
 	color: white;
 	font-weight: bold;
 	font-size: 30px;
@@ -134,7 +134,7 @@ body {
 }
   
 .l-container button:hover {
-	background-color: #DE9894;
+	background-color: #D47C77;
 }
 
 /*container for zoom slider */
@@ -178,7 +178,7 @@ body {
   width: 25px;
   height: 25px;
   border-radius: 50%; 
-  background: #70544D;
+  background: #674D46;
   cursor: pointer;
 }
 
@@ -187,7 +187,7 @@ body {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: #70544D;
+  background: #674D46;
   cursor: pointer;
 }
 
@@ -267,7 +267,7 @@ input[type=checkbox] {
 }
 
 .checkReplacer:checked {
-    background-color: #70544D;
+    background-color: #674D46;
 }
 
 .checkReplacer:checked::after {
@@ -291,7 +291,7 @@ label {
 
 /*hint solution ... tutorial buttons */
 .r-container button {
-	background-color: #70544D;
+	background-color: #674D46;
 	color: white;
 	font-weight: bold;
 	font-size: 16px;
@@ -305,7 +305,7 @@ label {
 }
   
 .r-container button:hover {
-	background-color: #DE9894;
+	background-color: #D47C77;
 }
 
 /*timer under tutorial buttons */
@@ -329,7 +329,7 @@ label {
 	padding: 10px;
 	margin-bottom: 10px;
 	color: #ffffff;
-	background-color: #DE9894;
+	background-color: #D47C77;
 }
 
 /* input form for leaderboard */
@@ -341,14 +341,14 @@ input[type=text] {
   border: 1px solid #fff;
   border-radius: 4px;
   box-sizing: border-box;
-  color: #70544D;
+  color: #674D46;
   font-size: 16px;
   font-family: Arial;
 }
 
 input[type=submit] {
   width: 100%;
-  background-color: #C36D68;
+  background-color: #B64E49;
   color: white;
   padding: 5px 20px;
   margin-top: 5px;
@@ -360,7 +360,7 @@ input[type=submit] {
 }
 
 input[type=submit]:hover {
-	background-color: #70544D;
+	background-color: #674D46;
 }
 
 /* leaderboard under timer */
@@ -406,7 +406,7 @@ input[type=submit]:hover {
 
 /* submit and new puzzle buttons */
 .lb-button {
-	background-color: #70544D;
+	background-color: #674D46;
 	color: white;
 	font-weight: bold;
 	font-size: 16px;
@@ -460,7 +460,7 @@ input[type=submit]:hover {
 
 /* selected item, appears next to arrow at top */
 .select-selected {
-  background-color: #DE9894;
+  background-color: #D47C77;
 }
 
 /* arrow (down) */
@@ -486,14 +486,14 @@ input[type=submit]:hover {
   color: #ffffff;
   padding: 8px 16px;
   border: 1px solid transparent;
-  border-color: transparent transparent #C36D68 transparent;
+  border-color: transparent transparent #B64E49 transparent;
   cursor: pointer;
 }
 
 /* items that can be selected */
 .select-items {
   position: absolute;
-  background-color: #DE9894;
+  background-color: #D47C77;
   top: 100%;
   left: 0;
   right: 0;
@@ -506,12 +506,12 @@ input[type=submit]:hover {
 }
 
 .select-items div:hover, .same-as-selected {
-  background-color: #C36D68;
+  background-color: #B64E49;
 } 
 
 /* button to submit newp options and actually get a new puzzle */
 .newp-button {
-	background-color: #70544D;
+	background-color: #674D46;
 	color: white;
 	font-weight: bold;
 	font-size: 16px;
@@ -535,7 +535,7 @@ input[type=submit]:hover {
 	width: 93%;
 	margin-bottom: -10px;
 	margin-top: -5px;
-	color: #DE9894;
+	color: #D47C77;
 }
 
 /*  holds save/load buttons */
@@ -547,7 +547,7 @@ input[type=submit]:hover {
 
  /* save/load buttons */
 .save-button {
-	background-color: #70544D;
+	background-color: #674D46;
 	color: white;
 	font-weight: bold;
 	font-size: 30px;
@@ -561,7 +561,7 @@ input[type=submit]:hover {
 }
   
 .b-container button:hover {
-	background-color: #DE9894;
+	background-color: #D47C77;
 }
 
 /* FOOTER --------------------*/  
@@ -574,7 +574,7 @@ input[type=submit]:hover {
 	bottom: 0px;
 	right: 0px;
 	text-align: right;
-	color: #DE9894;
+	color: #B64E49;
 	font-family: Arial;
 	font-size: 15px;
 }

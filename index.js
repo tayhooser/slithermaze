@@ -161,7 +161,7 @@ window.onload = function(){
 				break;
 			}
 		}
-		console.log("maxSave = " + maxSave);
+		//console.log("maxSave = " + maxSave);
 		
 		// load puzzle on screen
 		let n = JSON.parse(localStorage.getItem("load" + maxSave + "cells")).length;
@@ -1104,10 +1104,10 @@ redoHTML.onclick = function(){
 saveHTML.onclick = function(){
 	if (saveCounter < 31){ // max 31 savestates. saves 32+ overwrite save 31
 		saveCounter += 1;
-		console.log("saveCounter (in save func): " + saveCounter);
+		//console.log("saveCounter (in save func): " + saveCounter);
 	
 		// add button
-		let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\">" + saveCounter + "<\/button>";
+		let insertHTML = "<button class=\"save-button\" id=\"load" + saveCounter + "\" value=\"Load " + saveCounter + "\">" + saveCounter + "<\/button>";
 		saveContainerHTML.insertAdjacentHTML('beforeend', insertHTML);
 		
 		// add listener
