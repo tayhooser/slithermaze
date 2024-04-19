@@ -56,7 +56,7 @@ export var logPuzzleState = function(puzzle) {
 export var convertPuzzle = function(json) {
 	var data = json;
 	var size = parseInt(data.size);
-	console.log(size);
+	//console.log(size);
 	var puzzle = new Puzzle(size, size);
 	for (let i = 0; i < puzzle.h; i++){
 		for (let j = 0; j < puzzle.w; j++){
@@ -638,7 +638,7 @@ export var verifySolution = function(puzzle){
 			if (puzzle.nodes[cur[0]][cur[1]][i][2] == 1)
 				lineConns.push(puzzle.nodes[cur[0]][cur[1]][i]);
 		}
-		console.log("linesConns: " + lineConns.length);
+		//console.log("linesConns: " + lineConns.length);
 		// each node should only have 2 lines
 		if (lineConns.length != 2){
 			console.log("INCORRECT SOLUTION: dead end or intersection found at nodes[" + cur[0] + "][" + cur[1] + "]");

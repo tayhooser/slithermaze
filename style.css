@@ -58,7 +58,6 @@ body {
 	border-radius: 15px;
 	overflow: hidden;
 	aspect-ratio: 1 / 1;
-	z-index: 2;
 	touch-action: none;
 	z-index: 4;
 }
@@ -367,11 +366,32 @@ input[type=submit]:hover {
 /* leaderboard under timer */
 .leaderboard {
 	background-color: #ffffff;
-	font-weight: bold;
-	font-size: 14px;
+	font-size: 13px;
 	font-family: Arial;
-	padding: 10px;
+	padding: 7px;
 	border-radius: 5px;
+	height: 208px;
+	overflow: auto;
+}
+
+.leaderboard table {
+	width: 100%;
+	table-layout: fixed;
+}
+
+.numCol {
+	width: 15px;
+	text-align: left;
+}
+
+.nameCol {
+	overflow: hidden;
+	width: 50px;
+}
+
+.timeCol {
+	text-align: right;
+	overflow: hidden;
 }
 
 /* BELOW AREA --------------------*/  
@@ -590,6 +610,13 @@ input[type=submit]:hover {
 		order: 4;
 		width: 95%;
 		max-width: 600px;
+	}
+	
+	.leaderboard {
+		font-size: 14px;
+		padding: 10px;
+		max-height: 400px;
+		height: fit-content;
 	}
 	
 	.b-container{

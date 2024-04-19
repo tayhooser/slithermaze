@@ -8,6 +8,7 @@ var B = 1.0;
 
 var curPuzzle; // current puzzle
 var curPuzzleID = 0; // id of current puzzle, used if pre-made
+var curPuzzleLeaderboard; // leaderboard data of cur puzzle
 
 var saveCounter = 0; // number of savestates
 var puzzleHistory = []; // history of puzzle states -- used for undo/redo
@@ -15,6 +16,7 @@ var maxHistory = 20; // number states to keep track of
 var lastUndo = -1; // index for last undo move
 
 var solverUsed = false; // keeps track of whether the user used an autosolver on curPuzzle
+var leaderboard = false; // turns leaderboard on/off
 
 // timer variables
 var timer = true; // true = running
@@ -123,9 +125,8 @@ async function getMap(query = { author: 'Taylor' }) {
 }
 
 //Needs string ID from field _id. Call .valueOf() method on field to retrieve.
-//Name entry to be determined.
-async function updateBoard(id, name) {
-    let time = (hour*3600) + (minute*60) + (seconds)
+async function sendScore(id, name) {
+    let time = (hour*3600) + (minute*60) + (second-1) // second-1 because internal value different from displayed...
     fetch("http://slithermaze.com/map", {
     method: "POST",
     body: JSON.stringify({
@@ -147,6 +148,7 @@ window.onload = function(){
 	gl.enable(gl.CULL_FACE);
 	clock();
 	spawnSelectionMenus();
+	//updateLeaderboard();
 	
 	// load prev puzzle or new one
 	if (localStorage.getItem("load1cells") != null){
@@ -183,9 +185,7 @@ window.onload = function(){
 		puzzleTitleHTML.innerHTML = "Random Easy 5x5";
 		updateStateHistory();
 	}
-	
-	//pl.logPuzzleState(curPuzzle);
-	
+
 	// some browsers do not natively support webgl, try experimental ver
 	if (!gl) {
 		console.log("WebGL not supported, falling back on experimental version.");
@@ -753,7 +753,7 @@ var click = function(worldCoords, button) {
 		}
 	}
 	var msPassed = Date.now() - timeStart;
-	console.log("click() took ", msPassed, "ms");
+	//console.log("click() took ", msPassed, "ms");
 
 };
 
@@ -1044,11 +1044,13 @@ var clock = function(){
             secString = "0" + secString; 
         } 
   
+		second++;
+  
         document.getElementById('hr').innerHTML = hrString; 
         document.getElementById('min').innerHTML = minString; 
         document.getElementById('sec').innerHTML = secString;
 		
-		second++;
+		//second++;
 	}
 	setTimeout(clock, 1000); // calls Timer() after 1 second
 }
@@ -1206,7 +1208,6 @@ var performQOL = function(){
 // toggles auto cross completed numbers
 ACnumHTML.oninput = function() {
 	ACnum = ACnumHTML.checked;
-	//console.log("ACnum = " + ACnum);
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
@@ -1214,7 +1215,6 @@ ACnumHTML.oninput = function() {
 // toggles auto cross intersections
 ACinterHTML.oninput = function() {
 	ACinter = ACinterHTML.checked;
-	console.log("ACinter = " + ACinter);
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
@@ -1222,9 +1222,6 @@ ACinterHTML.oninput = function() {
 // toggles auto cross dead ends
 ACdeadHTML.oninput = function() {
 	ACdead = ACdeadHTML.checked;
-	//console.log("ACdead = " + ACdead);
-	// apply rule
-	let changes = true;
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
@@ -1232,7 +1229,6 @@ ACdeadHTML.oninput = function() {
 // toggles auto cross premature loops
 ACloopHTML.oninput = function() {
 	ACloop = ACloopHTML.checked;
-	//console.log("ACloop = " + ACloop);
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
@@ -1240,7 +1236,6 @@ ACloopHTML.oninput = function() {
 // toggles highlight wrong moves
 highlightHTML.oninput = function() {
 	highlight = highlightHTML.checked;
-	//console.log("highlight = " + highlight);
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
@@ -1248,9 +1243,8 @@ highlightHTML.oninput = function() {
 // called when user hits hint button, HTML side
 // shows either 1 possible cross or line, depends on current state and puzzle
 hintHTML.onclick = function(){
-	//console.log("Hint pressed.");
+	console.log("Hint pressed.");
 	//pl.logPuzzleState(curPuzzle);
-	
 	return;
 };
 
@@ -1512,20 +1506,21 @@ importHTML.onclick = function(){
 
 // stops timer, checks answer
 submitHTML.onclick = function(){
-	console.log("Submit pressed.");
 	let win = document.getElementById("win");
 	let verify = pl.verifySolution(curPuzzle);
 	if (!verify){
 		win.innerHTML = "Try again...";
 		win.style.display = 'block';
+		document.getElementById("leaderboard").style.height = "160px"; // hack solution to bug im so sorry
 		return;
 	}
 	
 	timer = false;
 	
-	if (curPuzzleID == 0){ // random puzzle, do not get leaderboard info
+	if (curPuzzleID == 0 || leaderboard == false || solverUsed){ // do not let leaderboard submission
 		win.innerHTML = "You win!"
 		win.style.display = 'block';
+		document.getElementById("leaderboard").style.height = "160px"; // hack solution to bug im so sorry
 		return;
 	}
 	
@@ -1534,14 +1529,20 @@ submitHTML.onclick = function(){
 					"<input type=\"submit\" id=\"leaderboard-submit\" value=\"Submit\">";
 	win.style.display = 'block';
 	document.getElementById("leaderboard-submit").addEventListener("click", submitScore);
+	document.getElementById("leaderboard").style.height = "92px"; // hack solution to bug im so sorry
 	return;
 };
 
 // sends leaderboard score to server
 var submitScore = function(){
 	name = document.getElementById("player-name").value;
-	console.log(name + " has time of " + hour + ":" + minute + ":" + second);
+	console.log(name + " has time of " + hour + ":" + minute + ":" + (second-1) + " for puzzleID = " + curPuzzleID);
+	sendScore(curPuzzleID, name).then(
+		(val) => {
+			updateLeaderboard();
+	});
 	win.innerHTML = "You win!"
+	document.getElementById("leaderboard").style.height = "160px"; // hack solution to bug im so sorry
 }
 
 // new puzzle related -------
@@ -1658,6 +1659,7 @@ getNewpHTML.onclick = function() {
 	
 	// hide win/try again msg
 	document.getElementById("win").style.display = 'none';
+	document.getElementById("leaderboard").style.height = "208px";
 	
 	// delete current puzzle 
 	for (let e in curPuzzle){
@@ -1745,8 +1747,11 @@ getNewpHTML.onclick = function() {
 				}
 				puzzleTitleHTML.innerHTML = map.name;
 				curPuzzle = pl.convertPuzzle(map);
+				curPuzzleLeaderboard = map.board;
 				initPuzzleGraphics(curPuzzle);
 				g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+				leaderboard = true;
+				updateLeaderboard();
 			},
 			(issue) => {
 				console.log(issue);
@@ -1766,7 +1771,57 @@ getNewpHTML.onclick = function() {
 		initPuzzleGraphics(curPuzzle);
 		usedSolver = false;
 		timer = true;
+		leaderboard = false;
+		updateLeaderboard();
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	}
 	return;
+}
+
+var updateLeaderboard = function() {
+	//console.log("leaderboard = " + leaderboard);
+	let leaderboardHTML = document.getElementById("leaderboard");
+	if (leaderboard == false){ // disables leaderboard, either bc random puzzle or autosolver used
+		leaderboardHTML.innerHTML = "<center><span style=\"color: #C36D68\"><b><u>LEADERBOARD</u></b></span></center>" +
+									"<br>Leaderboard is unavailable for random puzzles or puzzles from a previous session."
+	} else { // get leaderboard info for puzzle
+		let HTML = "<center><span style=\"color: #C36D68\"><b><u>LEADERBOARD</u></b></span></center>" +
+				"<table>" +
+					"<tr>" +
+					  "<th width=\"15px\">#</th>" +
+					  "<th class=\"nameCol\">Name</th>" +
+					  "<th width=\"45px\">Time</th>" +
+					"</tr>";
+		
+		// sort scores lowest time to highest
+		let sortedScores = [];
+		console.log(curPuzzleLeaderboard);
+		for (let key in curPuzzleLeaderboard){
+			if (!isNaN(curPuzzleLeaderboard[key]))
+				sortedScores.push([key, curPuzzleLeaderboard[key]]);
+		}
+		sortedScores.sort();
+		
+		// add scores to html
+		for (let i = 0; i < sortedScores.length; i++){
+			// convert to hh:mm:ss
+			let scoreSec = parseInt(sortedScores[i][1]);
+			let scoreHour = Math.floor(scoreSec / 3600);
+			scoreSec %= 3600;
+			let scoreMin = Math.floor(scoreSec / 60);
+			scoreSec %= 60;
+			
+			scoreHour = String(scoreHour).padStart(2, '0');
+			scoreMin = String(scoreMin).padStart(2, '0');
+			scoreSec = String(scoreSec).padStart(2, '0');
+			
+			HTML += "<tr>" +
+					  "<td class=\"numCol\">" + (i+1) + "</td>" +
+					  "<td class=\"nameCol\">" + sortedScores[i][0] + "</td>" +
+					  "<td class=\"timeCol\">" + scoreHour + ":" + scoreMin + ":" + scoreSec + "</td>" +
+				    "</tr>";
+		}
+		HTML += "</table>";
+		leaderboardHTML.innerHTML = HTML;
+	}
 }
