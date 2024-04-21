@@ -688,7 +688,7 @@ function handleNodeRules(puzzle, i, j) {
         if (puzzle.nodes[i][j].length == 3) {
             handleNodeWithThree(puzzle, i, j);
         } else if (puzzle.nodes[i][j].length == 2) {
-            //handleNodeWithTwo(puzzle, i, j);
+            handleNodeWithTwo(puzzle, i, j);
         }
     }
 }
@@ -737,13 +737,49 @@ function handleNodeWithThree(puzzle, i, j) {
 
 // Function to handle rules for nodes with two connections
 function handleNodeWithTwo(puzzle, i, j) {
+	
+	let requiredConns = 0;
     let numLines = 0;
     let numCross = 0;
     let visited = [];
     let missing = [];
-    let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
+    let neighbors = [];
 
-    for (let k = 0; k < 2; k++) {
+	// edge/corner cases
+	if ( i== 0 && j == 0){ // top left corner
+		requiredConns = 1;
+		neighbors = [[i+1, j], [i, j+1]];
+	} else if (i == 0 && j == puzzle.w) { // top right corner
+		requiredConns = 1;
+		neighbors = [[i+1, j], [i, j-1]];
+	} else if (i == puzzle.h && j == 0) { // bottom left corner
+		requiredConns = 1;
+		neighbors = [[i, j+1], [i-1, j]];
+	} else if (i == puzzle.h && j == puzzle.w) { // bottom right corner
+		requiredConns = 1;
+		neighbors = [[i, j-1], [i-1, j]];
+	} else if (i == 0) { // top edge
+		requiredConns = 2;
+		neighbors = [[i, j-1], [i, j+1], [i+1, j]];
+	} else if (i == puzzle.h){ // bototm edge
+		requiredConns = 2;
+		neighbors = [[i, j-1], [i, j+1], [i-1, j]];
+	} else if (j == 0){ // left edge
+		requiredConns = 2;
+		neighbors = [[i-1, j], [i+1, j], [i, j+1]];
+	} else if (j == puzzle.w){ // right edge
+		requiredConns = 2;
+		neighbors = [[i-1, j], [i+1, j], [i, j-1]];
+	} else { // general case
+		requiredConns = 2;
+		neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
+	}
+	
+	if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length != requiredConns)
+		return false;
+	
+
+    for (let k = 0; k < requiredConns; k++) {
         if (puzzle.nodes[i][j][k][2] == 1) {
             numLines++;
         } else if (puzzle.nodes[i][j][k][2] == 0) {
@@ -752,31 +788,27 @@ function handleNodeWithTwo(puzzle, i, j) {
         visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
     }
 
-    for (let n = 0; n < neighbors.length; n++) {
-        let neighbor = neighbors[n];
-        let found = false;
+    missing = nodeSetDifference(neighbors,visited);
 
-        for (let v = 0; v < visited.length; v++) {
-            let visitedNode = visited[v];
-            if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            missing.push(neighbor);
-        }
-    }
-
-    if (numCross == 2 && missing.length == 2 && puzzle.cells[i][j][0]==countLines(puzzle,i,j)) {
-        placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
-        placeLine(puzzle, i, j, missing[1][0], missing[1][1]);
-    } else if (numLines == 2 && missing.length == 2) {
+    
+    if (numLines == 2 && missing.length == 2) {
         placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
         placeCross(puzzle, i, j, missing[1][0], missing[1][1]);
+		
+			
+		
     }
+
+	if (numLines == 1 && missing.length == 1 && numCross == 1) {
+
+		placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
+
+
+	}
+
+	
 }
+
 
 
 
@@ -2051,44 +2083,197 @@ function handleSpecialDiags (puzzle,i,j) {
 
 }
 
-// Main autoSolver function
+function lineOrCrossExists(puzzle, x1, y1, x2, y2) {
+    const nodeConnections = puzzle.nodes[x1][y1];
+    if (!nodeConnections) return false; // No connections from this node
+
+    const lineIndex = arrayIndexOf(nodeConnections, [x2, y2, 1]); // Check for line
+    const crossIndex = arrayIndexOf(nodeConnections, [x2, y2, 0]); // Check for cross
+
+    return lineIndex == -1 || crossIndex !== -1;
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function getAvailableNeighbors(puzzle, x, y) {
+    let neighbors = [];
+
+    if (x >= 0 && !lineOrCrossExists(puzzle, x, y, x - 1, y)) neighbors.push([x - 1, y]);
+    if (x < puzzle.h && !lineOrCrossExists(puzzle, x, y, x + 1, y)) neighbors.push([x + 1, y]);
+    if (y >= 0 && !lineOrCrossExists(puzzle, x, y, x, y - 1)) neighbors.push([x, y - 1]);
+    if (y < puzzle.w && !lineOrCrossExists(puzzle, x, y, x, y + 1)) neighbors.push([x, y + 1]);
+
+    // Shuffle neighbors to try them in a random order
+    shuffleArray(neighbors);
+
+    return neighbors;
+}
+
+
+
+
+
+
+export var solveSlitherlink = function(puzzle) {
+    const saveKey = "loadsolvernodes";
+
+    function saveState() {
+        localStorage.setItem(saveKey, JSON.stringify(puzzle.nodes));
+    }
+
+    function loadState() {
+        const savedNodes = localStorage.getItem(saveKey);
+        if (savedNodes) {
+            puzzle.nodes = JSON.parse(savedNodes);
+        }
+    }
+
+    function deleteState() {
+        localStorage.removeItem(saveKey);
+    }
+
+    function backtrack(x, y) {
+		if (verifySolution(puzzle)) {
+			console.log("Puzzle solved correctly!");
+			deleteState();
+			return true;
+		}
+	
+		// Define potential neighboring positions (top, bottom, left, right), checking bounds
+		let neighbors = getAvailableNeighbors(puzzle,x,y)
+	
+		for (let neighbor of neighbors) {
+			saveState();
+			if (placeLine(puzzle, x, y, neighbor[0], neighbor[1])) {
+				if (checkDeadEnds(puzzle) || checkIntersections(puzzle)) {
+					loadState(); // Restore the state if an error is detected
+					//placeCross(puzzle, x, y, neighbor[0], neighbor[1]); // Place a cross to avoid repeating the mistake
+					saveState();
+					continue; // Move to the next neighbor
+				}
+				if (backtrack(neighbor[0], neighbor[1])) {
+					return true;
+				}
+				loadState(); // Restore the previous state if backtracking
+			}
+		}
+		return false;
+    }
+
+    for (let x = 0; x < puzzle.h-1; x++) {
+        for (let y = 0; y < puzzle.w-1; y++) {
+            if (backtrack(x, y)) {
+                return true;
+            }
+        }
+    }
+
+    console.log("No solution found.");
+    return false;
+};
+function checkIntersections(puzzle) {
+    for (let i = 0; i < puzzle.h; i++) {
+        for (let j = 0; j < puzzle.w; j++) {
+            let connectionCount = 0;
+            const nodeConnections = puzzle.nodes[i][j];
+            if (nodeConnections) {
+                for (let k = 0; k < nodeConnections.length; k++) {
+                    if (nodeConnections[k][2] == 1) { // Checking if there's a line
+                        connectionCount++;
+                    }
+                }
+                if (connectionCount == 3) { // Intersection condition
+                    return true; // Intersection found
+                }
+            }
+        }
+    }
+    return false; // No intersections found
+}
+
+function checkDeadEnds(puzzle) {
+    for (let i = 0; i < puzzle.h; i++) {
+        for (let j = 0; j < puzzle.w; j++) {
+            let connectionCount = 0;
+            const nodeConnections = puzzle.nodes[i][j];
+            if (nodeConnections) {
+                for (let k = 0; k < nodeConnections.length; k++) {
+                    if (nodeConnections[k][2] == 1) { // Checking if there's a line
+                        connectionCount++;
+                    }
+                }
+                if (connectionCount == 1) { // Dead end condition
+                    return true; // Dead end found
+                }
+            }
+        }
+    }
+    return false; // No dead ends found
+}
+
+
+
+
+
 export var autoSolver = function(puzzle) {
     let changesMade;
+    let couldSolve;
     do {
-        changesMade = false; // Reset flag at the start of each iteration
+        changesMade = false;
+        couldSolve = false;
 
+        // Apply all heuristics
         for (let i = 0; i < puzzle.h; i++) {
             for (let j = 0; j < puzzle.w; j++) {
-                // Store the current state of the puzzle for comparison after applying rules
                 const snapshotBefore = JSON.stringify(puzzle);
 
                 handleCellRules(puzzle, i, j);
-                handleCellWithInverseNumber(puzzle, i, j);
-                applyTwoAdjacentRule(puzzle, i, j);
-                handleRulesForOnes(puzzle, i, j);
-                performStandardOperations(puzzle, i, j);
-                handleRulesForThrees(puzzle, i, j);
-                performStandardOperations(puzzle, i, j);
-                handleDiags(puzzle, i, j);
-                performStandardOperations(puzzle, i, j);
-                handleSpecialDiags(puzzle, i, j);
-                handleNodeRules(puzzle, i, j);
-                handleCellWithInverseNumber(puzzle, i, j);
-                performStandardOperations(puzzle, i, j);
+				performStandardOperations(puzzle, i, j);
+				applyTwoAdjacentRule(puzzle, i, j);
+				performStandardOperations(puzzle, i, j);
+				handleRulesForOnes(puzzle, i, j);
+				performStandardOperations(puzzle, i, j);
+				handleRulesForThrees(puzzle, i, j);
+				performStandardOperations(puzzle, i, j);
+				handleDiags(puzzle, i, j);
+				performStandardOperations(puzzle, i, j);
+				handleSpecialDiags(puzzle, i, j);
+				performStandardOperations(puzzle,i,j);
 
-                // Compare the state of the puzzle before and after applying rules
+				handleNodeRules(puzzle, i, j);
+
+				performStandardOperations(puzzle, i, j);
+				handleCellWithInverseNumber(puzzle, i, j);
+				performStandardOperations(puzzle, i, j);
                 const snapshotAfter = JSON.stringify(puzzle);
                 if (snapshotBefore !== snapshotAfter) {
-                    changesMade = true; // A change was made, so we'll need another iteration
+                    changesMade = true;
                 }
             }
         }
 
-        // If changes were made, the loop will continue; otherwise, it will exit
+        // If no changes were made with heuristics, try to solve a bit and then apply heuristics again
+        if (!changesMade) {
+            couldSolve = solveSlitherlink(puzzle);
+            if (!verifySolution(puzzle)) {
+                console.log("No solution found or further backtracking required.");
+                break; // Exit the loop if we can't make any progress
+            } else {
+                changesMade = true; // Set to true so heuristics will run again
+            }
+        }
     } while (changesMade);
 
+    if (verifySolution(puzzle)) {
+        console.log("Puzzle solved successfully after backtracking.");
+    }
     
 
-    console.log("AutoSolver finished");
 }
+
 
