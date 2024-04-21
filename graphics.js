@@ -1,4 +1,5 @@
 import * as pl from './logic.js';
+import { lineObjects } from './index.js';
 
 // source for vertex shader
 export var vertexShaderText = `
@@ -30,6 +31,13 @@ void main()
 	gl_FragColor = vec4(col, 1.0);
 }
 `
+var colorPresets = [
+	[0.439, 0.329, 0.302],				// default color
+	[0.0, 0.0, 1.0],					// blue
+	[1.0, 0.0, 0.0],					// red
+	[0.0, 1.0, 0.0],					// green
+	[1.0, 1.0, 0.0],					// yellow
+];
 
 // dot graphic only made once and reused to draw multiple lines
 export class circleTemplate {
@@ -1088,7 +1096,7 @@ export var getDot = function(gl, program) {
 	//console.log("newDot has been pushed");
 	return newDot;
 	
-}
+};
 
 // function that initializes and returns an instance of the line template
 export var getLine = function(gl, program) {
@@ -1115,7 +1123,7 @@ export var getLine = function(gl, program) {
 	
 	//console.log("newLine has been pushed");
 	return newLine;
-}
+};
 
 export var getZero = function(gl, program) {
 	var newZero = new zeroTemplate();
@@ -1142,7 +1150,7 @@ export var getZero = function(gl, program) {
 	//console.log("newZero has been pushed");
 	return newZero;
 
-}
+};
 
 export var getOne = function(gl, program) {
 	var newOne = new oneTemplate();
@@ -1169,7 +1177,7 @@ export var getOne = function(gl, program) {
 	//console.log("newOne has been pushed");
 	return newOne;
 
-}
+};
 
 export var getTwo = function(gl, program) {
 	var newTwo = new twoTemplate();
@@ -1196,7 +1204,7 @@ export var getTwo = function(gl, program) {
 	//console.log("newTwo has been pushed");
 	return newTwo;
 
-}
+};
 
 export var getThree = function(gl, program) {
 	var newThree = new threeTemplate();
@@ -1223,7 +1231,7 @@ export var getThree = function(gl, program) {
 	//console.log("newThree has been pushed");
 	return newThree;
 
-}
+};
 
 export var getCross = function(gl, program) {
 	var newCross = new crossTemplate();
@@ -1250,7 +1258,7 @@ export var getCross = function(gl, program) {
 	//console.log("newCross has been pushed");
 	return newCross;
 
-}
+};
 
 export var getBox = function(gl, program) {
 	var newBox = new shadeCellTemplate();
@@ -1276,7 +1284,7 @@ export var getBox = function(gl, program) {
 	
 	//console.log("newBox has been pushed");
 	return newBox;
-}
+};
 
 // update graphic state to match logic state
 export var updateGraphicPuzzleState = function(puzzle, gLinesArray, cellShades){
@@ -1314,7 +1322,7 @@ export var updateGraphicPuzzleState = function(puzzle, gLinesArray, cellShades){
 			cellShades[i].display = 0;
 		}
 	}
-}
+};
 
 // updates a logical line to sync with graphics
 export var updateLogicConnection = function(puzzle, gLinesArray, i, j){
@@ -1342,8 +1350,10 @@ export var updateLogicConnection = function(puzzle, gLinesArray, i, j){
 		}
 	}
 
-}
+};
 
+// calculates the weight used to interpolate between the background color and the object's color
+// fade interval is the time in milliseconds it should take to completely fade in or out
 export var getMixWeight = function(lastClickedTime, fadeInterval) {
 	var time = Date.now();
 	var mixWeight = 1;
@@ -1352,4 +1362,15 @@ export var getMixWeight = function(lastClickedTime, fadeInterval) {
 		mixWeight = timeSinceToggled / fadeInterval;
 	}
 	return mixWeight;
-}
+};
+
+// changes a lines color based off of a line's position in gLinesArray 
+// using a preset colors array defined at the top
+export var changeLineColor = function(y, x, colorIndex)  {
+	for (let i = 0; i <= lineObjects.length; i++) {
+		if (lineObjects[i].yCoord == y && lineObjects[i].xCoord == x) {
+			lineObjects[i].color = colorPresets[colorIndex];
+			break;
+		}
+	}
+};

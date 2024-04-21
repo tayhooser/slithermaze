@@ -99,6 +99,7 @@ var touchInit = false;
 var gHeight;
 var MoB;				// Middle of Board. Used to set the camera position in the center
 var gLinesArray;		// 2D Array that indicates which lines are on/off
+export { lineObjects };
 
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
 // gets map from server
@@ -349,6 +350,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.type = 2;					// 2 for a line
 			newMesh.xCoord = xIndex;			// store the linesArray index into the object
 			newMesh.yCoord = yIndex;
+			newMesh.color = [0.439, 0.329, 0.302];
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
@@ -387,6 +389,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.type = 2;
 			newMesh.xCoord = xIndex;
 			newMesh.yCoord = yIndex;
+			newMesh.color = [0.439, 0.329, 0.302];
 
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
@@ -446,7 +449,6 @@ var initPuzzleGraphics = function(puzzle) {
 
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	shouldRender = true;
-	//render();
 };
 
 // looping render call to draw stuff to screen
@@ -487,6 +489,7 @@ var render = function() {
 	var colorLoc = gl.getUniformLocation(program, "color");
 	var weightLoc = gl.getUniformLocation(program, "weight");
 	var crossScale = [3.0, 3.0, 1];
+	var color = [1.0, 1.0, 1.0];
 
 	// draw shaded cells
 	var cellShadeColor = [0.9, 0.9, 0.9];
@@ -512,7 +515,7 @@ var render = function() {
 		gl.uniform1f(weightLoc, mixWeight);
 
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off
-			lineObjects[i].color = [1.0, 1.0, 1.0];											
+			//lineObjects[i].color = [1.0, 1.0, 1.0];											
 			lineObjects[i].display = 0;
 			continue;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
@@ -520,17 +523,17 @@ var render = function() {
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].rotate);
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].scale);
-			lineObjects[i].color = [0.439, 0.329, 0.302];
+			color = lineObjects[i].color;
 			lineObjects[i].display = 1;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 2)	{	   // cross
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.scale(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, crossScale );
-			lineObjects[i].color = [1.0, 0.0, 0.0];
+			color = [1.0, 0.0, 0.0];
 			lineObjects[i].display = 2;
 		}
 		
-		gl.uniform3fv(colorLoc, lineObjects[i].color);
+		gl.uniform3fv(colorLoc, color);
 
 		glMatrix.mat4.multiply(mvp, vp, lineObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
