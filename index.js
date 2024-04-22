@@ -68,38 +68,36 @@ var gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
 var program = gl.createProgram();
 var vertexShader = gl.createShader(gl.VERTEX_SHADER);
 var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-var cameraPosition, lookAt, camAndLook;
-var puzzleObjects = [];				// list of puzzle objects that wont change much like dots and numbers
-var lineObjects = [];				// list of lines that will be interacted with and change
+
+// camera variables
+var cameraPosition, lookAt, camAndLook, camTotalMoved, MoB;
+var camWasMoved = false;
+
+// graphic objects
+var puzzleObjects = [];	// list of puzzle objects that wont change much like dots and numbers
+var lineObjects = [];	// list of lines that will be interacted with and change
 var cellShades = [];
+var gLinesArray;		// 2D Array that indicates which lines are on/off
+export { lineObjects };
 var dot, line, cross, zero, one, two, three, box;	// instance of graphic templates
+
 var shouldRender = false;
-var ortho_size;
-var view;
-var projection;
-var vp;
+var ortho_size, view, projection, vp;
 var startPos =  Array(2);
 var prevX, prevY = 0;
-var renderCalls = 0;
-var stopWatch;
-var startedTimer = false;
-var touchTimer;
-var touchTimerStart;
+
+// webGL control vars
+var touchTimer, touchTimerStart;
 var touchCrossThreshold = 250;
-var camWasMoved = false;
-var camTotalMoved;
 var lastPinchDist = 0;
 var ongoingTouches = [];
 var twoTouches = false;
 var touchTimer = 0;
 var usingTouchEvents = false;
 var isTouching = false;
-var justPlacedAnX = false;
 var touchInit = false;
-var gHeight;
-var MoB;				// Middle of Board. Used to set the camera position in the center
-var gLinesArray;		// 2D Array that indicates which lines are on/off
-export { lineObjects };
+
+var justPlacedAnX = false;
 
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
 // gets map from server
@@ -459,11 +457,6 @@ var render = function() {
 		setTimeout(render, 100);
 	}
 
-	if (!startedTimer) {
-		stopWatch = Date.now();
-		startedTimer = true;
-	}
-
 	var timeStart = Date.now();
 
 	gl.clearColor(R, G, B, 1.0);
@@ -594,16 +587,6 @@ var render = function() {
 	// console.log("render calls per second", fps);
 
 	var msPassed = Date.now() - timeStart;
-
-	// used to check fps
-	/*
-	renderCalls++;
-	if ((Date.now() - stopWatch) >= 1000) {
-		console.log("fps: ", renderCalls);
-		renderCalls = 0;
-		stopWatch = Date.now();
-	}
-	*/
 
 	// if (msPassed <= 12) { 			// 0 <= x <= 12
 	// 	setTimeout(render, 12 - msPassed);
@@ -1252,27 +1235,12 @@ hintHTML.onclick = function(){
 };
 
 // called when user hits solution button, HTML side
-// should complete a solution step by step, like an animation
-let autosolverActive = false;
-let autosolveTimeout;
-
 solutionHTML.onclick = function() {
-    autosolverActive = !autosolverActive; // Toggle the autosolve state
-    
-    if (autosolverActive) {
-        console.log("Autosolver is now ON.");
-        // Start the autosolver
+	console.log("Autosolver is now ON.");
         pl.autoSolver(curPuzzle,gLinesArray);
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 		updateStateHistory();
 		solverUsed = true;
-    } else {
-        console.log("Autosolver is now OFF.");
-        // Stop the autosolver
-        if (autosolveTimeout) {
-            clearTimeout(autosolveTimeout);
-        }
-    }
 };
 
 // called when user hits restart button, HTML side
@@ -1509,6 +1477,9 @@ importHTML.onclick = function(){
 
 // stops timer, checks answer
 submitHTML.onclick = function(){
+	if (timer == false) // already submitted, do nothing
+		return;
+	
 	let win = document.getElementById("win");
 	let verify = pl.verifySolution(curPuzzle);
 	if (!verify){
@@ -1539,10 +1510,24 @@ submitHTML.onclick = function(){
 // sends leaderboard score to server
 var submitScore = function(){
 	name = document.getElementById("player-name").value;
+	name = name.replace(/\s\s+/g, ' '); // replace all whitespace with 1 space
+	name = name.replace(/[^a-z0-9 ]/gi, ''); // alphanumeric names + spaces only
 	console.log(name + " has time of " + hour + ":" + minute + ":" + (second-1) + " for puzzleID = " + curPuzzleID);
 	sendScore(curPuzzleID, name).then(
 		(val) => {
-			updateLeaderboard();
+			console.log("Sent score, getting scoreboard for puzzle title " + puzzleTitleHTML.innerHTML + "....");
+			getMap({ name: String(puzzleTitleHTML.innerHTML) }).then( // should probably query with _id, but didnt want to get mongoDB depencencies
+				(map) => {
+					console.log("Map name after getMap(): " + map.name);
+					if (map.name){
+						curPuzzleLeaderboard = map.board;
+						updateLeaderboard();
+						console.log("Leaderboard updated.");
+					}
+				},
+				(issue) => {
+					console.log(issue);
+			});
 	});
 	win.innerHTML = "You win!"
 	document.getElementById("leaderboard").style.height = "160px"; // hack solution to bug im so sorry
@@ -1772,7 +1757,7 @@ getNewpHTML.onclick = function() {
 		curPuzzleID = 0;
 		curPuzzle = pl.generatePuzzle(h, w, d);
 		initPuzzleGraphics(curPuzzle);
-		usedSolver = false;
+		solverUsed = false;
 		timer = true;
 		leaderboard = false;
 		updateLeaderboard();
@@ -1791,9 +1776,9 @@ var updateLeaderboard = function() {
 		let HTML = "<center><span style=\"color: #C36D68\"><b><u>LEADERBOARD</u></b></span></center>" +
 				"<table>" +
 					"<tr>" +
-					  "<th width=\"15px\">#</th>" +
+					  "<th class=\"numCol\">#</th>" +
 					  "<th class=\"nameCol\">Name</th>" +
-					  "<th width=\"45px\">Time</th>" +
+					  "<th class=\"timeCol\">Time</th>" +
 					"</tr>";
 		
 		// sort scores lowest time to highest
@@ -1814,7 +1799,7 @@ var updateLeaderboard = function() {
 			let scoreMin = Math.floor(scoreSec / 60);
 			scoreSec %= 60;
 			
-			scoreHour = String(scoreHour).padStart(2, '0');
+			scoreHour = String(scoreHour).padStart(1, '0');
 			scoreMin = String(scoreMin).padStart(2, '0');
 			scoreSec = String(scoreSec).padStart(2, '0');
 			

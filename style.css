@@ -386,6 +386,7 @@ input[type=submit]:hover {
 
 .nameCol {
 	overflow: hidden;
+	white-space: nowrap;
 	width: 50px;
 }
 
