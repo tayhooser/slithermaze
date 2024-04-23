@@ -2524,7 +2524,7 @@ function checkIntersections(puzzle) {
                         connectionCount++;
                     }
                 }
-                if (connectionCount == 3) { // Intersection condition
+                if (connectionCount > 2) { // Intersection condition
                     return true; // Intersection found
                 }
             }
@@ -2540,11 +2540,11 @@ function checkDeadEnds(puzzle) {
             const nodeConnections = puzzle.nodes[i][j];
             if (nodeConnections) {
                 for (let k = 0; k < nodeConnections.length; k++) {
-                    if (nodeConnections[k][2] == 1) { // Checking if there's a line
+                    if (nodeConnections[k][2] == 0) { // Checking if there's a cross
                         connectionCount++;
                     }
                 }
-                if (connectionCount == 1) { // Dead end condition
+                if (connectionCount == 3) { // Dead end condition
                     return true; // Dead end found
                 }
             }
@@ -2556,93 +2556,140 @@ function checkDeadEnds(puzzle) {
 
 
 
+//still has issues with backtracking. seems to handle most of the 5x5 puzzles well though.
 
 export var autoSolver = function(puzzle) {
-	console.log("Starting autosolver.....................");
-    let changesMade, couldSolve;
-	// iterate over the entire puzzle multiple times until no more changes can be made
+    let changesMade;
     do {
         changesMade = false;
-        couldSolve = false;
-		var snapshotBefore = JSON.stringify(puzzle);
+        var snapshotBefore = JSON.stringify(puzzle);
 
         // Apply all heuristics, iterating through each cell
         for (let i = 0; i < puzzle.h; i++) {
             for (let j = 0; j < puzzle.w; j++) {
-				crossCompletedCell(puzzle, i, j);
-				handleNodeRules(puzzle, i, j);
-				
-				// this for loop iterates though each cell. yet, we need to check each node for rules too.
-				// the lattice of nodes has one more row and column compared to our lattice of cells.
-				// to check the right and bottom edge nodes, we can add a special case, remembering that
-				// cell[i][j]'s top left node is node[i][j].
-				if (j == puzzle.w - 1) // if current cell is on right edge, check its top right node
-					handleNodeRules(puzzle, i, puzzle.w);
-				if (i == puzzle.h - 1) // if current cell is on bottom edge, check its bottom left node
-					handleNodeRules(puzzle, puzzle.h, j);
-				if ((j == puzzle.w - 1) && (i == puzzle.h - 1)) // if puzzle is in bottom right corner, check bottom right node
-					handleNodeRules(puzzle, puzzle.h, puzzle.w);
+                crossCompletedCell(puzzle, i, j);
+                handleNodeRules(puzzle, i, j);
+                if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
+                if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
+                if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);  // Check bottom-right corner node
 
-                //handleCellRules(puzzle, i, j); // see below
-				
-				// check cell number, then apply related rules
-				if (puzzle.cells[i][j][0] == 1) {
-					handleCellWithOne(puzzle, i, j);
-				} else if (puzzle.cells[i][j][0] == 2) {
-					handleCellWithTwo(puzzle, i, j);
-				} else if (puzzle.cells[i][j][0] == 3) {
-					handleCellWithThree(puzzle, i, j);
-				}
-				
-				applyTwoAdjacentRule(puzzle, i, j);
-				handleRulesForOnes(puzzle, i, j);
-				handleRulesForThrees(puzzle, i, j);
-				handleDiags(puzzle, i, j);
-				handleSpecialDiags(puzzle, i, j);
+                // Apply rules based on the number of lines required
+                if (puzzle.cells[i][j][0] == 1) {
+                    handleCellWithOne(puzzle, i, j);
+                } else if (puzzle.cells[i][j][0] == 2) {
+                    handleCellWithTwo(puzzle, i, j);
+                } else if (puzzle.cells[i][j][0] == 3) {
+                    handleCellWithThree(puzzle, i, j);
+                }
 
-				handleCellWithInverseNumber(puzzle, i, j);
+                applyTwoAdjacentRule(puzzle, i, j);
+                handleRulesForOnes(puzzle, i, j);
+                handleRulesForThrees(puzzle, i, j);
+                handleDiags(puzzle, i, j);
+                handleSpecialDiags(puzzle, i, j);
+                handleCellWithInverseNumber(puzzle, i, j);
             }
         }
+
 		
-		// determine if changes were made after 1 pass 
-		var snapshotAfter = JSON.stringify(puzzle);
-        if (snapshotBefore !== snapshotAfter)
-			changesMade = true;
 
-        if (!changesMade) { // no more rules can be done
-			if (verifySolution(puzzle)){ // puzzle is solved, stop
-				console.log("Autosolver solved puzzle, stopping...");
-				return;
-			} else { // not solved, needs backtracking
+        var snapshotAfter = JSON.stringify(puzzle);
+        changesMade = snapshotBefore !== snapshotAfter;
+
+        if (!changesMade) {  // If no changes, then backtracking is needed
+            if (verifySolution(puzzle)) {
+                console.log("Autosolver solved puzzle, stopping...");
+                return;
+            } else {
                 console.log("No solution found; Needs backtracking.");
-				// select a random cell
-				// for each empty connection around cell curConnection:
-					// make savestate
-					// place line in curConnection
-					// for 10 scans of the full puzzle:
-						// apply heuristics
-					// check if any cell has wrong # lines
-					// check if any node has > 2 lines (intersection check)
-					// check if any node with 1 line has 3 crosses (dead end check)
-					// if any node/cell with above conditions exists:
-						// load savestate
-						// place a cross in curConnection
-					// if node/cell with above conditions doesnt exist:
-						// load savestate
+                // Loop through each cell again to find empty connections and attempt placing lines
+                for (let i = 0; i < puzzle.h; i++) {
+                    for (let j = 0; j < puzzle.w; j++) {
+                        // Getting empty connections for the node
+                        let emptyConnections = getEmptyConnections(puzzle, i, j);
+                        // Looping through connections
+                        for (let connection of emptyConnections) {
+                            let saveState = JSON.stringify(puzzle);  // Make savestate
+                            placeLine(puzzle, connection[0], connection[1], connection[2], connection[3]);  // Place line in current connection
 
-				// does solveSlitherlink do this? -- taylor
-				//couldSolve = solveSlitherlink(puzzle);
-				//changesMade = true; // iterate the while loop once more
+                            // Apply heuristics repeatedly for a specified # of iterations
+                            for (let iteration = 0; iteration < 10; iteration++) {
+                                crossCompletedCell(puzzle, i, j);
+								handleNodeRules(puzzle, i, j);
+								if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);
+								if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);
+								if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);
+
+								if (puzzle.cells[i][j][0] == 1) {
+									handleCellWithOne(puzzle, i, j);
+								} else if (puzzle.cells[i][j][0] == 2) {
+									handleCellWithTwo(puzzle, i, j);
+								} else if (puzzle.cells[i][j][0] == 3) {
+									handleCellWithThree(puzzle, i, j);
+								}
+
+								applyTwoAdjacentRule(puzzle, i, j);
+								handleRulesForOnes(puzzle, i, j);
+								handleRulesForThrees(puzzle, i, j);
+								handleDiags(puzzle, i, j);
+								handleSpecialDiags(puzzle, i, j);
+								handleCellWithInverseNumber(puzzle, i, j);
+                            }
+
+                            // Check conditions after heuristic/pattern passes.
+                            if (!checkIntersections(puzzle,i,j) && !checkDeadEnds(puzzle,i,j) && puzzle.cells[i][j][0] == countLines(puzzle, i, j)) {
+                                console.log("Valid move found, reloading save");
+                                puzzle = JSON.parse(saveState);
+								changesMade = true;
+                            } else {
+                                console.log("Invalid move detected, reloading save and adding cross");
+                                puzzle = JSON.parse(saveState);  // Reload the saved state to revert
+                                placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
+                                changesMade = true;
+                            }
+                        }
+                    }
+                }
+
+				//changesMade = true;
             }
         }
     } while (changesMade);
 
     if (verifySolution(puzzle)) {
-        console.log("Autosolver completed puzzle successfully!!!!");
+        console.log("Autosolver completed puzzle successfully.");
     } else {
-		console.log("Autosolver did not complete puzzle successfully.");
-	}
-    
+        console.log("Autosolver did not complete puzzle successfully.");
+    }
+};
+
+
+
+
+function getEmptyConnections(puzzle, x, y) {
+    let connections = [];
+    const directions = [
+        [x, y, x, y + 1],      // Top left to top right
+        [x, y, x + 1, y],      // Top left to bottom left
+        [x + 1, y, x + 1, y + 1],  // Bottom left to bottom right
+        [x, y + 1, x + 1, y + 1] // Top right to bottom right
+    ];
+
+    // Checking each direction for empty connections
+    for (let dir of directions) {
+        let [startX, startY, endX, endY] = dir;
+        if (
+            startX >= 0 && startX < puzzle.h && startY >= 0 && startY < puzzle.w &&
+            endX >= 0 && endX < puzzle.h && endY >= 0 && endY < puzzle.w &&
+            arrayIndexOf(puzzle.nodes[startX][startY], [endX, endY, 0]) === -1 && // No cross
+            arrayIndexOf(puzzle.nodes[startX][startY], [endX, endY, 1]) === -1    // No line
+        ) {
+            connections.push(dir);
+        }
+    }
+
+    return connections;
+}
 
 }
 
