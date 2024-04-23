@@ -34,7 +34,7 @@ void main()
 var colorPresets = [
 	[0.439, 0.329, 0.302],				// default color
 	[0.0, 0.0, 1.0],					// blue
-	[1.0, 0.0, 0.0],					// red
+	[0.831, 0.486, 0.467],				// red
 	[0.0, 1.0, 0.0],					// green
 	[1.0, 1.0, 0.0],					// yellow
 ];
@@ -1366,9 +1366,12 @@ export var getMixWeight = function(lastClickedTime, fadeInterval) {
 
 // changes a lines color based off of a line's position in gLinesArray 
 // using a preset colors array defined at the top
-export var changeLineColor = function(y, x, colorIndex)  {
-	for (let i = 0; i <= lineObjects.length; i++) {
-		if (lineObjects[i].yCoord == y && lineObjects[i].xCoord == x) {
+export var changeLineColor = function(x, y, colorIndex)  {
+	for (let i = 0; i < lineObjects.length; i++) {
+		// confusing, but the x/y flip-flip is because our logical coordinate system
+		// designates x as the vertical coordinate and y as the horizontal coordinate
+		if (lineObjects[i].yCoord == x && lineObjects[i].xCoord == y) {
+			//console.log("COLORING LINE[" + x + "][" + y + "]");
 			lineObjects[i].color = colorPresets[colorIndex];
 			break;
 		}

@@ -1,3 +1,5 @@
+import * as g from './graphics.js';
+
 // class for displayed puzzle
 export class Puzzle {
 	h;
@@ -557,6 +559,90 @@ var countCrosses = function(puzzle, x, y) {
 }
 
 
+// highlights wrong moves
+// returns true if change was made
+export var highlightWrongMoves = function(puzzle){
+	let red = 2;
+	let brown = 0;
+	let wrongLines = []; // array of gLineArray coords to change to red
+	// check for cells with wrong # lines around it
+	for (let i = 0; i < puzzle.h; i++){
+		for (let j = 0; j < puzzle.w; j++) {
+			if (puzzle.cells[i][j][0] == -1) // unnumbered cell, skip
+				continue;
+			if (countLines(puzzle, i, j) > puzzle.cells[i][j][0]){ // too many lines, highlight
+				//console.log("HIGHLIGHT WRONG MOVES: wrong num lines around cell (" + i + ", " + j + ")");
+				wrongLines.push([2*i, j]); // top line
+				wrongLines.push([2*i+2, j]); // bottom line
+				wrongLines.push([2*i+1, j]); // left line
+				wrongLines.push([2*i+1, j+1]); // right line
+			}
+		}
+	}
+	
+	// check for dead ends and intersections
+	for (let i = 0; i < puzzle.h+1; i++){
+		for (let j = 0; j < puzzle.w+1; j++) {
+			if (!puzzle.nodes[i][j]) // no connection data, skip
+				continue;
+
+			// count lines connected to node
+			let connectedNodes = [];
+			let numLines = 0;
+			for (let k = 0; k < puzzle.nodes[i][j].length; k++) {
+				if (puzzle.nodes[i][j][k][2] == 1){
+					numLines++;
+					connectedNodes.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
+				}
+			}
+			
+			// convert lines into usable gLineArray coordinates
+			let connectedLines = [];
+			for (let k = 0; k < connectedNodes.length; k++){
+				if ((connectedNodes[k][0] == i-1) && (connectedNodes[k][1] == j)){ // up
+					connectedLines.push([2*i-1, j]);
+				} else if ((connectedNodes[k][0] == i) && (connectedNodes[k][1] == j+1)){ // right
+					connectedLines.push([2*i, j]);
+				} else if ((connectedNodes[k][0] == i+1) && (connectedNodes[k][1] == j)){ // down
+					connectedLines.push([2*i+1, j]);
+				} else if ((connectedNodes[k][0] == i) && (connectedNodes[k][1] == j-1)){ // left
+					connectedLines.push([2*i, j-1]);
+				}
+			}
+			
+			// dead end
+			if (numLines == 1 && isDeadEnd(puzzle, i, j)){
+				console.log("dead end detected...");
+				for (let k = 0; k < connectedLines.length; k++){
+					console.log("pushing " + [connectedLines[k][0], connectedLines[k][1]]);
+					wrongLines.push([connectedLines[k][0], connectedLines[k][1]]);
+				}
+			}
+			
+			// intersection
+			if (numLines > 2){
+				for (let k = 0; k < connectedLines.length; k++) 
+					wrongLines.push([connectedLines[k][0], connectedLines[k][1]]);
+			}
+		}
+	}
+	
+	// color all lines brown
+	for (let i = 0; i < 2*puzzle.h+1; i++){
+		for (let j = 0; j < puzzle.w+1; j++) {
+			g.changeLineColor(i, j, brown);
+		}
+	}
+	
+	// highlight all the lines in the list
+	wrongLines = [...new Set(wrongLines)]; // remove duplicates from list
+	//console.log(wrongLines);
+	for (let i = 0; i < wrongLines.length; i++){
+		g.changeLineColor(wrongLines[i][0], wrongLines[i][1], red);
+	}
+	
+}
+
 // RULE: if a cell has the required number of lines around it, the remaining edges can be crossed
 // returns true if change was made
 export var crossCompletedCell = function(puzzle, x, y){
@@ -652,6 +738,56 @@ export var crossIntersection = function (puzzle, x, y){
 }
 
 
+// returns true if given node is a dead end
+// similar to crossDeadEnd(), but does not alter puzzle state
+export var isDeadEnd = function(puzzle, x, y){
+	let requiredCrosses = 0; // number crosses needed around node to be a dead end
+	let neighbors = [];
+	
+	// determine needed # crosses and neighbors for node
+	if (x == 0 && y == 0){ // top left corner
+		requiredCrosses = 1;
+		neighbors = [[x+1, y], [x, y+1]];
+	} else if (x == 0 && y == puzzle.w) { // top right corner
+		requiredCrosses = 1;
+		neighbors = [[x+1, y], [x, y-1]];
+	} else if (x == puzzle.h && y == 0) { // bottom left corner
+		requiredCrosses = 1;
+		neighbors = [[x, y+1], [x-1, y]];
+	} else if (x == puzzle.h && y == puzzle.w) { // bottom right corner
+		requiredCrosses = 1;
+		neighbors = [[x, y-1], [x-1, y]];
+	} else if (x == 0) { // top edge
+		requiredCrosses = 2;
+		neighbors = [[x, y-1], [x, y+1], [x+1, y]];
+	} else if (x == puzzle.h){ // bototm edge
+		requiredCrosses = 2;
+		neighbors = [[x, y-1], [x, y+1], [x-1, y]];
+	} else if (y == 0){ // left edge
+		requiredCrosses = 2;
+		neighbors = [[x-1, y], [x+1, y], [x, y+1]];
+	} else if (y == puzzle.w){ // right edge
+		requiredCrosses = 2;
+		neighbors = [[x-1, y], [x+1, y], [x, y-1]];
+	} else { // general case
+		requiredCrosses = 3;
+		neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
+	}
+	
+	// needs required # of crosses to be considered a dead end
+	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length < requiredCrosses)
+		return false;
+	let numCross = 0;
+	for (let i = 0; i < puzzle.nodes[x][y].length; i++) {
+		if (puzzle.nodes[x][y][i][2] == 0)
+			numCross++;
+	}
+	if (numCross != requiredCrosses)
+		return false;
+	return true;
+}
+
+
 // RULE: if a node has 3 crosses/unavailable spaces, the remaining connection should be a cross
 // RULE: nodes should only ever have 0 or 2 lines
 // returns true if change was made
@@ -709,7 +845,6 @@ export var crossDeadEnd = function(puzzle, x, y){
 	placeCross(puzzle, x, y, missing[0][0], missing[0][1]);
 	return true;
 }
-
 
 // RULE: if a node has 1 line and 1 remaining connection, that connection should be a line
 // RULE: nodes should only ever have 0 or 2 lines
@@ -966,10 +1101,6 @@ function handleCellWithTwo(puzzle, i, j) {
     }
 }
 
-
-
-
-
 // RULE: if number of crosses around a cell == 4 - cell number, then remaining edges should be lines
 function handleCellWithInverseNumber(puzzle, i, j) {
     // Retrieve the number in the current cell
@@ -1136,8 +1267,6 @@ function RuleTwoforOnes(puzzle,i,j) {
     }	
 }
 }	
-
-
 
 
 function RuleOneForOnes (puzzle,i,j) {
@@ -1332,8 +1461,6 @@ function RuleThreeForOnes (puzzle,i,j) {
 	}
 	}
 	
-	
-	
 
 // function that will place a cross between two sets of ones.
 
@@ -1501,7 +1628,6 @@ function RuleFiveForOnes (puzzle,i,j) {
 	}
 
 
-
 //applies to 3s and zeros
 function RuleOneforThrees (puzzle,i,j) {
 	// checks top row and cell below, to ensure we dont go out of bounds
@@ -1576,7 +1702,7 @@ function RuleOneforThrees (puzzle,i,j) {
 
 }
 
-	function RuleTwoForThrees (puzzle,i,j) {
+function RuleTwoForThrees (puzzle,i,j) {
 
 		if (j+1 < puzzle.w && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j+1][0] == 3) {
 			if (j+2 < puzzle.w && puzzle.cells[i][j+2][0]!=0) {
@@ -1596,8 +1722,7 @@ function RuleOneforThrees (puzzle,i,j) {
 	
 // rule for where a three 3 is adjacent to a zero diagonally
 function RuleThreeForThrees (puzzle,i,j) {
-
-if (puzzle.cells[i][j][0] == 3) {
+	if (puzzle.cells[i][j][0] == 3) {
 
 
 	if ( j-1 >= 0 && i+1 < puzzle.h &&  puzzle.cells[i+1][j-1][0] == 0) {
@@ -1683,8 +1808,6 @@ function RuleFourforThrees(puzzle,i,j) {
 	
 		}
 
-
-
 // handles threes placed diagonally
   function DiagThrees(puzzle,i,j) {
 	
@@ -1712,7 +1835,7 @@ function RuleFourforThrees(puzzle,i,j) {
 
   }
 
-  function DiagThrees2 (puzzle,i,j) {
+function DiagThrees2 (puzzle,i,j) {
 
 	if (puzzle.cells[i][j][0] == 3) {
 
@@ -2160,10 +2283,6 @@ function getAvailableNeighbors(puzzle, x, y) {
 }
 
 
-
-
-
-
 export var solveSlitherlink = function(puzzle) {
     const saveKey = "loadsolvernodes";
 
@@ -2221,6 +2340,7 @@ export var solveSlitherlink = function(puzzle) {
     //console.log("No solution found.");
     return false;
 };
+
 function checkIntersections(puzzle) {
     for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {

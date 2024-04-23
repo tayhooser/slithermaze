@@ -349,6 +349,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.xCoord = xIndex;			// store the linesArray index into the object
 			newMesh.yCoord = yIndex;
 			newMesh.color = [0.439, 0.329, 0.302];
+			//newMesh.color = [0.592, 0.482, 0.451];
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
@@ -388,6 +389,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.xCoord = xIndex;
 			newMesh.yCoord = yIndex;
 			newMesh.color = [0.439, 0.329, 0.302];
+			//newMesh.color = [0.592, 0.482, 0.451];
 
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
@@ -431,19 +433,7 @@ var initPuzzleGraphics = function(puzzle) {
 	zoomSliderHTML.min = minZoom;
 	zoomLevel = zoomSliderHTML.value = maxZoom;
 
-	// trigger some of the QOL options
-	let changes = true;
-	while (changes){ // iterate over puzzle multiple times until no changes made
-		changes = false;
-		for (let i = 0; i < curPuzzle.h + 1; i++){
-			for (let j = 0; j < curPuzzle.w + 1; j++) {
-				if (ACdead)
-					changes = changes || pl.crossDeadEnd(curPuzzle, i, j);
-				if (ACnum)
-					changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
-			}
-		}
-	}
+	performQOL();
 
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	shouldRender = true;
@@ -507,8 +497,7 @@ var render = function() {
 		let mixWeight = g.getMixWeight(lineObjects[i].lastClicked, 150);
 		gl.uniform1f(weightLoc, mixWeight);
 
-		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off
-			//lineObjects[i].color = [1.0, 1.0, 1.0];											
+		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off										
 			lineObjects[i].display = 0;
 			continue;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
@@ -522,7 +511,7 @@ var render = function() {
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.scale(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, crossScale );
-			color = [1.0, 0.0, 0.0];
+			color = [0.831, 0.486, 0.467];
 			lineObjects[i].display = 2;
 		}
 		
@@ -708,8 +697,11 @@ var click = function(worldCoords, button) {
 		
 		// update puzzle state with all QOL options ONLY IF cross or line was placed
 		// this is to allow user to erase moves without QOL infinitely triggering
-		if (gLinesArray[tempYIndex][tempXIndex] != 0)
+		if (gLinesArray[tempYIndex][tempXIndex] != 0){
 			performQOL();
+		} else {
+			pl.highlightWrongMoves(curPuzzle); // only QOL that should trigger
+		}
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 		updateStateHistory(); // update puzzle state history
 		prevX = tempXIndex;
@@ -1071,7 +1063,15 @@ undoHTML.onclick = function(){
 		lastUndo--;
 	}
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-	return;
+	
+	// refresh highlighted wrong moves
+	for (let i = 0; i < 2*curPuzzle.h+1; i++){
+		for (let j = 0; j < curPuzzle.w+1; j++) {
+			g.changeLineColor(i, j, 0);
+		}
+	}
+	if (highlight)
+		pl.highlightWrongMoves(curPuzzle);
 };
 
 // called when user hits redo button, HTML side
@@ -1083,7 +1083,15 @@ redoHTML.onclick = function(){
 		lastUndo++;
 	}
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-	return;
+	
+	// refresh highlighted wrong moves
+	for (let i = 0; i < 2*curPuzzle.h+1; i++){
+		for (let j = 0; j < curPuzzle.w+1; j++) {
+			g.changeLineColor(i, j, 0);
+		}
+	}
+	if (highlight)
+		pl.highlightWrongMoves(curPuzzle);
 };
 
 // creates new savestate + button
@@ -1119,9 +1127,17 @@ var load = function(state){
 	curPuzzle.cells = JSON.parse(localStorage.getItem(key));
 	key = "load" + state + "nodes";
 	curPuzzle.nodes = JSON.parse(localStorage.getItem(key));
-	
-	//pl.logPuzzleState(curPuzzle);
+
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	
+	// refresh highlighted wrong moves
+	for (let i = 0; i < 2*curPuzzle.h+1; i++){
+		for (let j = 0; j < curPuzzle.w+1; j++) {
+			g.changeLineColor(i, j, 0);
+		}
+	}
+	if (highlight)
+		pl.highlightWrongMoves(curPuzzle);
 	
 	return;
 };
@@ -1178,6 +1194,8 @@ var performQOL = function(){
 	let changes = true;
 	while (changes){ // iterate over puzzle multiple times until no changes made
 		changes = false;
+		if (highlight)
+			changes = changes || pl.highlightWrongMoves(curPuzzle);
 		for (let i = 0; i < curPuzzle.h + 1; i++){
 			for (let j = 0; j < curPuzzle.w + 1; j++) {
 				if (ACdead)
@@ -1222,6 +1240,13 @@ ACloopHTML.oninput = function() {
 // toggles highlight wrong moves
 highlightHTML.oninput = function() {
 	highlight = highlightHTML.checked;
+	if (!highlight){ // return all lines to brown
+		for (let i = 0; i < 2*curPuzzle.h+1; i++){
+			for (let j = 0; j < curPuzzle.w+1; j++) {
+				g.changeLineColor(i, j, 0);
+			}
+		}
+	}
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
