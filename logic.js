@@ -544,6 +544,7 @@ var countLines = function(puzzle, x, y){
 	return n;
 }
 
+
 // returns number of crosses around a given cell
 var countCrosses = function(puzzle, x, y) {
     let numCrosses = 0;
@@ -559,7 +560,7 @@ var countCrosses = function(puzzle, x, y) {
 }
 
 
-// highlights wrong moves
+// highlights wrong lines red
 // returns true if change was made
 export var highlightWrongMoves = function(puzzle){
 	let red = 2;
@@ -738,56 +739,6 @@ export var crossIntersection = function (puzzle, x, y){
 }
 
 
-// returns true if given node is a dead end
-// similar to crossDeadEnd(), but does not alter puzzle state
-export var isDeadEnd = function(puzzle, x, y){
-	let requiredCrosses = 0; // number crosses needed around node to be a dead end
-	let neighbors = [];
-	
-	// determine needed # crosses and neighbors for node
-	if (x == 0 && y == 0){ // top left corner
-		requiredCrosses = 1;
-		neighbors = [[x+1, y], [x, y+1]];
-	} else if (x == 0 && y == puzzle.w) { // top right corner
-		requiredCrosses = 1;
-		neighbors = [[x+1, y], [x, y-1]];
-	} else if (x == puzzle.h && y == 0) { // bottom left corner
-		requiredCrosses = 1;
-		neighbors = [[x, y+1], [x-1, y]];
-	} else if (x == puzzle.h && y == puzzle.w) { // bottom right corner
-		requiredCrosses = 1;
-		neighbors = [[x, y-1], [x-1, y]];
-	} else if (x == 0) { // top edge
-		requiredCrosses = 2;
-		neighbors = [[x, y-1], [x, y+1], [x+1, y]];
-	} else if (x == puzzle.h){ // bototm edge
-		requiredCrosses = 2;
-		neighbors = [[x, y-1], [x, y+1], [x-1, y]];
-	} else if (y == 0){ // left edge
-		requiredCrosses = 2;
-		neighbors = [[x-1, y], [x+1, y], [x, y+1]];
-	} else if (y == puzzle.w){ // right edge
-		requiredCrosses = 2;
-		neighbors = [[x-1, y], [x+1, y], [x, y-1]];
-	} else { // general case
-		requiredCrosses = 3;
-		neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
-	}
-	
-	// needs required # of crosses to be considered a dead end
-	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length < requiredCrosses)
-		return false;
-	let numCross = 0;
-	for (let i = 0; i < puzzle.nodes[x][y].length; i++) {
-		if (puzzle.nodes[x][y][i][2] == 0)
-			numCross++;
-	}
-	if (numCross != requiredCrosses)
-		return false;
-	return true;
-}
-
-
 // RULE: if a node has 3 crosses/unavailable spaces, the remaining connection should be a cross
 // RULE: nodes should only ever have 0 or 2 lines
 // returns true if change was made
@@ -844,6 +795,211 @@ export var crossDeadEnd = function(puzzle, x, y){
 	missing = nodeSetDifference(neighbors, visited);
 	placeCross(puzzle, x, y, missing[0][0], missing[0][1]);
 	return true;
+}
+
+
+// similar to crossDeadEnd(), but does not alter puzzle state
+// returns true if given node is a dead end
+export var isDeadEnd = function(puzzle, x, y){
+	let requiredCrosses = 0; // number crosses needed around node to be a dead end
+	let neighbors = [];
+	
+	// determine needed # crosses and neighbors for node
+	if (x == 0 && y == 0){ // top left corner
+		requiredCrosses = 1;
+		neighbors = [[x+1, y], [x, y+1]];
+	} else if (x == 0 && y == puzzle.w) { // top right corner
+		requiredCrosses = 1;
+		neighbors = [[x+1, y], [x, y-1]];
+	} else if (x == puzzle.h && y == 0) { // bottom left corner
+		requiredCrosses = 1;
+		neighbors = [[x, y+1], [x-1, y]];
+	} else if (x == puzzle.h && y == puzzle.w) { // bottom right corner
+		requiredCrosses = 1;
+		neighbors = [[x, y-1], [x-1, y]];
+	} else if (x == 0) { // top edge
+		requiredCrosses = 2;
+		neighbors = [[x, y-1], [x, y+1], [x+1, y]];
+	} else if (x == puzzle.h){ // bototm edge
+		requiredCrosses = 2;
+		neighbors = [[x, y-1], [x, y+1], [x-1, y]];
+	} else if (y == 0){ // left edge
+		requiredCrosses = 2;
+		neighbors = [[x-1, y], [x+1, y], [x, y+1]];
+	} else if (y == puzzle.w){ // right edge
+		requiredCrosses = 2;
+		neighbors = [[x-1, y], [x+1, y], [x, y-1]];
+	} else { // general case
+		requiredCrosses = 3;
+		neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
+	}
+	
+	// needs required # of crosses to be considered a dead end
+	if (!puzzle.nodes[x][y] || puzzle.nodes[x][y].length < requiredCrosses)
+		return false;
+	let numCross = 0;
+	for (let i = 0; i < puzzle.nodes[x][y].length; i++) {
+		if (puzzle.nodes[x][y][i][2] == 0)
+			numCross++;
+	}
+	if (numCross != requiredCrosses)
+		return false;
+	return true;
+}
+
+
+// RULE: there should only be one loop on the puzzle
+// if a line could be placed such that a loop is created, place a cross
+export var crossPrematureLoop = function(puzzle){
+	console.log("START OF CROSSPREMATURELOOP..............");
+	var start, end, prev, cur;
+	var x, y, lineConns;
+	var starts = []; // list of tail ends of each line segment
+	var ends = []; // list of other tail ends of each line segment
+	var segmentLengths = []; // lengths of line segments
+	var visited = []; // list of all visited nodes
+	var changes = false;
+	
+	// get collection of start, end coordinates for each line segment
+	let lineFound = true;
+	while (lineFound){
+		// find a segment of lines
+		lineFound = false;
+		find_line:
+		for (let i = 0; i < puzzle.h + 1; i++){
+			for (let j = 0; j < puzzle.w + 1; j++) {
+				if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0) // if no connection data, skip
+					continue;
+				if (arrayIndexOf(visited, [i, j]) != -1) // part of another line already explored, skip
+					continue;
+				for (let k = 0; k < puzzle.nodes[i][j].length; k++){
+					if (puzzle.nodes[i][j][k][2] == 1){ // line connection data exists
+						prev = [i, j];
+						cur = [puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]; // store coords of 1st connection
+						visited.push(prev);
+						lineFound = true;
+						break find_line;
+					}
+				}
+			}
+		}
+		
+		if (!lineFound) // no more line segments to explore, stop
+			break;
+		
+		// follow segment until tail end is found
+		do { // while current node has 2 line connections
+			lineConns = [];
+			for (let i = 0; i < puzzle.nodes[cur[0]][cur[1]].length; i++){
+				if (puzzle.nodes[cur[0]][cur[1]][i][2] == 1)
+					lineConns.push(puzzle.nodes[cur[0]][cur[1]][i]);
+			}
+			
+			if (lineConns.length == 1){ // found tail end
+				start = cur;
+				visited.push([...cur]);
+				break;
+			} else if (lineConns.length > 2){ // stop computation if intersection exists; results in complex code and infinite loops
+				return changes;
+			}
+			visited.push([...cur]);
+			
+			// visit next node
+			// if first connection in list = prev, use second in list
+			if ((lineConns[0][0] == prev[0]) && (lineConns[0][1] == prev[1])){
+				prev = [...cur];
+				x = lineConns[1][0];
+				y = lineConns[1][1];
+				cur[0] = x;
+				cur[1] = y;
+			} else {
+				prev = [...cur];
+				x = lineConns[0][0];
+				y = lineConns[0][1];
+				cur[0] = x;
+				cur[1] = y;
+			}
+		} while (lineConns.length == 2);
+		
+		// advance to next node
+		for (let k = 0; k < puzzle.nodes[start[0]][start[1]].length; k++){
+			if (puzzle.nodes[start[0]][start[1]][k][2] == 1){ // line connection data exists
+				prev = start;
+				cur = [puzzle.nodes[start[0]][start[1]][k][0], puzzle.nodes[start[0]][start[1]][k][1]]; // store coords of 1st connection
+				visited.push(prev);
+				break;
+			}
+		}
+		let lineLength = 1;
+		
+		// follow line segment until other end is found
+		do { // while current node has 2 line connections
+			lineConns = [];
+			for (let i = 0; i < puzzle.nodes[cur[0]][cur[1]].length; i++){
+				if (puzzle.nodes[cur[0]][cur[1]][i][2] == 1)
+					lineConns.push(puzzle.nodes[cur[0]][cur[1]][i]);
+			}
+			
+			if (lineConns.length == 1){ // found other end
+				end = cur;
+				visited.push([...cur]);
+				break;
+			} else if (lineConns.length > 2){ // stop computation if intersection exists; results in complex code and infinite loops
+				return changes;
+			}
+			visited.push([...cur]);
+			
+			// visit next node
+			// if first connection in list = prev, use second in list
+			if ((lineConns[0][0] == prev[0]) && (lineConns[0][1] == prev[1])){
+				prev = [...cur];
+				x = lineConns[1][0];
+				y = lineConns[1][1];
+				cur[0] = x;
+				cur[1] = y;
+			} else {
+				prev = [...cur];
+				x = lineConns[0][0];
+				y = lineConns[0][1];
+				cur[0] = x;
+				cur[1] = y;
+			}
+			lineLength++;
+		} while (lineConns.length == 2);
+		
+		//console.log("Segment: " + start + " --- " + end);
+		starts.push(start);
+		ends.push(end);
+		segmentLengths.push(lineLength);
+	}
+		
+	// if there is only one loop on the board -- do nothing!
+	// the player may be doing their last move before submitting
+	if (starts.length < 2){
+		console.log("not enough segments...");
+		return changes;
+	}
+	
+	// else, check to see if starts are one line away from ends and cross
+	for (let i = 0; i < starts.length; i++){
+		console.log("[" + starts[i][0] + ", " + starts[i][1] + "] --- [" + ends[i][0] + ", " + ends[i][1] + "]");
+		if (segmentLengths[i] < 3) // minimum length of 3 to be 1 away from making a loop
+			continue;
+		let iDiff = Math.abs(starts[i][0] - ends[i][0]);
+		let jDiff = Math.abs(starts[i][1] - ends[i][1]);
+		console.log("iDiff = " + iDiff + "; jDiff = " + jDiff);
+		if ((iDiff == 1) && (jDiff == 0)){ // one line apart, vertically
+			console.log("Placing a cross at: [" + starts[i][0] + ", " + starts[i][1] + "] x [" + ends[i][0] + ", " + ends[i][1] + "]");
+			placeCross(puzzle, starts[i][0], starts[i][1], ends[i][0], ends[i][1]);
+			changes = true;
+		} else if ((iDiff == 0) && (jDiff == 1)){ // one line apart, horizontally
+			console.log("Placing a cross at: [" + starts[i][0] + ", " + starts[i][1] + "] x [" + ends[i][0] + ", " + ends[i][1] + "]");
+			placeCross(puzzle, starts[i][0], starts[i][1], ends[i][0], ends[i][1]);
+			changes = true;
+		} 
+	}
+	
+	return changes;
 }
 
 // RULE: if a node has 1 line and 1 remaining connection, that connection should be a line

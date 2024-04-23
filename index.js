@@ -699,7 +699,7 @@ var click = function(worldCoords, button) {
 		// this is to allow user to erase moves without QOL infinitely triggering
 		if (gLinesArray[tempYIndex][tempXIndex] != 0){
 			performQOL();
-		} else {
+		} else if (highlight){
 			pl.highlightWrongMoves(curPuzzle); // only QOL that should trigger
 		}
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
@@ -1196,6 +1196,8 @@ var performQOL = function(){
 		changes = false;
 		if (highlight)
 			changes = changes || pl.highlightWrongMoves(curPuzzle);
+		if (ACloop)
+			changes = changes || pl.crossPrematureLoop(curPuzzle);
 		for (let i = 0; i < curPuzzle.h + 1; i++){
 			for (let j = 0; j < curPuzzle.w + 1; j++) {
 				if (ACdead)
