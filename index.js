@@ -1213,7 +1213,7 @@ var performQOL = function(){
 		if (highlight)
 			changes = changes || pl.highlightWrongMoves(curPuzzle);
 		if (ACloop)
-			changes = changes || pl.crossPrematureLoop(curPuzzle);
+			pl.crossPrematureLoop(curPuzzle);
 		for (let i = 0; i < curPuzzle.h + 1; i++){
 			for (let j = 0; j < curPuzzle.w + 1; j++) {
 				if (ACdead)
@@ -1559,9 +1559,8 @@ var submitScore = function(){
 	name = name.replace(/[^a-z0-9 ]/gi, ''); // alphanumeric names + spaces only
 	console.log(name + " has time of " + hour + ":" + minute + ":" + (second-1) + " for puzzleID = " + curPuzzleID);
 	sendScore(curPuzzleID, name).then(
-		(val) => {
-			console.log("Sent score, getting scoreboard for puzzle title " + puzzleTitleHTML.innerHTML + "....");
-			curPuzzleLeaderboard = val.board;
+		(map) => {
+			curPuzzleLeaderboard = map.board;
 			updateLeaderboard();
 	});
 	win.innerHTML = "You win!"
@@ -1822,7 +1821,7 @@ var updateLeaderboard = function() {
 		
 		// sort scores lowest time to highest
 		let sortedScores = [];
-		console.log(curPuzzleLeaderboard);
+		//console.log(curPuzzleLeaderboard);
 		for (let key in curPuzzleLeaderboard){
 			if (!isNaN(curPuzzleLeaderboard[key]))
 				sortedScores.push([key, curPuzzleLeaderboard[key]]);

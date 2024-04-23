@@ -613,9 +613,9 @@ export var highlightWrongMoves = function(puzzle){
 			
 			// dead end
 			if (numLines == 1 && isDeadEnd(puzzle, i, j)){
-				console.log("dead end detected...");
+				//console.log("dead end detected...");
 				for (let k = 0; k < connectedLines.length; k++){
-					console.log("pushing " + [connectedLines[k][0], connectedLines[k][1]]);
+					//console.log("pushing " + [connectedLines[k][0], connectedLines[k][1]]);
 					wrongLines.push([connectedLines[k][0], connectedLines[k][1]]);
 				}
 			}
@@ -851,7 +851,7 @@ export var isDeadEnd = function(puzzle, x, y){
 // RULE: there should only be one loop on the puzzle
 // if a line could be placed such that a loop is created, place a cross
 export var crossPrematureLoop = function(puzzle){
-	//console.log("START OF CROSSPREMATURELOOP..............");
+	console.log("START OF CROSSPREMATURELOOP..............");
 	var start, end, prev, cur;
 	var x, y, lineConns;
 	var starts = []; // list of tail ends of each line segment
@@ -919,6 +919,10 @@ export var crossPrematureLoop = function(puzzle){
 				cur[0] = x;
 				cur[1] = y;
 			}
+			if (cur === start){ // made a full loop, stop
+				console.log("full loop found, stopping...");
+				return changes;
+			}
 		} while (lineConns.length == 2);
 		
 		// advance to next node
@@ -967,7 +971,7 @@ export var crossPrematureLoop = function(puzzle){
 			lineLength++;
 		} while (lineConns.length == 2);
 		
-		//console.log("Segment: " + start + " --- " + end);
+		console.log("Segment: " + start + " --- " + end);
 		starts.push(start);
 		ends.push(end);
 		segmentLengths.push(lineLength);
@@ -1060,172 +1064,46 @@ function handleNodeRules(puzzle, i, j) {
 	lineFollowPath(puzzle, i, j);
 }
 
-// Function to handle rules for nodes with three connections
-function handleNodeWithThree(puzzle, i, j) {
-    let numCross = 0;
-    let numLines = 0;
-    let visited = [];
-    let missing = [];
-    let neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
-
-    for (let k = 0; k < 3; k++) {
-        if (puzzle.nodes[i][j][k][2] == 0) {
-            numCross++;
-            visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
-        } else if (puzzle.nodes[i][j][k][2] == 1) {
-            numLines++;
-        }
-    }
-
-    for (let n = 0; n < neighbors.length; n++) {
-        let neighbor = neighbors[n];
-        let found = false;
-
-        for (let v = 0; v < visited.length; v++) {
-            let visitedNode = visited[v];
-            if (visitedNode[0] === neighbor[0] && visitedNode[1] === neighbor[1]) {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            missing.push(neighbor);
-        }
-    }
-
-    if (numCross == 3 && missing.length == 1) {
-        placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
-    } else if (numCross == 2 && numLines == 1) {
-        placeLine(puzzle, i, j, missing[1][0], missing[1][1]);
-        placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
-    }
-}
-
-// Function to handle rules for nodes with two connections
-// RULE: if a node has an incoming line and one missing connection, remaining connection should also be line
-function handleNodeWithTwo(puzzle, i, j) {
-	// only handle nodes with two connections
-	if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length != 2)
-		return false;
-	
-	//let requiredCrosses = 0; // required # crosses needed around node for dead end rule
-    let numLines = 0;
-    let numCross = 0;
-    let visited = [];
-    let missing = [];
-    let neighbors = [];
-
-	// edge/corner cases
-	if ( i== 0 && j == 0){ // top left corner
-		//requiredCrosses = 1;
-		neighbors = [[i+1, j], [i, j+1]];
-	} else if (i == 0 && j == puzzle.w) { // top right corner
-		//requiredCrosses = 1;
-		neighbors = [[i+1, j], [i, j-1]];
-	} else if (i == puzzle.h && j == 0) { // bottom left corner
-		//requiredCrosses = 1;
-		neighbors = [[i, j+1], [i-1, j]];
-	} else if (i == puzzle.h && j == puzzle.w) { // bottom right corner
-		//requiredCrosses = 1;
-		neighbors = [[i, j-1], [i-1, j]];
-	} else if (i == 0) { // top edge
-		//requiredCrosses = 2;
-		neighbors = [[i, j-1], [i, j+1], [i+1, j]];
-	} else if (i == puzzle.h){ // bototm edge
-		//requiredCrosses = 2;
-		neighbors = [[i, j-1], [i, j+1], [i-1, j]];
-	} else if (j == 0){ // left edge
-		//requiredCrosses = 2;
-		neighbors = [[i-1, j], [i+1, j], [i, j+1]];
-	} else if (j == puzzle.w){ // right edge
-		//requiredCrosses = 2;
-		neighbors = [[i-1, j], [i+1, j], [i, j-1]];
-	} else { // general case
-		//requiredCrosses = 2;
-		neighbors = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
-	}
-	
-	// return if node doesnt have enough connections for following rules
-	/*
-	if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length != requiredCrosses)
-		return false;
-	*/
-	
-	// count number of lines and crosses connected to node
-    for (let k = 0; k < 2; k++) {
-        if (puzzle.nodes[i][j][k][2] == 1) {
-            numLines++;
-		}
-        /*
-		} else if (puzzle.nodes[i][j][k][2] == 0) {
-            numCross++;
-        }
-		*/
-        visited.push([puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]);
-    }
-
-	// find remaining possible connection to add to node
-    missing = nodeSetDifference(neighbors, visited);
-
-    // if 2 lines, cross remaining connections
-	// !! HANDLED WITH crossIntersection() IN handleNodeRules
-	/*
-    if (numLines == 2 && missing.length == 2) {
-        placeCross(puzzle, i, j, missing[0][0], missing[0][1]);
-        placeCross(puzzle, i, j, missing[1][0], missing[1][1]);
-    }
-	*/
-
-	// if 1 line and 1 available space to go
-	if (numLines == 1 && missing.length == 1) {
-		placeLine(puzzle, i, j, missing[0][0], missing[0][1]);
-	}
-}
 
 // Function to handle cell with one
 function handleCellWithOne(puzzle, i, j) {
+	if (puzzle.cells[i][j][0] == 1) {
+		if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+			if (i === 0) {
+				placeCross(puzzle, i, j, i , j+1);
+			} else if (i == puzzle.h - 1) {
+				placeCross(puzzle, i+1, j, i+1, j+1);
+			}
 
-if (puzzle.cells[i][j][0] == 1) {
-
-    if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-        if (i === 0) {
-            placeCross(puzzle, i, j, i , j+1);
-        } else if (i == puzzle.h - 1) {
-            placeCross(puzzle, i+1, j, i+1, j+1);
-        }
-
-        if (j === 0) {
-            placeCross(puzzle, i, j, i+1, j);
-        } else if (j == puzzle.w - 1) {
-           placeCross(puzzle, i, j+1 , i+1, j+1);
-        }
-    }
-
+			if (j === 0) {
+				placeCross(puzzle, i, j, i+1, j);
+			} else if (j == puzzle.w - 1) {
+			   placeCross(puzzle, i, j+1 , i+1, j+1);
+			}
+		}
+	}
 }
-}
+
 
 // Function to handle cell with three
 function handleCellWithThree(puzzle, i, j) {
+	if (puzzle.cells[i][j][0] == 3) {
+		if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
+			if (i === 0) {
+				placeLine(puzzle, i, j, i , j+1);
+			} else if (i == puzzle.h - 1) {
+				placeLine(puzzle, i+1, j, i+1, j+1);
+			}
 
-if (puzzle.cells[i][j][0] == 3) {
-
-    if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-		if (i === 0) {
-            placeLine(puzzle, i, j, i , j+1);
-        } else if (i == puzzle.h - 1) {
-            placeLine(puzzle, i+1, j, i+1, j+1);
-        }
-
-        if (j === 0) {
-            placeLine(puzzle, i, j, i+1, j);
-        } else if (j == puzzle.w - 1) {
-           placeLine(puzzle, i, j+1 , i+1, j+1);
-        }
-    }
-
+			if (j === 0) {
+				placeLine(puzzle, i, j, i+1, j);
+			} else if (j == puzzle.w - 1) {
+			   placeLine(puzzle, i, j+1 , i+1, j+1);
+			}
+		}
+	}
 }
-}
+
 
 // Function to handle cell with two
 function handleCellWithTwo(puzzle, i, j) {
@@ -1257,6 +1135,7 @@ function handleCellWithTwo(puzzle, i, j) {
     }
 }
 
+
 // RULE: if number of crosses around a cell == 4 - cell number, then remaining edges should be lines
 function handleCellWithInverseNumber(puzzle, i, j) {
     // Retrieve the number in the current cell
@@ -1286,21 +1165,22 @@ function handleCellWithInverseNumber(puzzle, i, j) {
     }
 }
 
+
 function applyTwoAdjacentRule(puzzle, i, j) {
-if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
-    // Checks if the current cell is a '2'
-    if (puzzle.cells[i][j][0] == 2) {
-        // Check for 'X' to the left of the '2' cell
-        if (i >= 0 && j +1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-            // Check for a line below the bottom-left corner of the '2' cell
-            if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
-                // Place a line on the right edge of the '2' cell
-                placeLine(puzzle, i, j + 1, i + 1, j + 1);
-				placeCross(puzzle,i+2,j,i+1,j);
-            }
-        }
-    }
-}
+	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
+		// Checks if the current cell is a '2'
+		if (puzzle.cells[i][j][0] == 2) {
+			// Check for 'X' to the left of the '2' cell
+			if (i >= 0 && j +1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+				// Check for a line below the bottom-left corner of the '2' cell
+				if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
+					// Place a line on the right edge of the '2' cell
+					placeLine(puzzle, i, j + 1, i + 1, j + 1);
+					placeCross(puzzle,i+2,j,i+1,j);
+				}
+			}
+		}
+	}
 }
 
 
@@ -1308,480 +1188,289 @@ if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 //multiple permutations exist
 function RuleTwoforOnes(puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
+		if (puzzle.cells[i][j][0] == 1) {
+			// Check for cross above topleft node
+			if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
+				//console.log("cross detected");
+				// Check for coming into the top-left corner of the '2' cell
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
+					//console.log("line detected");
+					// Place a line on the right edge of the '2' cell
+					placeCross(puzzle,i,j+1,i+1,j+1);
+					placeCross(puzzle,i+1,j,i+1,j+1);
+				}
+			} else if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1,j+1,0]) != -1) {
+				//checks for bottom right line coming in and bottom right node has a cross below it
+				//console.log("bottom cross detected");
 
+				if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+2],[i+1,j+1,1]) != -1) {
+					//console.log("bottom left line detcted")
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j,i+1,j);
+				}
+			} else if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) { //checks for top left cross above top left node
+				//console.log("top right cross detected")
+				//checks line coming in to top right node
+				if (j >= 0 && j+1< puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1], [i,j+2,1]) != -1) {
+					//console.log("top right line detected");
+					placeCross(puzzle,i,j,i+1,j);
+					placeCross(puzzle,i+1,j,i+1,j+1);
+				}
+			} else if (i+1 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j+2, 0]) != -1) {
+				//console.log("bottom right cross detected")
+				//checks for line coming into bottom right node
+				if (j >= 0 && i+1<puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2,j+1,1]) != -1) {
+					//console.log("bottom right line detected");
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j,i+1,j);
+				}
+			} else if (i >= 0 && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
+				//console.log("cross to the right of top right node");
+				if (j >= 0 && i-1>= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i,j+1,1]) != -1) {
+					//console.log("line coming in from top to top right node");
 
-	if (puzzle.cells[i][j][0] == 1) {
-        // Check for cross above topleft node
-        if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
-			//console.log("cross detected");
-            // Check for coming into the top-left corner of the '2' cell
-            if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
-				//console.log("line detected");
-                // Place a line on the right edge of the '2' cell
-                placeCross(puzzle,i,j+1,i+1,j+1);
-				placeCross(puzzle,i+1,j,i+1,j+1);
-            }
-        }
+					placeCross(puzzle,i,j,i+1,j);
+					placeCross(puzzle,i+1,j+1,i+1,j);
+				}
+			} else if (i < puzzle.h+1 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
+				//console.log("bottom cross found on bottom left node");
 
-		//checks for bottom right line coming in and bottom right node has a cross below it
-		else if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1,j+1,0]) != -1) {
-			//console.log("bottom cross detected");
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1,j,1]) != -1) {
+					//console.log("line coming in to left side of bottom left node");
 
-			if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+2],[i+1,j+1,1]) != -1) {
-				//console.log("bottom left line detcted")
-				placeCross(puzzle,i,j,i,j+1);
-				placeCross(puzzle,i,j,i+1,j);
-
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j+1,i+1,j+1);
+				}
+			} else if (i < puzzle.h+1 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
+				//console.log("cross to the left detected on bottom left node");
+				if (j >= 0 && i+2<puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j], [i+1,j,1]) != -1) {
+					//console.log("line coming from bottom to bottom left node");
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j+1,i+1,j+1);
+				}
+			} else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
+				//console.log("cross to the left of top left node detected");
+				if (j >= 0 && i-1 >- 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,1]) != -1) {
+					//console.log("line above top left node detected");
+					placeCross(puzzle,i,j+1,i+1,j+1);
+					placeCross(puzzle,i+1,j,i+1,j+1);
+				}
 			}
-		}
-
-		//checks for top left cross above top left node
-		else if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
-			//console.log("top right cross detected")
-
-			//checks line coming in to top right node
-			if (j >= 0 && j+1< puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1], [i,j+2,1]) != -1) {
-				//console.log("top right line detected");
-				placeCross(puzzle,i,j,i+1,j);
-				placeCross(puzzle,i+1,j,i+1,j+1);
-
-
-			} 
-
-		}
-
-		//checks for bottom right cross
-		else if (i+1 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j+2, 0]) != -1) {
-			//console.log("bottom right cross detected")
-
-			//checks for line coming into bottom right node
-			if (j >= 0 && i+1<puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2,j+1,1]) != -1) {
-				//console.log("bottom right line detected");
-
-				placeCross(puzzle,i,j,i,j+1);
-				placeCross(puzzle,i,j,i+1,j);
-			}
-
-
-
-
-		}
-
-		else if (i >= 0 && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
-			//console.log("cross to the right of top right node");
-
-			if (j >= 0 && i-1>= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i,j+1,1]) != -1) {
-				//console.log("line coming in from top to top right node");
-
-				placeCross(puzzle,i,j,i+1,j);
-				placeCross(puzzle,i+1,j+1,i+1,j);
-			}
-
-		}
-
-
-		else if (i < puzzle.h+1 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
-			//console.log("bottom cross found on bottom left node");
-
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1,j,1]) != -1) {
-				//console.log("line coming in to left side of bottom left node");
-
-				placeCross(puzzle,i,j,i,j+1);
-				placeCross(puzzle,i,j+1,i+1,j+1);
-
-
-			}
-
-		}
-
-		else if (i < puzzle.h+1 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
-			//console.log("cross to the left detected on bottom left node");
-
-			if (j >= 0 && i+2<puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j], [i+1,j,1]) != -1) {
-				//console.log("line coming from bottom to bottom left node");
-
-				placeCross(puzzle,i,j,i,j+1);
-				placeCross(puzzle,i,j+1,i+1,j+1);
-
-			}
-
-		}
-
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
-			//console.log("cross to the left of top left node detected");
-
-			if (j >= 0 && i-1 >- 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,1]) != -1) {
-				//console.log("line above top left node detected");
-
-				placeCross(puzzle,i,j+1,i+1,j+1);
-				placeCross(puzzle,i+1,j,i+1,j+1);
-
-			}
-
-		}
-
-    }	
-}
+		}	
+	}
 }	
 
 
 function RuleOneForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
-	if (puzzle.cells[i][j][0] == 1) {
-	
-		if (i >= 0 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
-			//console.log("yes")
-
-			if (j >= 0 && i-1 >=0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
-				//console.log("two crosses detected, both at top left node");
-
-				placeCross(puzzle,i,j,i,j+1);
-				placeCross(puzzle,i,j,i+1,j);
-
-			} 
-
-
-
-		}
-
-		if (i-1 >= 0 && j+1<puzzle.w && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
-
-			if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
-				//console.log("two crosses detected, both at top right node");
-
-				placeCross(puzzle,i,j,i,j+1);
-				placeCross(puzzle,i,j+1,i+1,j+1);
-
+		if (puzzle.cells[i][j][0] == 1) {
+			if (i >= 0 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
+				//console.log("yes")
+				if (j >= 0 && i-1 >=0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
+					//console.log("two crosses detected, both at top left node");
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j,i+1,j);
+				} 
 			}
-
-		}
-
-
-		if (i+2 < puzzle.h+1 && j < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 0]) != -1) {
-
-			if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
-				//console.log("two crosses detected, both at bottom right corner");
-
-				placeCross(puzzle,i,j+1,i+1,j+1);
-				placeCross(puzzle, i+1,j,i+1,j+1);
-
+			if (i-1 >= 0 && j+1<puzzle.w && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
+					//console.log("two crosses detected, both at top right node");
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j+1,i+1,j+1);
+				}
 			}
-
-		}
-
-		if (i+1 <= puzzle.h+1 && j-1 >-0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
-
-			if (j >= 0 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 0]) != -1) {
-				//console.log("two crosses detected, both at bottom left corner");
-
-				placeCross(puzzle,i,j,i+1,j);
-				placeCross(puzzle,i+1,j,i+1,j+1);
-
+			if (i+2 < puzzle.h+1 && j < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 0]) != -1) {
+				if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
+					//console.log("two crosses detected, both at bottom right corner");
+					placeCross(puzzle,i,j+1,i+1,j+1);
+					placeCross(puzzle, i+1,j,i+1,j+1);
+				}
 			}
-
+			if (i+1 <= puzzle.h+1 && j-1 >-0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
+				if (j >= 0 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 0]) != -1) {
+					//console.log("two crosses detected, both at bottom left corner");
+					placeCross(puzzle,i,j,i+1,j);
+					placeCross(puzzle,i+1,j,i+1,j+1);
+				}
+			}
 		}
-
-		
 	}
-	}
-
-
 }
 
 
 function RuleThreeForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
-		
-	
 		if (puzzle.cells[i][j][0]== 1) {
-	
 			if (i >= 0 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 1]) != -1) {
 				//console.log("line coming to left side of top left node")
-	
 				if (j >= 0 && i+1< puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
-	
 					if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
 						//console.log("two crosses found, both inside cell (bottom and right edge)");
-	
 						placeCross(puzzle,i-1,j,i,j);
-	
-	
 					}
-	
 				}
-	
 			}
-	
 			if (i >= 0 && j+2 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 1]) != -1) {
 				//console.log("line coming to right side of top right node");
-	
 				if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-					
-	
 					if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
 						//console.log("two cross found, both inside cell (left and bottom edge)");
 						placeCross(puzzle,i-1,j+1,i,j+1);
 					}
-	
 				}
 			}
-	
 			if (i-1 >= 0 && j+1<puzzle.w &&  arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 1]) != -1) {
 				//console.log("line coming to top side of top right node");
-	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-					
-	
 					if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
 						//console.log("two cross found, both inside cell (left and bottom edge)");
 						placeCross(puzzle,i,j+1,i,j+2);
 					}
-	
 				}
 			}
-	
 			if (i >= 0 &&  j-1 >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
 				//console.log("line coming to left side of bottom left node");
-	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-					
-	
 					if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
 						//console.log("two cross found, both inside cell (top and right edge)");
 						placeCross(puzzle,i+2,j,i+1,j);
 					}
-	
 				}
 			}
-	
-	
 			if (i+2 < puzzle.h+1 && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 1]) != -1) {
 				//console.log("line coming to bottom side of bottom left node");
-	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-					
-	
 					if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
 						//console.log("two cross found, both inside cell (top and right edge)");
 						placeCross(puzzle,i+1,j-1,i+1,j);
 					}
-	
 				}
 			}
-	
 			if (i >= 0 && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 1]) != -1) {
 				//console.log("line coming to right side of bottom right node");
-	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-					
-	
 					if (arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
 						//console.log("two cross found, both inside cell (top and left edge)");
 						placeCross(puzzle,i+2,j+1,i+1,j+1);
 					}
-	
 				}
 			}
-	
 			if (i+2 < puzzle.h+1 && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 1]) != -1) {
 				//console.log("line coming to bottom side of bottom right node");
-	
 				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-					
-	
 					if (arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
 						//console.log("two cross found, both inside cell (top and left edge)");
 						placeCross(puzzle,i+1,j+2,i+1,j+1);
-	
 					}
-	
 				}
 			}
-	
 			if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 1]) != -1) {
 				//console.log("line coming to top side of top left node");
-	
 				if (j >= 0 &&  i+1 < puzzle.h && j+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1) {
-					
-	
 					if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
 						//console.log("two cross found, both inside cell (right and bottom edge)");
 						placeCross(puzzle,i,j-1,i,j);
 					}
-	
 				}
 			}
-	
-	
 		}
 	}
-	}
+}
 	
 
 // function that will place a cross between two sets of ones.
-
-//LEFT OFF HERE RESUME TOMORROW
-
 function RuleFourForOnes (puzzle,i,j) { 
-if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w) {
-
-	if (i < puzzle.h-1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j][0] == 1) {
-		//console.log("two ones detected, aligned vertically")
-
-		if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j+2], [i, j+1, 0]) != -1 ) {
-			//console.log("first right cross detected");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
-				//console.log("second right cross detected");
-
-				if (arrayIndexOf(puzzle.nodes[i+2][j+2], [i+2, j+1, 0]) != -1) {
-					//console.log ("third right cross detected");
-
-					placeCross(puzzle,i+1,j,i+1,j+1);
-
+	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w) {
+		if (i < puzzle.h-1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j][0] == 1) {
+			//console.log("two ones detected, aligned vertically")
+			if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j+2], [i, j+1, 0]) != -1 ) {
+				//console.log("first right cross detected");
+				if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
+					//console.log("second right cross detected");
+					if (arrayIndexOf(puzzle.nodes[i+2][j+2], [i+2, j+1, 0]) != -1) {
+						//console.log ("third right cross detected");
+						placeCross(puzzle,i+1,j,i+1,j+1);
+					}
 				}
-
-			}
-	}
-
-		else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
-			console.log("first left cross detected");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
-				console.log("second left cross detected");
-
-				if (arrayIndexOf(puzzle.nodes[i+2][j-1], [i+2, j, 0]) != -1) {
-					console.log("third right cross detected");
-
-					placeCross(puzzle,i+1,j,i+1,j+1);
-
+			} else if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
+				//console.log("first left cross detected");
+				if (j > 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
+					//console.log("second left cross detected");
+					if (arrayIndexOf(puzzle.nodes[i+2][j-1], [i+2, j, 0]) != -1) {
+						//console.log("third right cross detected");
+						placeCross(puzzle,i+1,j,i+1,j+1);
+					}
 				}
-
 			}
-
-
-		}
-		
-
-	}
-
-	if (j < puzzle.w -1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i][j+1][0] == 1) { 
-		console.log("two ones detected, aligned horizontally");
-
-		if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 0]) != -1) {
-			console.log("first top cross detected");
-
-			if (j > 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
-				console.log("second top cross detected");
-
-				if (arrayIndexOf(puzzle.nodes[i-1][j+2], [i, j+2, 0]) != -1) {
-					console.log("third top cross detected");
-
-					placeCross(puzzle,i,j+1,i+1,j+1);
-
-				}
-
-			}
-
 		}
 
-		else if (i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
-			console.log("first bottom cross detected");
-
-			if (j >= 0 &&i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2, j+1, 0]) != -1) {
-				console.log("second bottom cross detected");
-
-				if (arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
-					console.log("third bottom cross detected");
-
-					placeCross(puzzle,i,j+1,i+1,j+1);
-
+		if (j < puzzle.w -1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i][j+1][0] == 1) { 
+			//console.log("two ones detected, aligned horizontally");
+			if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j], [i, j, 0]) != -1) {
+				//console.log("first top cross detected");
+				if (j > 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
+					//console.log("second top cross detected");
+					if (arrayIndexOf(puzzle.nodes[i-1][j+2], [i, j+2, 0]) != -1) {
+						//console.log("third top cross detected");
+						placeCross(puzzle,i,j+1,i+1,j+1);
+					}
 				}
-
+			} else if (i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1) {
+				//console.log("first bottom cross detected");
+				if (j >= 0 &&i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2, j+1, 0]) != -1) {
+					//console.log("second bottom cross detected");
+					if (arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
+						//console.log("third bottom cross detected");
+						placeCross(puzzle,i,j+1,i+1,j+1);
+					}
+				}
 			}
-
 		}
-
-
-
 	}
-}
-
-
 }
 
 
 function RuleFiveForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
-	
 		if (puzzle.cells[i][j][0] == 1 && i<puzzle.h-1 && j< puzzle.w-1 && puzzle.cells[i+1][j+1][0]==1) {
-	
-			console.log("two ones detected, top left to bottom right diagonal");
-	
+			//console.log("two ones detected, top left to bottom right diagonal");
 			if (i >= 0 &&  j+2< puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+2, j+2, 0]) != -1) {
-				console.log("left edge crossed on second cell detected");
-	
+				//console.log("left edge crossed on second cell detected");
 				if (j > 0 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+2, j+2, 0]) != -1) {
-					console.log("bottom edge crossed on second cell detected");
-	
+					//.log("bottom edge crossed on second cell detected");
 					placeCross(puzzle,i,j,i,j+1);
 					placeCross(puzzle,i,j,i+1,j);
-	
-	
 				}
-	
-			}
-	
-			else if (i >= 0 && j +1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
-				console.log("left edge crossed on 1st cell detected")
-	
+			} else if (i >= 0 && j +1 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1) {
+				//console.log("left edge crossed on 1st cell detected")
 				if (j > 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-					console.log("top edge crossed on 1st cell");
-	
+					//console.log("top edge crossed on 1st cell");
 					placeCross(puzzle,i+2,j+1,i+2,j+2);
 					placeCross(puzzle,i+2,j+2,i+1,j+2);
-	
 				}
-	
 			}
-			
-	
-	
-		}
-	
-		else if (i > 0 && j + 1 < puzzle.w && puzzle.cells[i][j][0] == 1 && puzzle.cells[i-1][j+1][0] == 1)  {
-			console.log("two ones detected, top right to bottom left");
-			console.log(puzzle.cells[i-1][j+1][0]);
-	
+		} else if (i > 0 && j + 1 < puzzle.w && puzzle.cells[i][j][0] == 1 && puzzle.cells[i-1][j+1][0] == 1)  {
+			//console.log("two ones detected, top right to bottom left");
+			//console.log(puzzle.cells[i-1][j+1][0]);
 			if (i >= 0 && arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1) {
-				console.log("left edge crossed on bottem left one");
-	
+				//console.log("left edge crossed on bottem left one");
 				if (j > 0 && i+1< puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1) {
-					console.log("bottom edge crossed on bottem left one");
-	
+					//console.log("bottom edge crossed on bottem left one");
 					placeCross(puzzle,i-1,j+1,i-1,j+2);
 					placeCross(puzzle,i-1,j+2,i,j+2);
-	
 				}
-	
 			}
-	
 			if (i >= 0 && arrayIndexOf(puzzle.nodes[i-1][j+1], [i-1, j+2, 0]) != -1) {
-				console.log("top cross detected on top right one");
-	
+				//console.log("top cross detected on top right one");
 				if (j > 0 && arrayIndexOf(puzzle.nodes[i][j+2], [i-1, j+2, 0]) != -1) {
-					console.log("right cross detected on top right one");
-					
+					//console.log("right cross detected on top right one");
 					placeCross(puzzle,i,j,i+1,j);
 					placeCross(puzzle,i+1,j,i+1,j+1);
-	
 				}
-	
 			}
-	
 		}
 	}
-	}
+}
 
 
 //applies to 3s and zeros
@@ -1794,7 +1483,7 @@ function RuleOneforThrees (puzzle,i,j) {
 		placeLine(puzzle,i,j+1,i+1,j+1);
 		placeLine(puzzle,i+1,j-1,i+1,j);
 		placeLine(puzzle,i+1,j+2,i+1,j+1)
-		}
+	}
 
 		//checks everything else and makes sure the cell above a 3 isnt a zero 
 		//checks to see if the cell below the three is a 0
@@ -1811,7 +1500,6 @@ function RuleOneforThrees (puzzle,i,j) {
 	//checks bottom row to esnure we dont go out of bounds 
 	//checks if there is a zero above a cell with a three, if so, place lines
 
-	
 	if (i-1 >= 0 && puzzle.cells[i][j][0] == 3 && puzzle.cells[i-1][j][0] == 0 && i == puzzle.h-1) {
 		placeLine(puzzle,i+1,j,i+1,j+1);
 		placeLine(puzzle,i,j+1,i+1,j+1);
@@ -1840,7 +1528,6 @@ function RuleOneforThrees (puzzle,i,j) {
 		placeLine(puzzle,i,j+1,i+1,j+1);
 		placeLine(puzzle,i,j,i,j+1);
 		placeLine(puzzle,i+1,j,i+2,j);
-
 	}
 
 	//perm where a 0 is to the right of a 3
@@ -1853,27 +1540,20 @@ function RuleOneforThrees (puzzle,i,j) {
 		placeLine(puzzle,i+1,j,i+1,j+1);
 		placeLine(puzzle,i+1,j+1,i+2,j+1);
 	} 
-
-	
-
 }
 
-function RuleTwoForThrees (puzzle,i,j) {
 
+function RuleTwoForThrees (puzzle,i,j) {
 		if (j+1 < puzzle.w && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j+1][0] == 3) {
 			if (j+2 < puzzle.w && puzzle.cells[i][j+2][0]!=0) {
-
-			//console.log("passed");
-			placeLine(puzzle,i,j,i+1,j);
-			placeLine(puzzle,i,j+1,i+1,j+1);
-			placeLine(puzzle,i,j+2,i+1,j+2);
-			placeCross(puzzle,i-1,j+1,i,j+1);
-			placeCross(puzzle,i+1,j+1,i+2,j+1);
-
-
+				//console.log("passed");
+				placeLine(puzzle,i,j,i+1,j);
+				placeLine(puzzle,i,j+1,i+1,j+1);
+				placeLine(puzzle,i,j+2,i+1,j+2);
+				placeCross(puzzle,i-1,j+1,i,j+1);
+				placeCross(puzzle,i+1,j+1,i+2,j+1);
+			}
 		}
-
-	}
 
 	if (i-1 >= 0 && puzzle.cells[i][j][0] == 3 && puzzle.cells[i-1][j][0] == 3) {
 		if (i+1 <puzzle.h && puzzle.cells[i+1][j][0] != 0 ) {
@@ -1882,12 +1562,7 @@ function RuleTwoForThrees (puzzle,i,j) {
 			placeLine(puzzle,i+2,j,i+2,j+1);
 			placeCross(puzzle,i+1,j+1,i+1,j+2);
 			placeCross(puzzle,i+1,j,i+1,j-1);
-
 		}
-
-
-
-
 	}
 }
 	
@@ -1895,169 +1570,116 @@ function RuleTwoForThrees (puzzle,i,j) {
 // rule for where a three 3 is adjacent to a zero diagonally
 function RuleThreeForThrees (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
-
-
-	if ( j-1 >= 0 && i+1 < puzzle.h &&  puzzle.cells[i+1][j-1][0] == 0) {
-		placeLine(puzzle,i,j,i+1,j);
-		placeLine(puzzle,i+1,j,i+1,j+1);
-		placeCross(puzzle,i+1,j-1,i+1,j);
-		placeCross(puzzle,i+1,j,i+2,j);
-
+		if ( j-1 >= 0 && i+1 < puzzle.h &&  puzzle.cells[i+1][j-1][0] == 0) {
+			placeLine(puzzle,i,j,i+1,j);
+			placeLine(puzzle,i+1,j,i+1,j+1);
+			placeCross(puzzle,i+1,j-1,i+1,j);
+			placeCross(puzzle,i+1,j,i+2,j);
+		}
+		if (j+1< puzzle.w && i+1< puzzle.h && puzzle.cells[i+1][j+1][0] == 0) {
+			placeLine(puzzle,i,j+1,i+1,j+1);
+			placeLine(puzzle,i+1,j,i+1,j+1);
+			placeCross(puzzle,i+1,j+1,i+1,j+2);
+			placeCross(puzzle,i+1,j+1,i+2,j+1);
+		}
+		if (i-1>=0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 0) {
+			placeLine(puzzle,i,j+1,i+1,j+1);
+			placeLine(puzzle,i,j,i,j+1);
+			placeCross(puzzle,i-1,j+1,i,j+1);
+			placeCross(puzzle,i,j+1,i,j+2);
+		}
+		if (i-1>=0 && j-1>=0 && puzzle.cells[i-1][j-1][0] == 0) {
+			placeLine(puzzle,i,j,i+1,j);
+			placeLine(puzzle,i,j,i,j+1);
+			placeCross(puzzle,i,j,i,j-1);
+			placeCross(puzzle,i-1,j,i,j);
+		}
 	}
-
-	if (j+1< puzzle.w && i+1< puzzle.h && puzzle.cells[i+1][j+1][0] == 0) {
-		placeLine(puzzle,i,j+1,i+1,j+1);
-		placeLine(puzzle,i+1,j,i+1,j+1);
-		placeCross(puzzle,i+1,j+1,i+1,j+2);
-		placeCross(puzzle,i+1,j+1,i+2,j+1);
-
-	}
-
-	if (i-1>=0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 0) {
-		placeLine(puzzle,i,j+1,i+1,j+1);
-		placeLine(puzzle,i,j,i,j+1);
-		placeCross(puzzle,i-1,j+1,i,j+1);
-		placeCross(puzzle,i,j+1,i,j+2);
-		
-
-
-
-	}
-
-
-	if (i-1>=0 && j-1>=0 && puzzle.cells[i-1][j-1][0] == 0) {
-		placeLine(puzzle,i,j,i+1,j);
-		placeLine(puzzle,i,j,i,j+1);
-		placeCross(puzzle,i,j,i,j-1);
-		placeCross(puzzle,i-1,j,i,j);
-
-
-
-	}
-
 }
-	
 
-}
 
 function RuleFourforThrees(puzzle,i,j) {
-	
-
-			if (puzzle.cells[i][j][0] == 3) {				
-				// Check for a line below the bottom-left corner of the '3' cell
-					if (i+1 < puzzle.h && j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
-						// Place lines
-						//console.log("rule four");
-						placeLine(puzzle, i, j, i, j + 1);
-						placeLine(puzzle,i,j+1,i+1,j+1);
-						placeCross(puzzle,i+1,j,i+2,j);
-					}
-
-					//perm 1
-					if (i+1 < puzzle.h && i+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+1],[i+1,j+2,1])!= -1) {
-						placeLine(puzzle,i,j,i,j+1);
-						placeLine(puzzle,i,j,i+1,j);
-						placeCross(puzzle,i+1,j+1,i+2,j+1);
-					}
-
-					//perm 2
-					if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j],[i,j,1])!= -1) {
-						placeLine(puzzle,i,j+1,i+1,j+1);
-						placeLine(puzzle,i+1,j,i+1,j+1);
-						placeCross(puzzle,i,j-1,i,j);
-
-					}
-
-					//perm 3
-					if (i+2 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1],[i+1,j+1,1])!= -1) {
-						placeLine(puzzle,i,j,i,j+1);
-						placeLine(puzzle,i,j,i+1,j);
-						placeCross(puzzle,i+1,j+1,i+1,j+2);
-
-					}
-				}
-				
-	
+	if (puzzle.cells[i][j][0] == 3) {				
+		// Check for a line below the bottom-left corner of the '3' cell
+		if (i+1 < puzzle.h && j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
+			// Place lines
+			//console.log("rule four");
+			placeLine(puzzle, i, j, i, j + 1);
+			placeLine(puzzle,i,j+1,i+1,j+1);
+			placeCross(puzzle,i+1,j,i+2,j);
 		}
+		//perm 1
+		if (i+1 < puzzle.h && i+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+1],[i+1,j+2,1])!= -1) {
+			placeLine(puzzle,i,j,i,j+1);
+			placeLine(puzzle,i,j,i+1,j);
+			placeCross(puzzle,i+1,j+1,i+2,j+1);
+		}
+		//perm 2
+		if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j],[i,j,1])!= -1) {
+			placeLine(puzzle,i,j+1,i+1,j+1);
+			placeLine(puzzle,i+1,j,i+1,j+1);
+			placeCross(puzzle,i,j-1,i,j);
+		}
+		//perm 3
+		if (i+2 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1],[i+1,j+1,1])!= -1) {
+			placeLine(puzzle,i,j,i,j+1);
+			placeLine(puzzle,i,j,i+1,j);
+			placeCross(puzzle,i+1,j+1,i+1,j+2);
+		}
+	}
+}
+
 
 // handles threes placed diagonally
-  function DiagThrees(puzzle,i,j) {
-	
+function DiagThrees(puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
-
 		if (j+1 < puzzle.w && i+1 < puzzle.h && puzzle.cells[i+1][j+1][0] == 3) {
-
 			placeLine(puzzle,i,j,i+1,j);
 			placeLine(puzzle,i,j,i,j+1);
 			placeLine(puzzle,i+2,j+1,i+2,j+2);
 			placeLine(puzzle,i+1,j+2,i+2,j+2);
-
-
 		}
-
 		if (j-1 >=0 && i+1< puzzle.h && puzzle.cells[i+1][j-1][0] == 3) {
 			placeLine(puzzle,i,j,i,j+1);
 			placeLine(puzzle,i,j+1,i+1,j+1);
 			placeLine(puzzle,i+1,j-1,i+2,j-1);
 			placeLine(puzzle,i+2,j-1,i+2,j);
-
 		}
-
 	}
+}
 
-  }
 
 function DiagThrees2 (puzzle,i,j) {
-
 	if (puzzle.cells[i][j][0] == 3) {
-
 		if (j+1 < puzzle.w && i+1 < puzzle.h && puzzle.cells[i+1][j+1][0] == 2) {
-
 			if (i+2 < puzzle.h && j+2 < puzzle.w && puzzle.cells[i+2][j+2][0] == 3) {
-
 				placeLine(puzzle,i,j,i+1,j);
 				placeLine(puzzle,i,j,i,j+1);
 				placeLine(puzzle,i+3,j+2,i+3,j+3);
 				placeLine(puzzle,i+2,j+3,i+3,j+3);
 			}
-
 		}
-
 		if (j-1 >= 0 && i+1 < puzzle.h && puzzle.cells[i+1][j-1][0] == 2) {
 			//console.log("valid");
 			//console.log(puzzle.cells[i+2][j-2])
-
 			if (i+2 < puzzle.h && j-2 >= 0 && puzzle.cells[i+2][j-2][0] == 3) {
 				//console.log("valid too");
-
 				placeLine(puzzle,i,j,i,j+1);
 				placeLine(puzzle,i,j+1,i+1,j+1);
 				placeLine(puzzle,i+2,j-2,i+3,j-2);
 				placeLine(puzzle,i+3,j-2,i+3,j-1);
-				
-
-
 			}
-
-			
-			
-
-		} 
-
+		}
 	}
-  }
+}
 
-  //deals with diagonal twos
+
+//deals with diagonal twos
 function DiagTwos (puzzle,i,j) {
-
-
 	if (puzzle.cells[i][j][0] == 2) {
-		
-		
 		// perm 1
 		if ( i-1>=0 && j-1 >=0 && puzzle.cells[i-1][j-1][0] == 2) {
 			//console.log("ok");
-
 			if ( i+1 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+1],[i+2,j+1,1])!= -1) {
 				//console.log("passes");
 				if ( arrayIndexOf(puzzle.nodes[i+1][j+1],[i+1,j+2,1])!= -1) {
@@ -2066,372 +1688,211 @@ function DiagTwos (puzzle,i,j) {
 					placeLine(puzzle,i,j,i,j+1);
 					placeLine(puzzle, i-1,j-1,i,j-1);
 					placeLine(puzzle,i-1,j-1,i-1,j);
-
-
 				}
-
-
 			}
-
 		}
-
 		//perm 2
 		if (i+1 < puzzle.h && j+1 < puzzle.w && puzzle.cells[i+1][j+1][0] == 2) {
-			
-
 			if ( i-1 >=0 && j >=0 && arrayIndexOf(puzzle.nodes[i][j], [i-1,j,1])!= -1) {
-				
-
 				if ( j-1 >=0 && arrayIndexOf(puzzle.nodes[i][j], [i,j-1,1])!= -1) {
-					
 					placeLine(puzzle,i+1,j,i+1,j+1);
 					placeLine(puzzle,i,j+1,i+1,j+1);
 					placeLine(puzzle,i+1,j+2,i+2,j+2);
 					placeLine(puzzle,i+2,j+1,i+2,j+2);
-
-
-
 				}
-
 			}
-
 		}
-
 		// perm 3
 		if ( i-1>=0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 2) {
-		
 			if ( i+1 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j-1,1])!= -1) {
-				
 				if ( arrayIndexOf(puzzle.nodes[i+1][j],[i+2,j,1])!= -1) {
-					
 					placeLine(puzzle,i,j,i,j+1);
 					placeLine(puzzle,i,j+1,i+1,j+1);
 					placeLine(puzzle, i-1,j+1,i-1,j+2);
 					placeLine(puzzle,i-1,j+2,i,j+2);
-
-
 				}
-
-
 			}
-
 		}
-
 		//perm 4
 		if (i+1 < puzzle.h && j-1 >= 0 && puzzle.cells[i+1][j-1][0] == 2) {
-			
-
 			if ( i-1 >=0 && j >=0 && arrayIndexOf(puzzle.nodes[i][j+1], [i-1,j+1,1])!= -1) {
-				
-
 				if ( j-1 >=0 && arrayIndexOf(puzzle.nodes[i][j+1], [i,j+2,1])!= -1) {
-					
 					placeLine(puzzle,i,j,i+1,j);
 					placeLine(puzzle,i+1,j,i+1,j+1);
 					placeLine(puzzle,i+1,j-1,i+2,j-1);
 					placeLine(puzzle,i+2,j-1,i+2,j);
-
-
-
 				}
-
 			}
-
 		}
-		
-
 	}
 }
+
 
 function Diag2sand3s(puzzle,i,j) {
-
 	// perm 1
-
 	if (puzzle.cells[i][j][0] == 2) {
-
 		if ( i+1 < puzzle.h && j+1 < puzzle.w && puzzle.cells[i+1][j+1][0] == 2) {
-
 			if (i+2 < puzzle.h && j+2 < puzzle.w && puzzle.cells[i+2][j+2][0] == 3) {
-
 				if (arrayIndexOf(puzzle.nodes[i][j],[i-1,j,1])!=-1) {
-
 					placeLine(puzzle, i+2,j+3,i+3,j+3);
 					placeLine(puzzle,i+3,j+2,i+3,j+3);
-
 				}
-
 			}
-
 		}
-		
 		//perm 2
-
 		if (i+1 < puzzle.h && j-1>= 0 && puzzle.cells[i+1][j-1][0] == 2) {
-			
-
 			if (i+2 < puzzle.h && j-2 >=0 && puzzle.cells[i+2][j-2][0] == 3) {
-			
-
-
 				if (i-1>=0 && j < puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1],[i-1,j+1,1])!= -1) {
-
-				
-
 					placeLine(puzzle,i+2,j-2,i+3,j-2);
 					placeLine(puzzle,i+3,j-2,i+3,j-1);
-
-
 				}
 			}
-
-
 		}
-
 		//perm 3
 		if (i-1 >=0 && j-1>=0 && puzzle.cells[i-1][j-1][0] == 2) {
-			
-
 			if (i-2 >= 0 && j-2>=0 && puzzle.cells[i-2][j-2][0] == 3) {
-				
-
 				if ( arrayIndexOf(puzzle.nodes[i+1][j+1],[i+2,j+1,1])!= - 1) {
-					
 					placeLine(puzzle,i-2,j-2,i-2,j-1);
 					placeLine(puzzle,i-2,j-2,i-1,j-2);
-
 				}
 			}
-
 		}
-
-
 		//perm 4
-
 		if (i-1 >=0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 2) {
-
 			if ( i-2 >= 0 && j+2 < puzzle.w && puzzle.cells[i-2][j+2][0] == 3) {
-
 				if (i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j],[i+2,j,1])!= -1) {
-
 					placeLine(puzzle,i-2,j+2,i-2,j+3);
 					placeLine(puzzle,i-2,j+3,i-1,j+3);
-
 				}
-
 			}
-
-
 		}
-
-		
-
-	
 	}
-
 }
 
+
 function Diag3sand1s (puzzle,i,j) {
-
 	if (puzzle.cells[i][j][0] == 1) {
-
-	
 		//perm 1
 		if (i-1 >=0 && j-1 >= 0 && puzzle.cells[i-1][j-1][0]== 3) {
 			if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,0] )!= -1) {
-				
-
 				if (arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,0])!= -1) {
-
 					placeLine(puzzle,i-1,j-1,i-1,j); 
 					placeLine(puzzle,i-1,j-1,i,j-1);
 				}
 			}
 		}
-
 		//perm 2
-
 		if (i-1 >=0 && j+1< puzzle.w && puzzle.cells[i-1][j+1][0] == 3) {
-
 			if (arrayIndexOf(puzzle.nodes[i][j],[i+1,j,0])!= -1) {
-
 				if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1,j+1,0])!= -1) {
-
 					placeLine(puzzle,i-1,j+1,i-1,j+2);
 					placeLine(puzzle,i-1,j+2,i,j+2);
-
-
 				}
-
 			}
-
 		}
-
 		//perm 3
-
 		if (i+1 < puzzle.h && j-1 >=0 && puzzle.cells[i+1][j-1][0] == 3) {
-
 			if (arrayIndexOf(puzzle.nodes[i][j],[i,j+1,0])!= -1) {
-
 				if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,0])!= -1) {
-
 					placeLine(puzzle,i+1,j-1,i+2,j-1);
 					placeLine(puzzle,i+2,j-1,i+2,j);
-
 				}
-
 			}
-
 		}
-
 		//perm 4
-
 		if (i+1 < puzzle.h && j+1 < puzzle.w && puzzle.cells[i+1][j+1][0] == 3) {
-
 			if (arrayIndexOf(puzzle.nodes[i][j],[i,j+1,0])!= -1) {
-
 				if (arrayIndexOf(puzzle.nodes[i][j],[i+1,j,0])!= -1) {
-
 					placeLine(puzzle,i+1,j+2,i+2,j+2);
 					placeLine(puzzle,i+2,j+1,i+2,j+2);
-
 				}
-
 			}
-
 		}
-
-
-
-
 	}
-
 }
 
-//left off here, resume when back.
+
 function InverseDiag3sand1s (puzzle,i,j) {
-
 	if (puzzle.cells[i][j][0] == 3) {
-
 		//perm 1
 		if(i+1 < puzzle.h && j+1 < puzzle.w && puzzle.cells[i+1][j+1][0] == 1) {
-
 			if (arrayIndexOf(puzzle.nodes[i][j],[i+1,j,1])!= -1) {
-				
-
 				if (arrayIndexOf(puzzle.nodes[i][j],[i,j+1,1])!= -1) {
-					
-
 					placeCross(puzzle,i+1,j+2,i+2,j+2);
 					placeCross(puzzle,i+2,j+2,i+2,j+1);
-
 				}
-
 			}
-
 		}
-
 		//perm 2
 		if (i+1 < puzzle.h && j-1 >= 0 && puzzle.cells[i+1][j-1][0] == 1 ) {
-			
-
 			if (arrayIndexOf(puzzle.nodes[i][j], [i,j+1,1]) !=-1) {
-				
 				if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,1])!= -1) {
-					
 					placeCross(puzzle,i+1,j-1,i+2,j-1);
 					placeCross(puzzle,i+2,j-1,i+2,j);
-
 				}
-
 			}
-
-
 		}
-
 		//perm 3
 		if (i-1 >= 0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 1) {
-
 			if (arrayIndexOf(puzzle.nodes[i][j],[i+1,j,1])!= -1) {
-				
 				if (arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,1])!= -1) {
-					
 					placeCross(puzzle,i-1,j+1,i-1,j+2);
 					placeCross(puzzle,i-1,j+2,i,j+2);
-
 				}
-
-
 			}
-
 		}
-
 		//perm 4
-
 		if (i-1 >= 0 && j-1 >= 0 && puzzle.cells[i-1][j-1][0] == 1) {
-
 			if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,1])!= -1) {
-
 				if (arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,1])!= -1) {
-
 					placeCross(puzzle,i-1,j-1,i-1,j);
 					placeCross(puzzle,i-1,j-1,i,j-1);
-
 				}
-
 			}
-
 		}
-
-
 	}
-
-
 }
 
 function handleRulesForOnes (puzzle,i,j) {
-
-			RuleOneForOnes(puzzle,i,j);
-			RuleTwoforOnes(puzzle,i,j);
-			RuleThreeForOnes(puzzle,i,j);
-			RuleFourForOnes (puzzle,i,j);
-			RuleFiveForOnes(puzzle,i,j);
-
+	RuleOneForOnes(puzzle,i,j);
+	RuleTwoforOnes(puzzle,i,j);
+	RuleThreeForOnes(puzzle,i,j);
+	RuleFourForOnes (puzzle,i,j);
+	RuleFiveForOnes(puzzle,i,j);
 }
 
 
 function handleRulesForThrees (puzzle,i,j) {
-			RuleOneforThrees(puzzle,i,j);
-			RuleTwoForThrees(puzzle,i,j);
-			RuleThreeForThrees(puzzle,i,j);
-			RuleFourforThrees(puzzle,i,j);
-
-
+	RuleOneforThrees(puzzle,i,j);
+	RuleTwoForThrees(puzzle,i,j);
+	RuleThreeForThrees(puzzle,i,j);
+	RuleFourforThrees(puzzle,i,j);
 }
+
 
 function handleDiags (puzzle,i,j) {
-			DiagThrees(puzzle,i,j);
-			DiagThrees2(puzzle,i,j);
-			DiagTwos(puzzle,i,j);
-
-
+	DiagThrees(puzzle,i,j);
+	DiagThrees2(puzzle,i,j);
+	DiagTwos(puzzle,i,j);
 }
+
 
 function handleSpecialDiags (puzzle,i,j) {
 	Diag2sand3s(puzzle,i,j);
 	Diag3sand1s(puzzle,i,j);
 	InverseDiag3sand1s (puzzle,i,j);
-
 }
+
 
 function lineOrCrossExists(puzzle, x1, y1, x2, y2) {
     const nodeConnections = puzzle.nodes[x1][y1];
-    if (!nodeConnections) return false; // No connections from this node
-
+    if (!nodeConnections)
+		return false; // No connections from this node
     const lineIndex = arrayIndexOf(nodeConnections, [x2, y2, 1]); // Check for line
     const crossIndex = arrayIndexOf(nodeConnections, [x2, y2, 0]); // Check for cross
-
     return lineIndex == -1 || crossIndex !== -1;
 }
+
 
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -2440,9 +1901,9 @@ function shuffleArray(array) {
     }
 }
 
+
 function getAvailableNeighbors(puzzle, x, y) {
     let neighbors = [];
-
     if (x >= 0 && !lineOrCrossExists(puzzle, x, y, x - 1, y)) neighbors.push([x - 1, y]);
     if (x < puzzle.h && !lineOrCrossExists(puzzle, x, y, x + 1, y)) neighbors.push([x + 1, y]);
     if (y >= 0 && !lineOrCrossExists(puzzle, x, y, x, y - 1)) neighbors.push([x, y - 1]);
@@ -2450,14 +1911,13 @@ function getAvailableNeighbors(puzzle, x, y) {
 
     // Shuffle neighbors to try them in a random order
     shuffleArray(neighbors);
-
     return neighbors;
 }
 
 
 export var solveSlitherlink = function(puzzle) {
     const saveKey = "loadsolvernodes";
-
+	
     function saveState() {
         localStorage.setItem(saveKey, JSON.stringify(puzzle.nodes));
     }
@@ -2513,6 +1973,7 @@ export var solveSlitherlink = function(puzzle) {
     return false;
 };
 
+
 function checkIntersections(puzzle) {
     for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {
@@ -2533,6 +1994,7 @@ function checkIntersections(puzzle) {
     return false; // No intersections found
 }
 
+
 function checkDeadEnds(puzzle) {
     for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {
@@ -2552,8 +2014,6 @@ function checkDeadEnds(puzzle) {
     }
     return false; // No dead ends found
 }
-
-
 
 
 //still has issues with backtracking. seems to handle most of the 5x5 puzzles well though.
@@ -2590,8 +2050,6 @@ export var autoSolver = function(puzzle) {
                 handleCellWithInverseNumber(puzzle, i, j);
             }
         }
-
-		
 
         var snapshotAfter = JSON.stringify(puzzle);
         changesMade = snapshotBefore !== snapshotAfter;
@@ -2650,7 +2108,6 @@ export var autoSolver = function(puzzle) {
                         }
                     }
                 }
-
 				//changesMade = true;
             }
         }
@@ -2662,8 +2119,6 @@ export var autoSolver = function(puzzle) {
         console.log("Autosolver did not complete puzzle successfully.");
     }
 };
-
-
 
 
 function getEmptyConnections(puzzle, x, y) {
@@ -2690,7 +2145,3 @@ function getEmptyConnections(puzzle, x, y) {
 
     return connections;
 }
-
-}
-
-
