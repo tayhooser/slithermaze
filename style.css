@@ -155,7 +155,7 @@ body {
 /*actual content within the zoom container */
 /* fade in animation*/
 .zoom-content {
-	display: flex;
+	display: none;
 	padding: 10px;
 	opacity: 0;
 	transition: opacity 1s ease;
@@ -209,7 +209,7 @@ body {
 /*actual content within the settings container */
 /* fade in animation*/
 .settings-content {
-	display: block;
+	display: none;
 	font-weight: bold;
 	font-size: 14px;
 	font-family: Arial;
@@ -437,7 +437,7 @@ input[type=submit]:hover {
 
 /* drop down menu holding new puzzle options */
 .new-puzzle-content {
-	display: flex;
+	display: none;
 	flex-wrap: wrap;
 	gap: 10px;
 	justify-content: center;

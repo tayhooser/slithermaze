@@ -123,7 +123,8 @@ async function getMap(query = { author: 'Taylor' }) {
     return returning;
 }
 
-//Needs string ID from field _id. Call .valueOf() method on field to retrieve.
+// sends current time + name to server
+// receives map data back
 async function sendScore(id, name) {
     let time = (hour*3600) + (minute*60) + (second-1) // second-1 because internal value different from displayed...
     let returning = await fetch("http://slithermaze.com/map", {
@@ -1159,7 +1160,11 @@ zoomHTML.onclick = function(){
         zoomSliderBox.style.maxHeight = '0px';
 		zoomSliderBox.style.marginTop = '0px';
 		zoomContent.style.opacity = '0';
+		setTimeout(function(){ // 
+			zoomContent.style.display = "none";
+		}, 1000);
     } else { // always falls back to this else block on first click..... dont know why
+		zoomContent.style.display = "flex";
         zoomSliderBox.style.maxHeight = '50px';
 		zoomSliderBox.style.marginTop = '10px';
 		zoomSliderBox.style.marginBottom = '10px';
@@ -1186,8 +1191,12 @@ settingsHTML.onclick = function(){
         settingsMenu.style.maxHeight = '0px';
 		settingsMenu.style.marginBottom = '0px';
 		settingsContent.style.opacity = '0';
+		setTimeout(function(){
+			settingsContent.style.display = "none";
+		}, 1000);
 		
     } else { // show menu
+		settingsContent.style.display = "block";
 		settingsMenu.style.maxHeight = '300px';
 		settingsMenu.style.marginBottom = '10px';
 		settingsContent.style.opacity = '1';
@@ -1198,6 +1207,7 @@ settingsHTML.onclick = function(){
 // performs QOL moves
 var performQOL = function(){
 	let changes = true;
+	let changedAtLeastOnce = false;
 	while (changes){ // iterate over puzzle multiple times until no changes made
 		changes = false;
 		if (highlight)
@@ -1214,7 +1224,10 @@ var performQOL = function(){
 					changes = changes || pl.crossIntersection(curPuzzle, i, j);
 			}
 		}
+		changedAtLeastOnce = changedAtLeastOnce || changes;
 	}
+	if (changedAtLeastOnce)
+		updateStateHistory();
 }
 
 // toggles auto cross completed numbers
@@ -1269,11 +1282,10 @@ hintHTML.onclick = function(){
 
 // called when user hits solution button, HTML side
 solutionHTML.onclick = function() {
-	console.log("Autosolver is now ON.");
-        pl.autoSolver(curPuzzle,gLinesArray);
-		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-		updateStateHistory();
-		solverUsed = true;
+    pl.autoSolver(curPuzzle,gLinesArray);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	updateStateHistory();
+	solverUsed = true;
 };
 
 // called when user hits restart button, HTML side
@@ -1549,18 +1561,8 @@ var submitScore = function(){
 	sendScore(curPuzzleID, name).then(
 		(val) => {
 			console.log("Sent score, getting scoreboard for puzzle title " + puzzleTitleHTML.innerHTML + "....");
-			getMap({ name: String(puzzleTitleHTML.innerHTML) }).then( // should probably query with _id, but didnt want to get mongoDB depencencies
-				(map) => {
-					console.log("Map name after getMap(): " + map.name);
-					if (map.name){
-						curPuzzleLeaderboard = map.board;
-						updateLeaderboard();
-						console.log("Leaderboard updated.");
-					}
-				},
-				(issue) => {
-					console.log(issue);
-			});
+			curPuzzleLeaderboard = val.board;
+			updateLeaderboard();
 	});
 	win.innerHTML = "You win!"
 	document.getElementById("leaderboard").style.height = "160px"; // hack solution to bug im so sorry
@@ -1576,7 +1578,11 @@ newPuzzleHTML.onclick = function(){
         newpMenu.style.maxHeight = '0px';
 		newpMenu.style.marginBottom = '0px';
 		newpContent.style.opacity = '0';
+		setTimeout(function(){
+			newpContent.style.display = "none";
+		}, 1000);
     } else { // show
+		newpContent.style.display = "flex";
 		newpMenu.style.maxHeight = '300px';
 		newpMenu.style.marginBottom = '10px';
 		newpContent.style.opacity = '1';

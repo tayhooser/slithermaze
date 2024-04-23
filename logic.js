@@ -851,7 +851,7 @@ export var isDeadEnd = function(puzzle, x, y){
 // RULE: there should only be one loop on the puzzle
 // if a line could be placed such that a loop is created, place a cross
 export var crossPrematureLoop = function(puzzle){
-	console.log("START OF CROSSPREMATURELOOP..............");
+	//console.log("START OF CROSSPREMATURELOOP..............");
 	var start, end, prev, cur;
 	var x, y, lineConns;
 	var starts = []; // list of tail ends of each line segment
@@ -976,24 +976,24 @@ export var crossPrematureLoop = function(puzzle){
 	// if there is only one loop on the board -- do nothing!
 	// the player may be doing their last move before submitting
 	if (starts.length < 2){
-		console.log("not enough segments...");
+		//console.log("not enough segments...");
 		return changes;
 	}
 	
 	// else, check to see if starts are one line away from ends and cross
 	for (let i = 0; i < starts.length; i++){
-		console.log("[" + starts[i][0] + ", " + starts[i][1] + "] --- [" + ends[i][0] + ", " + ends[i][1] + "]");
+		//console.log("[" + starts[i][0] + ", " + starts[i][1] + "] --- [" + ends[i][0] + ", " + ends[i][1] + "]");
 		if (segmentLengths[i] < 3) // minimum length of 3 to be 1 away from making a loop
 			continue;
 		let iDiff = Math.abs(starts[i][0] - ends[i][0]);
 		let jDiff = Math.abs(starts[i][1] - ends[i][1]);
-		console.log("iDiff = " + iDiff + "; jDiff = " + jDiff);
+		//console.log("iDiff = " + iDiff + "; jDiff = " + jDiff);
 		if ((iDiff == 1) && (jDiff == 0)){ // one line apart, vertically
-			console.log("Placing a cross at: [" + starts[i][0] + ", " + starts[i][1] + "] x [" + ends[i][0] + ", " + ends[i][1] + "]");
+			//console.log("Placing a cross at: [" + starts[i][0] + ", " + starts[i][1] + "] x [" + ends[i][0] + ", " + ends[i][1] + "]");
 			placeCross(puzzle, starts[i][0], starts[i][1], ends[i][0], ends[i][1]);
 			changes = true;
 		} else if ((iDiff == 0) && (jDiff == 1)){ // one line apart, horizontally
-			console.log("Placing a cross at: [" + starts[i][0] + ", " + starts[i][1] + "] x [" + ends[i][0] + ", " + ends[i][1] + "]");
+			//console.log("Placing a cross at: [" + starts[i][0] + ", " + starts[i][1] + "] x [" + ends[i][0] + ", " + ends[i][1] + "]");
 			placeCross(puzzle, starts[i][0], starts[i][1], ends[i][0], ends[i][1]);
 			changes = true;
 		} 
@@ -2558,6 +2558,7 @@ function checkDeadEnds(puzzle) {
 
 
 export var autoSolver = function(puzzle) {
+	console.log("Starting autosolver.....................");
     let changesMade, couldSolve;
 	// iterate over the entire puzzle multiple times until no more changes can be made
     do {
@@ -2637,9 +2638,9 @@ export var autoSolver = function(puzzle) {
     } while (changesMade);
 
     if (verifySolution(puzzle)) {
-        console.log("Autosolver completed puzzle successfully.");
+        console.log("Autosolver completed puzzle successfully!!!!");
     } else {
-		console.log("Autosolver did not compklete puzzle successfully.");
+		console.log("Autosolver did not complete puzzle successfully.");
 	}
     
 
