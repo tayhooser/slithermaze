@@ -126,7 +126,7 @@ async function getMap(query = { author: 'Taylor' }) {
 //Needs string ID from field _id. Call .valueOf() method on field to retrieve.
 async function sendScore(id, name) {
     let time = (hour*3600) + (minute*60) + (second-1) // second-1 because internal value different from displayed...
-    fetch("http://slithermaze.com/map", {
+    let returning = await fetch("http://slithermaze.com/map", {
     method: "POST",
     body: JSON.stringify({
         id: id,
@@ -136,7 +136,13 @@ async function sendScore(id, name) {
     headers: {
         "Content-type": "application/json; charset=UTF-8"
     }
-    });
+    }).then(res => res.json()).then(data=> {
+		return data;
+	})
+	.catch(function(error) {
+		console.log(error)
+	});
+	return returning;
 }
 
 // GRAPHICS FUNCTIONS ----------------------------------------------------------------------------------------------
