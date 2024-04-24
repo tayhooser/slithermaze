@@ -2150,3 +2150,5 @@ function getEmptyConnections(puzzle, x, y) {
 
     return connections;
 }
+
+

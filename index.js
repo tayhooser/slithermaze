@@ -75,11 +75,10 @@ var cameraPosition, lookAt, camAndLook, camTotalMoved, MoB;
 var camWasMoved = false;
 
 // graphic objects
-var puzzleObjects = [];	// list of puzzle objects that wont change much like dots and numbers
-var lineObjects = [];	// list of lines that will be interacted with and change
+export var puzzleObjects = [];	// list of puzzle objects that wont change much like dots and numbers
+export var lineObjects = [];	// list of lines that will be interacted with and change
 var cellShades = [];
 var gLinesArray;		// 2D Array that indicates which lines are on/off
-export { lineObjects };
 var dot, line, cross, zero, one, two, three, box;	// instance of graphic templates
 
 var shouldRender = false;
@@ -280,6 +279,8 @@ var initPuzzleGraphics = function(puzzle) {
 	lineObjects = [];
 	cellShades = [];
 	gLinesArray = Array(curPuzzle.h);
+	var xIndex = 0;
+	var yIndex = 0;
 
 	var translateX = 0.0;			// used to apply translation to object pos
 	var translateY = 0.0;
@@ -314,7 +315,9 @@ var initPuzzleGraphics = function(puzzle) {
 				let newMesh = new g.graphicsObj();
 				newMesh.type = 3;
 				newMesh.display = curPuzzle.cells[i][j][0];
-				
+				newMesh.xCoord = xIndex;
+				newMesh.yCoord = yIndex;
+
 				let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);	
 				glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
 
@@ -338,8 +341,12 @@ var initPuzzleGraphics = function(puzzle) {
 
 			cellShades.push(newMesh);
 
+			xIndex++;
 			translateX += 10.0;
 		}
+
+		xIndex = 0;
+		yIndex++;
 		translateX = 5.0;
 		translateY = translateY - 10.0;
 	}
@@ -349,8 +356,8 @@ var initPuzzleGraphics = function(puzzle) {
 	translateY = 0.0;
 
 	// Gives each line an x, y coordinate in the linesArray list.
-	var xIndex = 0;
-	var yIndex = 0;
+	xIndex = 0;
+	yIndex = 0;
 
 	// setup the horizontal lines
 	// follows a similar process as the dots but now we must track our position in the linesArray
@@ -458,6 +465,7 @@ var render = function() {
 		//clearTimeout(render);
 		//return;
 		setTimeout(render, 100);
+		return;
 	}
 
 	var timeStart = Date.now();
@@ -565,6 +573,7 @@ var render = function() {
 		}
 
 		else if (puzzleObjects[i].type == 3) {
+			gl.uniform3fv(colorLoc, puzzleObjects[i].color);
 			if (puzzleObjects[i].display == 0) {
 				gl.bindVertexArray(zero.VAO);
 				gl.drawElements(gl.TRIANGLES, zero.indices.length, gl.UNSIGNED_SHORT, 0);

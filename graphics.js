@@ -1,5 +1,5 @@
 import * as pl from './logic.js';
-import { lineObjects } from './index.js';
+import { lineObjects, puzzleObjects } from './index.js';
 
 // source for vertex shader
 export var vertexShaderText = `
@@ -1373,6 +1373,19 @@ export var changeLineColor = function(x, y, colorIndex)  {
 		if (lineObjects[i].yCoord == x && lineObjects[i].xCoord == y) {
 			//console.log("COLORING LINE[" + x + "][" + y + "]");
 			lineObjects[i].color = colorPresets[colorIndex];
+			break;
+		}
+	}
+};
+
+export var changeNumberColor = function(x, y, colorIndex)  {
+	for (let i = 0; i < puzzleObjects.length; i++) {
+		// confusing, but the x/y flip-flip is because our logical coordinate system
+		// designates x as the vertical coordinate and y as the horizontal coordinate
+		if (puzzleObjects[i].type == 1) continue;										// dots are in this list as well so skip those
+		if (puzzleObjects[i].yCoord == x && puzzleObjects[i].xCoord == y) {
+			//console.log("COLORING LINE[" + x + "][" + y + "]");
+			puzzleObjects[i].color = colorPresets[colorIndex];
 			break;
 		}
 	}
