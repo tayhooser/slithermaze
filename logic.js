@@ -566,6 +566,7 @@ export var highlightWrongMoves = function(puzzle){
 	let red = 2;
 	let brown = 0;
 	let wrongLines = []; // array of gLineArray coords to change to red
+	let wrongNums = []; // array of cell coords to change to red
 	// check for cells with wrong # lines around it
 	for (let i = 0; i < puzzle.h; i++){
 		for (let j = 0; j < puzzle.w; j++) {
@@ -577,6 +578,7 @@ export var highlightWrongMoves = function(puzzle){
 				wrongLines.push([2*i+2, j]); // bottom line
 				wrongLines.push([2*i+1, j]); // left line
 				wrongLines.push([2*i+1, j+1]); // right line
+				wrongNums.push([i, j]); // cell number
 			}
 		}
 	}
@@ -635,11 +637,22 @@ export var highlightWrongMoves = function(puzzle){
 		}
 	}
 	
+	// color all cells brown
+	for (let i = 0; i < puzzle.h; i++){
+		for (let j = 0; j < puzzle.w; j++){
+			g.changeNumberColor(i, j, brown);
+		}
+	}
+	
 	// highlight all the lines in the list
 	wrongLines = [...new Set(wrongLines)]; // remove duplicates from list
-	//console.log(wrongLines);
 	for (let i = 0; i < wrongLines.length; i++){
 		g.changeLineColor(wrongLines[i][0], wrongLines[i][1], red);
+	}
+
+	// highlight all cells in list
+	for (let i = 0; i < wrongNums.length; i++){
+		g.changeNumberColor(wrongNums[i][0], wrongNums[i][1], red);
 	}
 	
 }

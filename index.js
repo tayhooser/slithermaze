@@ -1278,10 +1278,17 @@ ACloopHTML.oninput = function() {
 // toggles highlight wrong moves
 highlightHTML.oninput = function() {
 	highlight = highlightHTML.checked;
-	if (!highlight){ // return all lines to brown
+	if (!highlight){
+		// change lines back to brown
 		for (let i = 0; i < 2*curPuzzle.h+1; i++){
 			for (let j = 0; j < curPuzzle.w+1; j++) {
 				g.changeLineColor(i, j, 0);
+			}
+		}
+		// change nums back to brown
+		for (let i = 0; i < curPuzzle.h; i++){
+			for (let j = 0; j < curPuzzle.w; j++){
+				g.changeNumberColor(i, j, 0);
 			}
 		}
 	}
@@ -1834,7 +1841,7 @@ var updateLeaderboard = function() {
 	let leaderboardHTML = document.getElementById("leaderboard");
 	if (leaderboard == false){ // disables leaderboard, either bc random puzzle or autosolver used
 		leaderboardHTML.innerHTML = "<center><span style=\"color: #C36D68\"><b><u>LEADERBOARD</u></b></span></center>" +
-									"<br>Leaderboard is unavailable for random puzzles or puzzles from a previous session."
+									"<br>Unavailable for random puzzles or puzzles from a previous session. "
 	} else { // get leaderboard info for puzzle
 		let HTML = "<center><span style=\"color: #C36D68\"><b><u>LEADERBOARD</u></b></span></center>" +
 				"<table>" +
@@ -1851,7 +1858,15 @@ var updateLeaderboard = function() {
 			if (!isNaN(curPuzzleLeaderboard[key]))
 				sortedScores.push([key, curPuzzleLeaderboard[key]]);
 		}
-		sortedScores.sort();
+		for (let i = 0; i < sortedScores.length; i++){
+			for (let j = 0; j < sortedScores.length - 1 - i; j++){
+				if (sortedScores[j][1] > sortedScores[j+1][1]){
+					let tmp = sortedScores[j];
+					sortedScores[j] = sortedScores[j+1];
+					sortedScores[j+1] = tmp;
+				}
+			}
+		}
 		
 		// add scores to html
 		for (let i = 0; i < sortedScores.length; i++){
