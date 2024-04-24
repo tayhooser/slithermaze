@@ -2036,10 +2036,14 @@ function checkDeadEnds(puzzle) {
 
 //still has issues with backtracking. seems to handle most of the 5x5 puzzles well though.
 
-export var autoSolver = function(puzzle) {
+export var autoSolver = function(puzzle, steps) {
     let changesMade;
+	let backtracking = true;
+	let iterations = 0;
     do {
         changesMade = false;
+		if (steps > 0 && iterations == steps)
+			break;
         var snapshotBefore = JSON.stringify(puzzle);
 
         // Apply all heuristics, iterating through each cell
@@ -2078,57 +2082,60 @@ export var autoSolver = function(puzzle) {
                 return;
             } else {
                 console.log("No solution found; Needs backtracking.");
-                // Loop through each cell again to find empty connections and attempt placing lines
-                for (let i = 0; i < puzzle.h; i++) {
-                    for (let j = 0; j < puzzle.w; j++) {
-                        // Getting empty connections for the node
-                        let emptyConnections = getEmptyConnections(puzzle, i, j);
-                        // Looping through connections
-                        for (let connection of emptyConnections) {
-                            let saveState = JSON.stringify(puzzle);  // Make savestate
-                            placeLine(puzzle, connection[0], connection[1], connection[2], connection[3]);  // Place line in current connection
+				if (backtracking){
+					// Loop through each cell again to find empty connections and attempt placing lines
+					for (let i = 0; i < puzzle.h; i++) {
+						for (let j = 0; j < puzzle.w; j++) {
+							// Getting empty connections for the node
+							let emptyConnections = getEmptyConnections(puzzle, i, j);
+							// Looping through connections
+							for (let connection of emptyConnections) {
+								let saveState = JSON.stringify(puzzle);  // Make savestate
+								placeLine(puzzle, connection[0], connection[1], connection[2], connection[3]);  // Place line in current connection
 
-                            // Apply heuristics repeatedly for a specified # of iterations
-                            for (let iteration = 0; iteration < 10; iteration++) {
-                                crossCompletedCell(puzzle, i, j);
-								handleNodeRules(puzzle, i, j);
-								if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);
-								if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);
-								if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);
+								// Apply heuristics repeatedly for a specified # of iterations
+								for (let iteration = 0; iteration < 10; iteration++) {
+									crossCompletedCell(puzzle, i, j);
+									handleNodeRules(puzzle, i, j);
+									if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);
+									if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);
+									if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);
 
-								if (puzzle.cells[i][j][0] == 1) {
-									handleCellWithOne(puzzle, i, j);
-								} else if (puzzle.cells[i][j][0] == 2) {
-									handleCellWithTwo(puzzle, i, j);
-								} else if (puzzle.cells[i][j][0] == 3) {
-									handleCellWithThree(puzzle, i, j);
+									if (puzzle.cells[i][j][0] == 1) {
+										handleCellWithOne(puzzle, i, j);
+									} else if (puzzle.cells[i][j][0] == 2) {
+										handleCellWithTwo(puzzle, i, j);
+									} else if (puzzle.cells[i][j][0] == 3) {
+										handleCellWithThree(puzzle, i, j);
+									}
+
+									applyTwoAdjacentRule(puzzle, i, j);
+									handleRulesForOnes(puzzle, i, j);
+									handleRulesForThrees(puzzle, i, j);
+									handleDiags(puzzle, i, j);
+									handleSpecialDiags(puzzle, i, j);
+									handleCellWithInverseNumber(puzzle, i, j);
 								}
 
-								applyTwoAdjacentRule(puzzle, i, j);
-								handleRulesForOnes(puzzle, i, j);
-								handleRulesForThrees(puzzle, i, j);
-								handleDiags(puzzle, i, j);
-								handleSpecialDiags(puzzle, i, j);
-								handleCellWithInverseNumber(puzzle, i, j);
-                            }
-
-                            // Check conditions after heuristic/pattern passes.
-                            if (!checkIntersections(puzzle,i,j) && !checkDeadEnds(puzzle,i,j) && puzzle.cells[i][j][0] == countLines(puzzle, i, j)) {
-                                console.log("Valid move found, reloading save");
-                                puzzle = JSON.parse(saveState);
-								changesMade = true;
-                            } else {
-                                console.log("Invalid move detected, reloading save and adding cross");
-                                puzzle = JSON.parse(saveState);  // Reload the saved state to revert
-                                placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
-                                changesMade = true;
-                            }
-                        }
-                    }
-                }
+								// Check conditions after heuristic/pattern passes.
+								if (!checkIntersections(puzzle,i,j) && !checkDeadEnds(puzzle,i,j) && puzzle.cells[i][j][0] == countLines(puzzle, i, j)) {
+									console.log("Valid move found, reloading save");
+									puzzle = JSON.parse(saveState);
+									changesMade = true;
+								} else {
+									console.log("Invalid move detected, reloading save and adding cross");
+									puzzle = JSON.parse(saveState);  // Reload the saved state to revert
+									placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
+									changesMade = true;
+								}
+							}
+						}
+					}
+				}
 				//changesMade = true;
             }
         }
+		iterations++;
     } while (changesMade);
 
     if (verifySolution(puzzle)) {

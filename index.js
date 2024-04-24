@@ -37,7 +37,7 @@ const ACinterHTML = document.getElementById('ACinter');
 const ACdeadHTML = document.getElementById('ACdead');
 const ACloopHTML = document.getElementById('ACloop');
 const highlightHTML = document.getElementById('highlight');
-const hintHTML = document.getElementById('hint');
+//const hintHTML = document.getElementById('hint');
 const solutionHTML = document.getElementById('solution');
 const restartHTML = document.getElementById('restart');
 const printHTML = document.getElementById('print');
@@ -1298,15 +1298,20 @@ highlightHTML.oninput = function() {
 
 // called when user hits hint button, HTML side
 // shows either 1 possible cross or line, depends on current state and puzzle
+/*
 hintHTML.onclick = function(){
 	console.log("Hint pressed.");
+	pl.autoSolver(curPuzzle, 1);
+	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	updateStateHistory();
 	//pl.logPuzzleState(curPuzzle);
 	return;
 };
+*/
 
 // called when user hits solution button, HTML side
 solutionHTML.onclick = function() {
-    pl.autoSolver(curPuzzle,gLinesArray);
+    pl.autoSolver(curPuzzle, 0);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	updateStateHistory();
 	solverUsed = true;
@@ -1346,6 +1351,7 @@ restartHTML.onclick = function(){
 	timer = true;
 	
 	document.getElementById("win").style.display = 'none';
+	document.getElementById("leaderboard").style.height = "150px";
 	
 	return;
 };
@@ -1555,7 +1561,7 @@ submitHTML.onclick = function(){
 		win.innerHTML = "Try again...";
 		win.style.display = 'block';
 		if (!mobileLayout)
-			document.getElementById("leaderboard").style.height = "60px"; // hack solution to bug im so sorry
+			document.getElementById("leaderboard").style.height = "108px"; // hack solution to bug im so sorry
 		return;
 	}
 	
@@ -1565,7 +1571,7 @@ submitHTML.onclick = function(){
 		win.innerHTML = "You win!"
 		win.style.display = 'block';
 		if (!mobileLayout)
-			document.getElementById("leaderboard").style.height = "60px";
+			document.getElementById("leaderboard").style.height = "108px";
 		return;
 	}
 	
@@ -1594,8 +1600,10 @@ var submitScore = function(){
 	});
 	win.innerHTML = "You win!"
 	//document.getElementById("leaderboard").style.height = "60px"; // hack solution to bug im so sorry
-	if (!mobileLayout)
+	if (!mobileLayout){
+		document.getElementById("leaderboard").style.height = "108px";
 		document.getElementById("leaderboard").style.display = "block";
+	}
 }
 
 // new puzzle related -------
@@ -1716,7 +1724,7 @@ getNewpHTML.onclick = function() {
 	
 	// hide win/try again msg
 	document.getElementById("win").style.display = 'none';
-	document.getElementById("leaderboard").style.height = "108px";
+	document.getElementById("leaderboard").style.height = "150px";
 	
 	// delete current puzzle 
 	for (let e in curPuzzle){
@@ -1802,14 +1810,19 @@ getNewpHTML.onclick = function() {
 					newpErrHTML.style.display = 'block';
 					return;
 				}
-				puzzleTitleHTML.innerHTML = map.name;
-				curPuzzle = pl.convertPuzzle(map);
-				curPuzzleLeaderboard = map.board;
-				initPuzzleGraphics(curPuzzle);
-				g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+				puzzleTitleHTML.innerHTML = map.name; // set title
+				curPuzzle = pl.convertPuzzle(map); // set current puzzle logically
+				initPuzzleGraphics(curPuzzle); // draw board to screen
+				g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades); // update graphic state
+				
+				curPuzzleLeaderboard = map.board; // get leaderboard info
 				leaderboard = true;
+				updateLeaderboard(); // update leaderboard html
+				
 				solverUsed = false;
-				updateLeaderboard();
+				lastUndo = 0; // reset undo
+				puzzleHistory = [];
+				updateStateHistory();
 			},
 			(issue) => {
 				console.log(issue);
@@ -1823,15 +1836,19 @@ getNewpHTML.onclick = function() {
 			difficulty = "Medium";
 		if (d == 3)
 			difficulty = "Hard";
-		puzzleTitleHTML.innerHTML = "Random " + difficulty + " " + h + "x" + w;
-		curPuzzleID = 0;
-		curPuzzle = pl.generatePuzzle(h, w, d);
-		initPuzzleGraphics(curPuzzle);
-		solverUsed = false;
-		timer = true;
-		leaderboard = false;
+		puzzleTitleHTML.innerHTML = "Random " + difficulty + " " + h + "x" + w; // set title
+		curPuzzleID = 0; // reset id
+		curPuzzle = pl.generatePuzzle(h, w, d); // generate puzzle
+		initPuzzleGraphics(curPuzzle); // draw board to screen
+		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades); // update graphic state
+		
+		leaderboard = false; // disable leaderboard
 		updateLeaderboard();
-		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+		
+		solverUsed = false;
+		lastUndo = 0; // reset undo
+		puzzleHistory = [];
+		updateStateHistory();
 	}
 	return;
 }
