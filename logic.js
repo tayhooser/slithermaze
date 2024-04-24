@@ -883,11 +883,12 @@ export var crossPrematureLoop = function(puzzle){
 				}
 			}
 		}
+		let initialLine = prev; // used to prevent infinite loops later
 		
 		if (!lineFound) // no more line segments to explore, stop
 			break;
 		
-		// follow segment until tail end is found
+		// follow segment until start is found
 		do { // while current node has 2 line connections
 			lineConns = [];
 			for (let i = 0; i < puzzle.nodes[cur[0]][cur[1]].length; i++){
@@ -902,6 +903,13 @@ export var crossPrematureLoop = function(puzzle){
 			} else if (lineConns.length > 2){ // stop computation if intersection exists; results in complex code and infinite loops
 				return changes;
 			}
+			
+			//console.log(cur + " === " + initialLine + "?");
+			if (cur[0] == initialLine[0] && cur[1] == initialLine[1]){ // made a full loop, stop
+				console.log("Loop found, stopping...");
+				return changes;
+			}
+			
 			visited.push([...cur]);
 			
 			// visit next node
@@ -918,10 +926,6 @@ export var crossPrematureLoop = function(puzzle){
 				y = lineConns[0][1];
 				cur[0] = x;
 				cur[1] = y;
-			}
-			if (cur === start){ // made a full loop, stop
-				console.log("full loop found, stopping...");
-				return changes;
 			}
 		} while (lineConns.length == 2);
 		
@@ -1853,6 +1857,7 @@ function InverseDiag3sand1s (puzzle,i,j) {
 	}
 }
 
+
 function handleRulesForOnes (puzzle,i,j) {
 	RuleOneForOnes(puzzle,i,j);
 	RuleTwoforOnes(puzzle,i,j);
@@ -2027,13 +2032,13 @@ export var autoSolver = function(puzzle) {
         // Apply all heuristics, iterating through each cell
         for (let i = 0; i < puzzle.h; i++) {
             for (let j = 0; j < puzzle.w; j++) {
-                crossCompletedCell(puzzle, i, j);
-                handleNodeRules(puzzle, i, j);
+                crossCompletedCell(puzzle, i, j); // cross the edges of completed cells
+                handleNodeRules(puzzle, i, j); // cross possible intersections/dead ends and continue line path
                 if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
                 if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
                 if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);  // Check bottom-right corner node
 
-                // Apply rules based on the number of lines required
+                // Apply rules based on the number inside each cell
                 if (puzzle.cells[i][j][0] == 1) {
                     handleCellWithOne(puzzle, i, j);
                 } else if (puzzle.cells[i][j][0] == 2) {

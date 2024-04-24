@@ -365,12 +365,13 @@ input[type=submit]:hover {
 
 /* leaderboard under timer */
 .leaderboard {
+	display: block;
 	background-color: #ffffff;
 	font-size: 13px;
 	font-family: Arial;
 	padding: 7px;
 	border-radius: 5px;
-	height: 208px;
+	height: 108px;
 	overflow: auto;
 }
 
@@ -387,12 +388,12 @@ input[type=submit]:hover {
 .nameCol {
 	overflow: hidden;
 	white-space: nowrap;
-	width: 50px;
 }
 
 .timeCol {
 	text-align: right;
 	overflow: hidden;
+	width: 50px;
 }
 
 /* BELOW AREA --------------------*/  
@@ -400,7 +401,7 @@ input[type=submit]:hover {
 	order: 4;
 	position: relative;
 	margin: auto;
-	width: 600px;
+	width: 500px;
 	align-items: flex;
 	justify-content: center;
 }
@@ -574,14 +575,14 @@ input[type=submit]:hover {
 	margin: 10px;
 	bottom: 0px;
 	right: 0px;
-	text-align: right;
+	text-align: center;
 	color: #B64E49;
 	font-family: Arial;
 	font-size: 15px;
 }
 
 /*CSS for smaller screens, such as mobile */
-@media screen and (max-width: 950px) {
+@media screen and (max-width: 900px) {
 	.tutorial {
 		width: 90%;
 		top: 25%;
@@ -589,7 +590,7 @@ input[type=submit]:hover {
 	
 	.l-container {
 		width: 100%;
-		max-width: 670px;
+		max-width: 550px;
 		margin-bottom: -15px;
 	}
 	
@@ -610,24 +611,27 @@ input[type=submit]:hover {
 	.r-container {
 		order: 4;
 		width: 95%;
-		max-width: 600px;
+		max-width: 500px;
+		max-height: 700px;
 	}
 	
 	.leaderboard {
 		font-size: 14px;
 		padding: 10px;
-		max-height: 400px;
+		max-height: 700px;
 		height: fit-content;
 	}
 	
 	.b-container{
 		order: 3;
 		width: 95%;
-		max-width: 600px;
+		max-width: 500px;
 	}
 	
 	.about {
 		position: inherit;
+		bottom: 0px;
+		right: 0px;
 	}
 	
 }

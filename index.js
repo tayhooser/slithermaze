@@ -17,6 +17,7 @@ var lastUndo = -1; // index for last undo move
 
 var solverUsed = false; // keeps track of whether the user used an autosolver on curPuzzle
 var leaderboard = false; // turns leaderboard on/off
+var mobileLayout = false; // if user is using the mobile layout
 
 // timer variables
 var timer = true; // true = running
@@ -154,7 +155,12 @@ window.onload = function(){
 	gl.enable(gl.CULL_FACE);
 	clock();
 	spawnSelectionMenus();
-	//updateLeaderboard();
+
+	if (window.screen.width <= 900){
+		mobileLayout = true;
+	} else {
+		mobileLayout = false;
+	}
 	
 	// load prev puzzle or new one
 	if (localStorage.getItem("load1cells") != null){
@@ -968,11 +974,13 @@ var incrementCounter = function(worldCoords) {
 		setTimeout(incrementCounter, 5, worldCoords);
 };
 
-// used to resize the canvas and viewport after the window size changes
+// checks if user is using mobile layout
 var windowResize = function() {
-	//canvas.width = canvas.parentNode.clientWidth;
-	//canvas.height = canvas.parentNode.clientHeight;
-	//gl.viewport(0, 0, canvas.width, canvas.height);
+	if (window.screen.width <= 900){
+		mobileLayout = true;
+	} else {
+		mobileLayout = false;
+	}
 };
 
 // need to check if the edge of the camera is too far passed the edges of the puzzle after moving or zooming
@@ -1530,7 +1538,8 @@ submitHTML.onclick = function(){
 	if (!verify){
 		win.innerHTML = "Try again...";
 		win.style.display = 'block';
-		document.getElementById("leaderboard").style.height = "160px"; // hack solution to bug im so sorry
+		if (!mobileLayout)
+			document.getElementById("leaderboard").style.height = "60px"; // hack solution to bug im so sorry
 		return;
 	}
 	
@@ -1539,7 +1548,8 @@ submitHTML.onclick = function(){
 	if (curPuzzleID == 0 || leaderboard == false || solverUsed){ // do not let leaderboard submission
 		win.innerHTML = "You win!"
 		win.style.display = 'block';
-		document.getElementById("leaderboard").style.height = "160px"; // hack solution to bug im so sorry
+		if (!mobileLayout)
+			document.getElementById("leaderboard").style.height = "60px";
 		return;
 	}
 	
@@ -1548,7 +1558,10 @@ submitHTML.onclick = function(){
 					"<input type=\"submit\" id=\"leaderboard-submit\" value=\"Submit\">";
 	win.style.display = 'block';
 	document.getElementById("leaderboard-submit").addEventListener("click", submitScore);
-	document.getElementById("leaderboard").style.height = "92px"; // hack solution to bug im so sorry
+	if (!mobileLayout) {
+		document.getElementById("leaderboard").style.height = "60px";
+		document.getElementById("leaderboard").style.display = "none";
+	}
 	return;
 };
 
@@ -1564,7 +1577,9 @@ var submitScore = function(){
 			updateLeaderboard();
 	});
 	win.innerHTML = "You win!"
-	document.getElementById("leaderboard").style.height = "160px"; // hack solution to bug im so sorry
+	//document.getElementById("leaderboard").style.height = "60px"; // hack solution to bug im so sorry
+	if (!mobileLayout)
+		document.getElementById("leaderboard").style.display = "block";
 }
 
 // new puzzle related -------
@@ -1685,7 +1700,7 @@ getNewpHTML.onclick = function() {
 	
 	// hide win/try again msg
 	document.getElementById("win").style.display = 'none';
-	document.getElementById("leaderboard").style.height = "208px";
+	document.getElementById("leaderboard").style.height = "108px";
 	
 	// delete current puzzle 
 	for (let e in curPuzzle){
@@ -1777,6 +1792,7 @@ getNewpHTML.onclick = function() {
 				initPuzzleGraphics(curPuzzle);
 				g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 				leaderboard = true;
+				solverUsed = false;
 				updateLeaderboard();
 			},
 			(issue) => {
