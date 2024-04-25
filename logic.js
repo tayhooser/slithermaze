@@ -1083,7 +1083,7 @@ function handleNodeRules(puzzle, i, j) {
 
 
 // Function to handle cell with one
-/ Function to handle cell with ones in a corner
+// Function to handle cell with ones in a corner
 function handleCellWithOne(puzzle, i, j) {
 	if (puzzle.cells[i][j][0] == 1) {
 		if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
