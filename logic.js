@@ -1083,6 +1083,7 @@ function handleNodeRules(puzzle, i, j) {
 
 
 // Function to handle cell with one
+/ Function to handle cell with ones in a corner
 function handleCellWithOne(puzzle, i, j) {
 	if (puzzle.cells[i][j][0] == 1) {
 		if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
@@ -1102,7 +1103,7 @@ function handleCellWithOne(puzzle, i, j) {
 }
 
 
-// Function to handle cell with three
+// Function to handle cell with three in a corner
 function handleCellWithThree(puzzle, i, j) {
 	if (puzzle.cells[i][j][0] == 3) {
 		if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
@@ -1122,7 +1123,7 @@ function handleCellWithThree(puzzle, i, j) {
 }
 
 
-// Function to handle cell with two
+// Function to handle cell with two in a corner
 function handleCellWithTwo(puzzle, i, j) {
     if (puzzle.cells[i][j][0] == 2) {
         // Check if it's any of the four corners
@@ -1183,6 +1184,8 @@ function handleCellWithInverseNumber(puzzle, i, j) {
 }
 
 
+// If a 2 has any surrounding line X’d, then a line coming into either of the two corners not adjacent to the X’d out line cannot immediately exit at right angles away from the 2, as then two lines around the 2 would be impossible, and can therefore be X’d. This means that the incoming line must continue on one side of the 2 or the other. This in turn means that the 
+//second line of the 2 must be on the only remaining free side, adjacent to the originally X’d line, so that can be filled in.
 function applyTwoAdjacentRule(puzzle, i, j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		// Checks if the current cell is a '2'
@@ -1201,8 +1204,7 @@ function applyTwoAdjacentRule(puzzle, i, j) {
 }
 
 
-//for cells with ones, where a line is coming into the cell and a cross is placed outside it
-//multiple permutations exist
+// if a line comes into a node of a cell with a one, and that node posseses a cross next to it as well, we cross ourt the inner edges of the one. 
 function RuleTwoforOnes(puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		if (puzzle.cells[i][j][0] == 1) {
@@ -1278,6 +1280,8 @@ function RuleTwoforOnes(puzzle,i,j) {
 }	
 
 
+
+//if two crosses exist on the outside of the nodes for a cell with a one, cross our the other two directions
 function RuleOneForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		if (puzzle.cells[i][j][0] == 1) {
@@ -1315,6 +1319,8 @@ function RuleOneForOnes (puzzle,i,j) {
 }
 
 
+
+// if a line is coming into a cell with a one, and the two inner edges of a one are crossed off, place a cross on outside of the node with the line connected to it.
 function RuleThreeForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		if (puzzle.cells[i][j][0]== 1) {
@@ -1446,6 +1452,8 @@ function RuleFourForOnes (puzzle,i,j) {
 	}
 }
 
+//f two 1s are diagonally adjacent, then of the eight segments around those two cells, either the "inner" set of four segments sharing a 
+//common endpoint (the point shared by the 1s) or the other "outer" set of four segments must all be X'd out. Thus if any two inner or outer segments in one 1 are X'd, the respective inner or outer segments of the other 1 must also be X'd.
 
 function RuleFiveForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
@@ -1490,7 +1498,8 @@ function RuleFiveForOnes (puzzle,i,j) {
 }
 
 
-//applies to 3s and zeros
+// If a 3 is adjacent to a 0, either horizontally or vertically, then all edges of that 3 
+//can be filled except for the one touching the 0. In addition, the two lines perpendicular to the adjacent boxes can be filled.
 function RuleOneforThrees (puzzle,i,j) {
 	// checks top row and cell below, to ensure we dont go out of bounds
 	// if there is a zero below and our current cell is a 3 then place lines
@@ -1559,7 +1568,8 @@ function RuleOneforThrees (puzzle,i,j) {
 	} 
 }
 
-
+// If two 3s are adjacent to each other horizontally or vertically, their common edge must be filled in, because the only other option is a closed oval that is 
+//impossible to connect to any other line. Second, the two outer lines of the group (parallel to the common line) must be filled in. Thirdly, the line through the 3s will always wrap around in an "S" shape. Therefore, the line between the 3s cannot continue in a straight line, and those sides which are in a straight line from the middle line can be X'd out.
 function RuleTwoForThrees (puzzle,i,j) {
 		if (j+1 < puzzle.w && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j+1][0] == 3) {
 			if (j+2 < puzzle.w && puzzle.cells[i][j+2][0]!=0) {
@@ -1573,7 +1583,7 @@ function RuleTwoForThrees (puzzle,i,j) {
 		}
 
 	if (i-1 >= 0 && puzzle.cells[i][j][0] == 3 && puzzle.cells[i-1][j][0] == 3) {
-		if (i+1 <puzzle.h && puzzle.cells[i+1][j][0] != 0 ) {
+		if (i+2 <puzzle.h && puzzle.cells[i+2][j][0] != 0 ) {
 			placeLine(puzzle,i,j,i,j+1);
 			placeLine(puzzle,i+1,j,i+1,j+1);
 			placeLine(puzzle,i+2,j,i+2,j+1);
@@ -1584,7 +1594,7 @@ function RuleTwoForThrees (puzzle,i,j) {
 }
 	
 	
-// rule for where a 3 has two crosses at its corner
+// 3-in-a-corner rule, generalized
 function RuleThreeForThrees (puzzle, i, j) {
 	if (puzzle.cells[i][j][0] != 3)
 		return false;
@@ -1648,7 +1658,7 @@ function RuleFourforThrees(puzzle,i,j) {
 }
 
 
-// handles threes placed diagonally
+// If two 3s are adjacent diagonally, the edges which do not run into the common point must be filled in.
 function DiagThrees(puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
 		if (j+1 < puzzle.w && i+1 < puzzle.h && puzzle.cells[i+1][j+1][0] == 3) {
@@ -1666,7 +1676,7 @@ function DiagThrees(puzzle,i,j) {
 	}
 }
 
-
+//Similarly, if two 3s are in the same diagonal, but separated by any number of 2s (and only 2s) the outside edges of the 3s must be filled in, just as if they were adjacent diagonally.
 function DiagThrees2 (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
 		if (j+1 < puzzle.w && i+1 < puzzle.h && puzzle.cells[i+1][j+1][0] == 2) {
@@ -1692,7 +1702,7 @@ function DiagThrees2 (puzzle,i,j) {
 }
 
 
-//deals with diagonal twos
+//if there is a series of 2s in a diagonal line and an angled line meets the corner of the 2 at one end of the series, a matching angled line can be drawn all the way up the series.
 function DiagTwos (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 2) {
 		// perm 1
@@ -1745,7 +1755,8 @@ function DiagTwos (puzzle,i,j) {
 	}
 }
 
-
+// if a line reaches the starting point (A) of a diagonal that contains one or more 2s and ends with a 3, both sides 
+//of the far corner (farthest from A on the diagonal) of the 3 must be filled. If this were not true, it would imply that both sides of the near corner of the 3 must be filled, which would imply that the near corners of all the 2s must be filled, including the 2 at the start of the diagonal, which is impossible because it conflicts with the line that has reached the starting point (A).
 function Diag2sand3s(puzzle,i,j) {
 	// perm 1
 	if (puzzle.cells[i][j][0] == 2) {
@@ -1788,6 +1799,8 @@ function Diag2sand3s(puzzle,i,j) {
 }
 
 
+
+// If a 1 and a 3 are adjacent diagonally and the outer two sides of the 1 are X'd out, then the outer two sides of the 3 must be filled in.
 function Diag3sand1s (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 1) {
 		//perm 1
@@ -1829,7 +1842,7 @@ function Diag3sand1s (puzzle,i,j) {
 	}
 }
 
-
+//    The opposite is the same: if the outer two corners of the 3 are filled in, then the outer two corners of the 1 must be X'd out.
 function InverseDiag3sand1s (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
 		//perm 1
@@ -1863,6 +1876,7 @@ function InverseDiag3sand1s (puzzle,i,j) {
 		if (i-1 >= 0 && j-1 >= 0 && puzzle.cells[i-1][j-1][0] == 1) {
 			if (arrayIndexOf(puzzle.nodes[i][j+1],[i+1,j+1,1])!= -1) {
 				if (arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,1])!= -1) {
+					
 					placeCross(puzzle,i-1,j-1,i-1,j);
 					placeCross(puzzle,i-1,j-1,i,j-1);
 				}
@@ -1870,7 +1884,6 @@ function InverseDiag3sand1s (puzzle,i,j) {
 		}
 	}
 }
-
 
 function handleRulesForOnes (puzzle,i,j) {
 	RuleOneForOnes(puzzle,i,j);
