@@ -864,7 +864,7 @@ export var isDeadEnd = function(puzzle, x, y){
 // RULE: there should only be one loop on the puzzle
 // if a line could be placed such that a loop is created, place a cross
 export var crossPrematureLoop = function(puzzle){
-	console.log("START OF CROSSPREMATURELOOP..............");
+	//console.log("START OF CROSSPREMATURELOOP..............");
 	var start, end, prev, cur;
 	var x, y, lineConns;
 	var starts = []; // list of tail ends of each line segment
@@ -919,7 +919,7 @@ export var crossPrematureLoop = function(puzzle){
 			
 			//console.log(cur + " === " + initialLine + "?");
 			if (cur[0] == initialLine[0] && cur[1] == initialLine[1]){ // made a full loop, stop
-				console.log("Loop found, stopping...");
+				//console.log("Loop found, stopping...");
 				return changes;
 			}
 			
@@ -988,7 +988,7 @@ export var crossPrematureLoop = function(puzzle){
 			lineLength++;
 		} while (lineConns.length == 2);
 		
-		console.log("Segment: " + start + " --- " + end);
+		//console.log("Segment: " + start + " --- " + end);
 		starts.push(start);
 		ends.push(end);
 		segmentLengths.push(lineLength);
@@ -1216,6 +1216,46 @@ function handleCellWithInverseNumber(puzzle, i, j) {
 // If a 2 has any surrounding line X’d, then a line coming into either of the two corners not adjacent to the X’d out line cannot immediately exit at right angles away from the 2, as then two lines around the 2 would be impossible, and can therefore be X’d. This means that the incoming line must continue on one side of the 2 or the other. This in turn means that the 
 //second line of the 2 must be on the only remaining free side, adjacent to the originally X’d line, so that can be filled in.
 function applyTwoAdjacentRule(puzzle, i, j) {
+	if (puzzle.cells[i][j][0] != 2)
+		return false;
+	
+	if (arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) != -1){ 		// top x
+		if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j-1, 1]) != -1){ // bottom left line
+			placeLine(puzzle, i, j+1, i+1, j+1);
+			placeCross(puzzle, i+1, j, i+2, j);
+		} else if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j+2, 1]) != -1){ // bottom right line
+			placeLine(puzzle, i, j, i+1, j);
+			placeCross(puzzle, i+1, j+1, i+2, j+1);
+		}
+	} else if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) != -1){ // right x
+		if (arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 1]) != -1){ // bottom left line
+			placeLine(puzzle, i, j, i, j+1);
+			placeCross(puzzle, i+1, j, i+1, j-1);
+		} else if (arrayIndexOf(puzzle.nodes[i][j], [i-1, j, 1]) != -1){ // top left line
+			placeLine(puzzle, i+1, j, i+1, j+1);
+			placeCross(puzzle, i, j, i, j-1);
+		}
+	} else if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j+1, 0]) != -1){ // bottom x
+		if (arrayIndexOf(puzzle.nodes[i][j], [i, j-1, 1]) != -1){ // top left line
+			placeLine(puzzle, i, j+1, i+1, j+1);
+			placeCross(puzzle, i, j, i-1, j);
+		} else if (arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 1]) != -1){ // top right line
+			placeLine(puzzle, i, j, i+1, j);
+			placeCross(puzzle, i, j+1, i-1, j+1);
+		}
+	} else if (arrayIndexOf(puzzle.nodes[i][j], [i+1, j, 0]) != -1){ // left x
+		if (arrayIndexOf(puzzle.nodes[i][j+1], [i-1, j+1, 1]) != -1){ // top right line
+			placeLine(puzzle, i+1, j, i+1, j+1);
+			placeCross(puzzle, i, j+1, i, j+2);
+		} else if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2, j+1, 1]) != -1){ // bottom right line
+			placeLine(puzzle, i, j, i, j+1);
+			placeCross(puzzle, i+1, j+1, i,1, j+2);
+		}
+	}
+	
+	
+	
+	/*
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		// Checks if the current cell is a '2'
 		if (puzzle.cells[i][j][0] == 2) {
@@ -1271,6 +1311,7 @@ function applyTwoAdjacentRule(puzzle, i, j) {
 
 		}
 	}
+	*/
 }
 
 
@@ -2219,7 +2260,7 @@ function checkDeadEnds(puzzle) {
 
 export var autoSolver = function(puzzle, steps) {
     let changesMade;
-	let backtracking = true;
+	let backtracking = false;
 	let iterations = 0;
     do {
         changesMade = false;
@@ -2290,7 +2331,7 @@ export var autoSolver = function(puzzle, steps) {
 										handleCellWithThree(puzzle, i, j);
 									}
 
-									applyTwoAdjacentRule(puzzle, i, j);
+									//applyTwoAdjacentRule(puzzle, i, j);
 									handleRulesForOnes(puzzle, i, j);
 									handleRulesForThrees(puzzle, i, j);
 									handleDiags(puzzle, i, j);
