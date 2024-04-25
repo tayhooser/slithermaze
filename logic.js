@@ -1584,33 +1584,34 @@ function RuleTwoForThrees (puzzle,i,j) {
 }
 	
 	
-// rule for where a three 3 is adjacent to a zero diagonally
-function RuleThreeForThrees (puzzle,i,j) {
-	if (puzzle.cells[i][j][0] == 3) {
-		if ( j-1 >= 0 && i+1 < puzzle.h &&  puzzle.cells[i+1][j-1][0] == 0) {
-			placeLine(puzzle,i,j,i+1,j);
-			placeLine(puzzle,i+1,j,i+1,j+1);
-			placeCross(puzzle,i+1,j-1,i+1,j);
-			placeCross(puzzle,i+1,j,i+2,j);
-		}
-		if (j+1< puzzle.w && i+1< puzzle.h && puzzle.cells[i+1][j+1][0] == 0) {
-			placeLine(puzzle,i,j+1,i+1,j+1);
-			placeLine(puzzle,i+1,j,i+1,j+1);
-			placeCross(puzzle,i+1,j+1,i+1,j+2);
-			placeCross(puzzle,i+1,j+1,i+2,j+1);
-		}
-		if (i-1>=0 && j+1 < puzzle.w && puzzle.cells[i-1][j+1][0] == 0) {
-			placeLine(puzzle,i,j+1,i+1,j+1);
-			placeLine(puzzle,i,j,i,j+1);
-			placeCross(puzzle,i-1,j+1,i,j+1);
-			placeCross(puzzle,i,j+1,i,j+2);
-		}
-		if (i-1>=0 && j-1>=0 && puzzle.cells[i-1][j-1][0] == 0) {
-			placeLine(puzzle,i,j,i+1,j);
-			placeLine(puzzle,i,j,i,j+1);
-			placeCross(puzzle,i,j,i,j-1);
-			placeCross(puzzle,i-1,j,i,j);
-		}
+// rule for where a 3 has two crosses at its corner
+function RuleThreeForThrees (puzzle, i, j) {
+	if (puzzle.cells[i][j][0] != 3)
+		return false;
+	
+	// top left corner
+	if (arrayIndexOf(puzzle.nodes[i][j], [i-1, j, 0]) != -1 &&
+		arrayIndexOf(puzzle.nodes[i][j], [i, j-1, 0]) != -1){
+		placeLine(puzzle, i, j, i+1, j);
+		placeLine(puzzle, i, j, i, j+1);
+	}
+	// bottom left corner
+	if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j-1, 0]) != -1 &&
+		arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1){
+		placeLine(puzzle, i+1, j, i, j);
+		placeLine(puzzle, i+1, j, i+1, j+1);
+	}
+	// bottom right corner
+	if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j+2, 0]) != -1 &&
+		arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2, j+1, 0]) != -1){
+		placeLine(puzzle, i+1, j+1, i+1, j);
+		placeLine(puzzle, i+1, j+1, i, j+1);
+	}
+	// top right corner
+	if (arrayIndexOf(puzzle.nodes[i][j+1], [i-1, j+1, 0]) != -1 &&
+		arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1){
+		placeLine(puzzle, i, j+1, i, j);
+		placeLine(puzzle, i, j+1, i+1, j+1);
 	}
 }
 
@@ -1881,7 +1882,7 @@ function handleRulesForOnes (puzzle,i,j) {
 
 
 function handleRulesForThrees (puzzle,i,j) {
-	RuleOneforThrees(puzzle,i,j);
+	//RuleOneforThrees(puzzle,i,j);
 	RuleTwoForThrees(puzzle,i,j);
 	RuleThreeForThrees(puzzle,i,j);
 	RuleFourforThrees(puzzle,i,j);
@@ -2038,7 +2039,7 @@ function checkDeadEnds(puzzle) {
 
 export var autoSolver = function(puzzle, steps) {
     let changesMade;
-	let backtracking = true;
+	let backtracking = false;
 	let iterations = 0;
     do {
         changesMade = false;
@@ -2050,6 +2051,7 @@ export var autoSolver = function(puzzle, steps) {
         for (let i = 0; i < puzzle.h; i++) {
             for (let j = 0; j < puzzle.w; j++) {
                 crossCompletedCell(puzzle, i, j); // cross the edges of completed cells
+				handleCellWithInverseNumber(puzzle, i, j); // add lines if enough crosses around cell
                 handleNodeRules(puzzle, i, j); // cross possible intersections/dead ends and continue line path
                 if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
                 if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
@@ -2057,22 +2059,21 @@ export var autoSolver = function(puzzle, steps) {
 
                 // Apply rules based on the number inside each cell
                 if (puzzle.cells[i][j][0] == 1) {
-                    handleCellWithOne(puzzle, i, j);
+                    //handleCellWithOne(puzzle, i, j);
                 } else if (puzzle.cells[i][j][0] == 2) {
-                    handleCellWithTwo(puzzle, i, j);
+                    //handleCellWithTwo(puzzle, i, j);
                 } else if (puzzle.cells[i][j][0] == 3) {
                     handleCellWithThree(puzzle, i, j);
                 }
 
-                applyTwoAdjacentRule(puzzle, i, j);
-                handleRulesForOnes(puzzle, i, j);
+                //applyTwoAdjacentRule(puzzle, i, j);
+                //handleRulesForOnes(puzzle, i, j);
                 handleRulesForThrees(puzzle, i, j);
                 handleDiags(puzzle, i, j);
-                handleSpecialDiags(puzzle, i, j);
-                handleCellWithInverseNumber(puzzle, i, j);
+                //handleSpecialDiags(puzzle, i, j);
             }
         }
-
+		crossPrematureLoop(puzzle);
         var snapshotAfter = JSON.stringify(puzzle);
         changesMade = snapshotBefore !== snapshotAfter;
 
