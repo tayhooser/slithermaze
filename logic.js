@@ -1598,6 +1598,36 @@ function RuleOneforThrees (puzzle,i,j) {
 
 // RULE: two adjacent threes should have lines dividing them
 function RuleTwoForThrees (puzzle,i,j) {
+	if (puzzle.cells[i][j][0] != 3)
+		return false;
+	
+	if (puzzle.cells[i+1] && puzzle.cells[i+1][j][0] == 3){ // three below
+		placeLine(puzzle, i, j, i, j+1); // top line
+		placeLine(puzzle, i+1, j, i+1, j+1); // mid line
+		placeLine(puzzle, i+2, j, i+2, j+1); // bottom line
+		placeCross(puzzle, i+1, j, i+1, j-1); // left cross
+		placeCross(puzzle, i+1, j+1, i+1, j+2); // right cross
+	} else if (puzzle.cells[i-1] && puzzle.cells[i-1][j][0] == 3){ // three above
+		placeLine(puzzle, i-1, j, i-1, j+1); // top line
+		placeLine(puzzle, i, j, i, j+1); // mid line
+		placeLine(puzzle, i+1, j, i+1, j+1); // bottom line
+		placeCross(puzzle, i, j, i, j-1); // left cross
+		placeCross(puzzle, i, j+1, i, j+2); // right cross
+	} else if (puzzle.cells[i][j-1] && puzzle.cells[i][j-1][0] == 3){ // three left
+		placeLine(puzzle, i, j-1, i+1, j-1); // left line
+		placeLine(puzzle, i, j, i+1, j); // mid line
+		placeLine(puzzle, i, j+1, i+1, j+1); // right line
+		placeCross(puzzle, i, j, i-1, j); // top cross
+		placeCross(puzzle, i+1, j, i+2, j); // bottom cross
+	} else if (puzzle.cells[i][j+1] && puzzle.cells[i][j+1][0] == 3){ // three right
+		placeLine(puzzle, i, j, i+1, j); // left line
+		placeLine(puzzle, i, j+1, i+1, j+1); // mid line
+		placeLine(puzzle, i, j+2, i+1, j+2); // right line
+		placeCross(puzzle, i, j+1, i-1, j+1); // top cross
+		placeCross(puzzle, i+1, j+1, i+2, j+1); // bottom cross
+	}
+	
+	/*
 		if (j+1 < puzzle.w && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j+1][0] == 3) {
 			if (j+2 < puzzle.w && puzzle.cells[i][j+2][0]!=0) {
 				//console.log("passed");
@@ -1619,6 +1649,7 @@ function RuleTwoForThrees (puzzle,i,j) {
 			placeCross(puzzle,i+1,j,i+1,j-1);
 		}
 	}
+	*/
 }
 	
 	
@@ -1964,9 +1995,9 @@ function handleRulesForOnes (puzzle,i,j) {
 
 function handleRulesForThrees (puzzle,i,j) {
 	//RuleOneforThrees(puzzle,i,j);
-	RuleTwoForThrees(puzzle,i,j);
-	RuleThreeForThrees(puzzle,i,j);
-	RuleFourforThrees(puzzle,i,j);
+	RuleTwoForThrees(puzzle,i,j); // adjacent 3s
+	RuleThreeForThrees(puzzle,i,j); // 3 in a corner, generalized
+	RuleFourforThrees(puzzle,i,j); // line "coming into" a cell
 }
 
 
@@ -2133,10 +2164,10 @@ export var autoSolver = function(puzzle, steps) {
             for (let j = 0; j < puzzle.w; j++) {
                 crossCompletedCell(puzzle, i, j); // cross the edges of completed cells
 				handleCellWithInverseNumber(puzzle, i, j); // add lines if enough crosses around cell
-                //handleNodeRules(puzzle, i, j); // cross possible intersections/dead ends and continue line path
-                //if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
-                //if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
-                //if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);  // Check bottom-right corner node
+                handleNodeRules(puzzle, i, j); // cross possible intersections/dead ends and continue line path
+                if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
+                if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
+                if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);  // Check bottom-right corner node
 
                 // Apply corner rules based on the number inside each cell
                 if (puzzle.cells[i][j][0] == 1) {
