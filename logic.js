@@ -1083,7 +1083,7 @@ function handleNodeRules(puzzle, i, j) {
 
 
 // Function to handle cell with one
-/ Function to handle cell with ones in a corner
+// Function to handle cell with ones in a corner
 function handleCellWithOne(puzzle, i, j) {
 	if (puzzle.cells[i][j][0] == 1) {
 		if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
@@ -1105,9 +1105,27 @@ function handleCellWithOne(puzzle, i, j) {
 
 // Function to handle cell with three in a corner
 function handleCellWithThree(puzzle, i, j) {
+	if (puzzle.cells[i][j][0] != 3)
+		return false;
+	
+	if (i == 0 && j == 0){ // top left
+		placeLine(puzzle, i, j, i, j+1);
+		placeLine(puzzle, i, j, i+1, j);
+	} else if (i == 0 && j == puzzle.w-1){ // top right
+		placeLine(puzzle, i, j, i, j+1);
+		placeLine(puzzle, i, j, i+1, j);
+	} else if (i == puzzle.h-1 && j == puzzle.w-1){ // bottom right
+		placeLine(puzzle, i, j, i, j-1);
+		placeLine(puzzle, i, j, i-1, j);
+	} else if (i == puzzle.h-1 && j == 0){ // bottom left
+		placeLine(puzzle, i, j, i, j+1);
+		placeLine(puzzle, i, j, i-1, j);
+	}
+	
+	/*
 	if (puzzle.cells[i][j][0] == 3) {
 		if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
-			if (i === 0) {
+			if (i == 0) {
 				placeLine(puzzle, i, j, i , j+1);
 			} else if (i == puzzle.h - 1) {
 				placeLine(puzzle, i+1, j, i+1, j+1);
@@ -1120,6 +1138,7 @@ function handleCellWithThree(puzzle, i, j) {
 			}
 		}
 	}
+	*/
 }
 
 
@@ -1156,15 +1175,24 @@ function handleCellWithTwo(puzzle, i, j) {
 
 // RULE: if number of crosses around a cell == 4 - cell number, then remaining edges should be lines
 function handleCellWithInverseNumber(puzzle, i, j) {
-    // Retrieve the number in the current cell
     let cellNumber = puzzle.cells[i][j][0];
-
-    // Count the number of crosses around the current cell
     let numCrosses = countCrosses(puzzle, i, j);
 
-    // If the number of crosses equals 4 minus the number in the cell, place lines on the remaining edges
-    if (numCrosses === 4 - cellNumber) {
-        // Define potential neighbors for the current cell
+    if (numCrosses == (4 - cellNumber)) {
+		// top line
+		if (arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) == -1) // if no cross
+			placeLine(puzzle, i, j, i, j+1);
+		// right line
+		if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) == -1)
+			placeLine(puzzle, i, j+1, i+1, j+1);
+		// bottom line
+		if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j, 0]) == -1)
+			placeLine(puzzle, i+1, j+1, i+1, j);
+		// left line
+		if (arrayIndexOf(puzzle.nodes[i+1][j], [i, j, 0]) == -1)
+			placeLine(puzzle, i+1, j, i, j);
+		
+		/*
         let neighbors = [
             [i, j, i, j + 1], // top
             [i, j + 1, i + 1, j + 1], // right
@@ -1180,6 +1208,7 @@ function handleCellWithInverseNumber(puzzle, i, j) {
                 placeLine(puzzle, neighbor[0], neighbor[1], neighbor[2], neighbor[3]);
             }
         }
+		*/
     }
 }
 
@@ -1454,7 +1483,6 @@ function RuleFourForOnes (puzzle,i,j) {
 
 //f two 1s are diagonally adjacent, then of the eight segments around those two cells, either the "inner" set of four segments sharing a 
 //common endpoint (the point shared by the 1s) or the other "outer" set of four segments must all be X'd out. Thus if any two inner or outer segments in one 1 are X'd, the respective inner or outer segments of the other 1 must also be X'd.
-
 function RuleFiveForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		if (puzzle.cells[i][j][0] == 1 && i<puzzle.h-1 && j< puzzle.w-1 && puzzle.cells[i+1][j+1][0]==1) {
@@ -1593,7 +1621,7 @@ function RuleTwoForThrees (puzzle,i,j) {
 	}
 }
 	
-	
+
 // 3-in-a-corner rule, generalized
 function RuleThreeForThrees (puzzle, i, j) {
 	if (puzzle.cells[i][j][0] != 3)
