@@ -1112,14 +1112,14 @@ function handleCellWithThree(puzzle, i, j) {
 		placeLine(puzzle, i, j, i, j+1);
 		placeLine(puzzle, i, j, i+1, j);
 	} else if (i == 0 && j == puzzle.w-1){ // top right
-		placeLine(puzzle, i, j, i, j+1);
-		placeLine(puzzle, i, j, i+1, j);
+		placeLine(puzzle, i, j+1, i, j);
+		placeLine(puzzle, i, j+1, i+1, j+1);
 	} else if (i == puzzle.h-1 && j == puzzle.w-1){ // bottom right
-		placeLine(puzzle, i, j, i, j-1);
-		placeLine(puzzle, i, j, i-1, j);
+		placeLine(puzzle, i+1, j+1, i, j+1);
+		placeLine(puzzle, i+1, j+1, i+1, j);
 	} else if (i == puzzle.h-1 && j == 0){ // bottom left
-		placeLine(puzzle, i, j, i, j+1);
-		placeLine(puzzle, i, j, i-1, j);
+		placeLine(puzzle, i+1, j, i, j);
+		placeLine(puzzle, i+1, j, i+1, j+1);
 	}
 	
 	/*
@@ -1596,8 +1596,7 @@ function RuleOneforThrees (puzzle,i,j) {
 	} 
 }
 
-// If two 3s are adjacent to each other horizontally or vertically, their common edge must be filled in, because the only other option is a closed oval that is 
-//impossible to connect to any other line. Second, the two outer lines of the group (parallel to the common line) must be filled in. Thirdly, the line through the 3s will always wrap around in an "S" shape. Therefore, the line between the 3s cannot continue in a straight line, and those sides which are in a straight line from the middle line can be X'd out.
+// RULE: two adjacent threes should have lines dividing them
 function RuleTwoForThrees (puzzle,i,j) {
 		if (j+1 < puzzle.w && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j+1][0] == 3) {
 			if (j+2 < puzzle.w && puzzle.cells[i][j+2][0]!=0) {
@@ -1610,8 +1609,9 @@ function RuleTwoForThrees (puzzle,i,j) {
 			}
 		}
 
-	if (i-1 >= 0 && puzzle.cells[i][j][0] == 3 && puzzle.cells[i-1][j][0] == 3) {
-		if (i+2 <puzzle.h && puzzle.cells[i+2][j][0] != 0 ) {
+		//perm
+	if (i+2 < puzzle.h && puzzle.cells[i][j][0] == 3 && puzzle.cells[i+1][j][0] == 3) {
+		if ( i+2 <puzzle.h && puzzle.cells[i+2][j][0] != 0 ) {
 			placeLine(puzzle,i,j,i,j+1);
 			placeLine(puzzle,i+1,j,i+1,j+1);
 			placeLine(puzzle,i+2,j,i+2,j+1);
@@ -1621,7 +1621,7 @@ function RuleTwoForThrees (puzzle,i,j) {
 	}
 }
 	
-
+	
 // 3-in-a-corner rule, generalized
 function RuleThreeForThrees (puzzle, i, j) {
 	if (puzzle.cells[i][j][0] != 3)
@@ -1653,8 +1653,47 @@ function RuleThreeForThrees (puzzle, i, j) {
 	}
 }
 
-
+// RULE: if there is a line "coming into" a cell with 3 in the corner, the two lines farthest from the incoming line should be lines
 function RuleFourforThrees(puzzle,i,j) {
+	if (puzzle.cells[i][j][0] != 3)
+		return false;
+	
+	if (arrayIndexOf(puzzle.nodes[i][j], [i-1, j, 1]) != -1){ // top left corner, up
+		placeLine(puzzle, i+1, j+1, i, j+1);
+		placeLine(puzzle, i+1, j+1, i+1, j);
+		placeCross(puzzle, i, j, i, j-1);
+	} else if (arrayIndexOf(puzzle.nodes[i][j], [i, j-1, 1]) != -1){ // top left corner, left
+		placeLine(puzzle, i+1, j+1, i, j+1);
+		placeLine(puzzle, i+1, j+1, i+1, j);
+		placeCross(puzzle, i, j, i-1, j);
+	} else if (arrayIndexOf(puzzle.nodes[i][j+1], [i-1, j+1, 1]) != -1){ // top right corner, up
+		placeLine(puzzle, i+1, j, i, j);
+		placeLine(puzzle, i+1, j, i+1, j+1);
+		placeCross(puzzle, i, j+1, i, j+2);
+	} else if (arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 1]) != -1){ // top right corner, right
+		placeLine(puzzle, i+1, j, i, j);
+		placeLine(puzzle, i+1, j, i+1, j+1);
+		placeCross(puzzle, i, j+1, i-1, j+1);
+	} else if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2, j+1, 1]) != -1){ // bottom right corner, down
+		placeLine(puzzle, i, j, i, j+1);
+		placeLine(puzzle, i, j, i+1, j);
+		placeCross(puzzle, i+1, j+1, i+1, j+2);
+	} else if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j+2, 1]) != -1){ // bottom right corner, right
+		placeLine(puzzle, i, j, i, j+1);
+		placeLine(puzzle, i, j, i+1, j);
+		placeCross(puzzle, i+1, j+1, i+2, j+1);
+	} else if (arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 1]) != -1){ // bottom left corner, down
+		placeLine(puzzle, i, j+1, i, j);
+		placeLine(puzzle, i, j+1, i+1, j+1);
+		placeCross(puzzle, i+1, j, i+1, j-1);
+	} else if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j-1, 1]) != -1){ // bottom left corner, left
+		placeLine(puzzle, i, j+1, i, j);
+		placeLine(puzzle, i, j+1, i+1, j+1);
+		placeCross(puzzle, i+1, j, i+2, j);
+	}
+	return;
+	
+	/*
 	if (puzzle.cells[i][j][0] == 3) {				
 		// Check for a line below the bottom-left corner of the '3' cell
 		if (i+1 < puzzle.h && j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
@@ -1683,6 +1722,7 @@ function RuleFourforThrees(puzzle,i,j) {
 			placeCross(puzzle,i+1,j+1,i+1,j+2);
 		}
 	}
+	*/
 }
 
 
@@ -1870,7 +1910,7 @@ function Diag3sand1s (puzzle,i,j) {
 	}
 }
 
-//    The opposite is the same: if the outer two corners of the 3 are filled in, then the outer two corners of the 1 must be X'd out.
+// The opposite is the same: if the outer two corners of the 3 are filled in, then the outer two corners of the 1 must be X'd out.
 function InverseDiag3sand1s (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
 		//perm 1
@@ -2093,12 +2133,12 @@ export var autoSolver = function(puzzle, steps) {
             for (let j = 0; j < puzzle.w; j++) {
                 crossCompletedCell(puzzle, i, j); // cross the edges of completed cells
 				handleCellWithInverseNumber(puzzle, i, j); // add lines if enough crosses around cell
-                handleNodeRules(puzzle, i, j); // cross possible intersections/dead ends and continue line path
-                if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
-                if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
-                if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);  // Check bottom-right corner node
+                //handleNodeRules(puzzle, i, j); // cross possible intersections/dead ends and continue line path
+                //if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
+                //if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
+                //if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);  // Check bottom-right corner node
 
-                // Apply rules based on the number inside each cell
+                // Apply corner rules based on the number inside each cell
                 if (puzzle.cells[i][j][0] == 1) {
                     //handleCellWithOne(puzzle, i, j);
                 } else if (puzzle.cells[i][j][0] == 2) {
@@ -2110,7 +2150,7 @@ export var autoSolver = function(puzzle, steps) {
                 //applyTwoAdjacentRule(puzzle, i, j);
                 //handleRulesForOnes(puzzle, i, j);
                 handleRulesForThrees(puzzle, i, j);
-                handleDiags(puzzle, i, j);
+                //handleDiags(puzzle, i, j);
                 //handleSpecialDiags(puzzle, i, j);
             }
         }
