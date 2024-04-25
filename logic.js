@@ -2214,14 +2214,49 @@ export var solveSlitherlink = function(puzzle) {
 };
 
 
+// returns true if in-progress solution is ok
+function progressCheck(puzzle){
+	// iterate thru each node
+    for (let i = 0; i < puzzle.h+1; i++) {
+        for (let j = 0; j < puzzle.w+1; j++) {
+            let lines = 0;
+            if (puzzle.nodes[i][j]) {
+                for (let k = 0; k < puzzle.nodes[i][j].length; k++) {
+                    if (puzzle.nodes[i][j][k][2] == 1) { // Checking if there's a line
+                        lines++;
+                    }
+                }
+                if (lines > 2) // Intersection
+                    return false;
+				if (isDeadEnd(puzzle, i, j))
+					return false;
+            }
+        }
+    }
+	
+	// iterate thru each cell
+	for (let i = 0; i < puzzle.h; i++){
+		for (let j = 0; j < puzzle.w; j++){
+			if (puzzle.cells[i][j][0] > countLines(puzzle, i, j)){ // too many lines
+				return false;
+			} else if (4 - puzzle.cells[i][j][0] > countCrosses(puzzle, i, j)) { // too many crosses
+				return false;
+			}
+		}
+	}
+	
+    return true; // everything ok
+}
+
+
 function checkIntersections(puzzle) {
-    for (let i = 0; i < puzzle.h; i++) {
-        for (let j = 0; j < puzzle.w; j++) {
+	// iterate thru each node
+    for (let i = 0; i < puzzle.h+1; i++) {
+        for (let j = 0; j < puzzle.w+1; j++) {
             let connectionCount = 0;
-            const nodeConnections = puzzle.nodes[i][j];
-            if (nodeConnections) {
-                for (let k = 0; k < nodeConnections.length; k++) {
-                    if (nodeConnections[k][2] == 1) { // Checking if there's a line
+            if (puzzle.nodes[i][j]) {
+                for (let k = 0; k < puzzle.nodes[i][j].length; k++) {
+                    if (puzzle.nodes[i][j][k][2] == 1) { // Checking if there's a line
                         connectionCount++;
                     }
                 }
@@ -2236,6 +2271,7 @@ function checkIntersections(puzzle) {
 
 
 function checkDeadEnds(puzzle) {
+	// iterate thru each node
     for (let i = 0; i < puzzle.h; i++) {
         for (let j = 0; j < puzzle.w; j++) {
             let connectionCount = 0;
@@ -2262,6 +2298,7 @@ export var autoSolver = function(puzzle, steps) {
     let changesMade;
 	let backtracking = false;
 	let iterations = 0;
+	let checkedCells = [];
     do {
         changesMade = false;
 		if (steps > 0 && iterations == steps)
@@ -2300,23 +2337,43 @@ export var autoSolver = function(puzzle, steps) {
 
         if (!changesMade) {  // If no changes, then backtracking is needed
             if (verifySolution(puzzle)) {
-                console.log("Autosolver solved puzzle, stopping...");
+                console.log("Autosolver SUCCESS");
                 return;
             } else {
-                console.log("No solution found; Needs backtracking.");
+                console.log("NEED BACKTRACKING....");
 				if (backtracking){
-					// Loop through each cell again to find empty connections and attempt placing lines
+					// find a cell to concentrate on
+					let emptyConnections;
+					loopConcentrate:
 					for (let i = 0; i < puzzle.h; i++) {
 						for (let j = 0; j < puzzle.w; j++) {
-							// Getting empty connections for the node
-							let emptyConnections = getEmptyConnections(puzzle, i, j);
-							// Looping through connections
-							for (let connection of emptyConnections) {
-								let saveState = JSON.stringify(puzzle);  // Make savestate
-								placeLine(puzzle, connection[0], connection[1], connection[2], connection[3]);  // Place line in current connection
+							if (arrayIndexOf(checkedCells, [i, j]) == -1 && puzzle.cells[i][j][0] != countLines(puzzle, i, j)){ // lines can possibly be placed around this cell!
+								emptyConnections = getEmptyConnections(puzzle, i, j);
+								if (emptyConnections){
+									checkedCells.push([i, j]);
+									console.log("Checking cells[" + i + "][" + j + "]");
+									break loopConcentrate;
+								} else {
+									continue;
+								}
+							}
+						}	
+					}
+					
+					if (!emptyConnections){ // did not find a suitable cell
+						console.log("Something wrong with backtracking...");
+						break;
+					}
+					
+					// try each line around cell
+					for (let connection of emptyConnections) {
+						let saveState = JSON.stringify(puzzle);  // Make savestate
+						placeLine(puzzle, connection[0], connection[1], connection[2], connection[3]);  // Place line in current connection
 
-								// Apply heuristics repeatedly for a specified # of iterations
-								for (let iteration = 0; iteration < 10; iteration++) {
+						// Apply heuristics repeatedly for a specified # of iterations
+						for (let iteration = 0; iteration < 15; iteration++) {
+							for (let i = 0; i < puzzle.h; i++) {
+								for (let j = 0; j < puzzle.w; j++) {
 									crossCompletedCell(puzzle, i, j);
 									handleNodeRules(puzzle, i, j);
 									if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);
@@ -2331,39 +2388,39 @@ export var autoSolver = function(puzzle, steps) {
 										handleCellWithThree(puzzle, i, j);
 									}
 
-									//applyTwoAdjacentRule(puzzle, i, j);
+									applyTwoAdjacentRule(puzzle, i, j);
 									handleRulesForOnes(puzzle, i, j);
 									handleRulesForThrees(puzzle, i, j);
 									handleDiags(puzzle, i, j);
 									handleSpecialDiags(puzzle, i, j);
 									handleCellWithInverseNumber(puzzle, i, j);
 								}
-
-								// Check conditions after heuristic/pattern passes.
-								if (!checkIntersections(puzzle,i,j) && !checkDeadEnds(puzzle,i,j) && puzzle.cells[i][j][0] == countLines(puzzle, i, j)) {
-									console.log("Valid move found, reloading save");
-									puzzle = JSON.parse(saveState);
-									changesMade = true;
-								} else {
-									console.log("Invalid move detected, reloading save and adding cross");
-									puzzle = JSON.parse(saveState);  // Reload the saved state to revert
-									placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
-									changesMade = true;
-								}
 							}
 						}
+
+						// Check conditions after heuristic/pattern passes.
+						if (progressCheck(puzzle)) {
+							console.log("Valid move found, reloading save");
+							puzzle = JSON.parse(saveState);
+							changesMade = true;
+						} else {
+							console.log("Invalid move detected, reloading save and adding cross");
+							puzzle = JSON.parse(saveState);  // Reload the saved state to revert
+							placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
+							changesMade = true;
+						}
 					}
+					changesMade = true; // needed to loop entire autosolver again after trying backtracking
 				}
-				//changesMade = true;
             }
         }
 		iterations++;
     } while (changesMade);
 
     if (verifySolution(puzzle)) {
-        console.log("Autosolver completed puzzle successfully.");
+        //console.log("Autosolver completed puzzle successfully.");
     } else {
-        console.log("Autosolver did not complete puzzle successfully.");
+        console.log("Autosolver FAILED.");
     }
 };
 
