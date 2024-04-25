@@ -1582,8 +1582,9 @@ function RuleTwoForThrees (puzzle,i,j) {
 			}
 		}
 
-	if (i-1 >= 0 && puzzle.cells[i][j][0] == 3 && puzzle.cells[i-1][j][0] == 3) {
-		if (i+2 <puzzle.h && puzzle.cells[i+2][j][0] != 0 ) {
+		//perm
+	if (i+2 < puzzle.h && puzzle.cells[i][j][0] == 3 && puzzle.cells[i+1][j][0] == 3) {
+		if ( i+2 <puzzle.h && puzzle.cells[i+2][j][0] != 0 ) {
 			placeLine(puzzle,i,j,i,j+1);
 			placeLine(puzzle,i+1,j,i+1,j+1);
 			placeLine(puzzle,i+2,j,i+2,j+1);
@@ -1592,7 +1593,6 @@ function RuleTwoForThrees (puzzle,i,j) {
 		}
 	}
 }
-	
 	
 // 3-in-a-corner rule, generalized
 function RuleThreeForThrees (puzzle, i, j) {
