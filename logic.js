@@ -1245,9 +1245,9 @@ function applyTwoAdjacentRule(puzzle, i, j) {
 			}
 
 
-			if (arrayIndexOf(puzzle.nodes[i+1][j], [i+1,j+1,0]) != -1) {
+			if (i+1 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j], [i+1,j+1,0]) != -1) {
 
-				if (arrayIndexOf(puzzle.nodes[i][j],[i,j-1,1]) != -1) {
+				if (j-1 >=0 && arrayIndexOf(puzzle.nodes[i][j],[i,j-1,1]) != -1) {
 
 						placeLine(puzzle,i,j+1,i+1,j+1);
 						placeCross(puzzle,i,j+1,i-1,j+1);
@@ -1259,9 +1259,9 @@ function applyTwoAdjacentRule(puzzle, i, j) {
 			}
 
 
-			if (arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,0])!= -1) {
+			if (i+1 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j],[i+1,j+1,0])!= -1) {
 
-				if (arrayIndexOf(puzzle.nodes[i][j+1],[i,j+2,1]) != -1) {
+				if (j+2 < puzzle.w && arrayIndexOf(puzzle.nodes[i][j+1],[i,j+2,1]) != -1) {
 
 					placeLine(puzzle,i,j,i+1,j);
 					placeCross(puzzle,i,j+1,i-1,j+1);
