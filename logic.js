@@ -1658,6 +1658,33 @@ function RuleThreeForThrees (puzzle, i, j) {
 	if (puzzle.cells[i][j][0] != 3)
 		return false;
 	
+	// edge cases
+	if (i == 0 && arrayIndexOf(puzzle.nodes[i][j], [i, j-1, 0]) != -1){ // top edge, left cross
+		placeLine(puzzle, i, j, i, j+1);
+		placeLine(puzzle, i, j, i+1, j);
+	} else if (i == 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1){ // top edge, right cross
+		placeLine(puzzle, i, j+1, i, j);
+		placeLine(puzzle, i, j+1, i+1, j+1);
+	} else if (i == puzzle.h-1 && arrayIndexOf(puzzle.nodes[i+1][j], [i+1, j-1, 0]) != -1){ // bottom edge, left cross
+		placeLine(puzzle, i+1, j, i, j);
+		placeLine(puzzle, i+1, j, i+1, j+1);
+	} else if (i == puzzle.h-1 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j+2, 0]) != -1){ // bottom edge, right cross
+		placeLine(puzzle, i+1, j+1, i, j+1);
+		placeLine(puzzle, i+1, j+1, i+1, j);
+	} else if (j == 0 && arrayIndexOf(puzzle.nodes[i][j], [i-1, j, 0]) != -1){ // left edge, top cross
+		placeLine(puzzle, i, j, i, j+1);
+		placeLine(puzzle, i, j, i+1, j);
+	} else if (j == 0 && arrayIndexOf(puzzle.nodes[i+1][j], [i+2, j, 0]) != -1){ // left edge, bottom cross
+		placeLine(puzzle, i+1, j, i, j);
+		placeLine(puzzle, i+1, j, i+1, j+1);
+	} else if (j == puzzle.w-1 && arrayIndexOf(puzzle.nodes[i][j+1], [i-1, j+1, 0]) != -1){ // right edge, top cross
+		placeLine(puzzle, i, j+1, i, j);
+		placeLine(puzzle, i, j+1, i+1, j+1);
+	} else if (j == puzzle.w-1 && arrayIndexOf(puzzle.nodes[i+1][j+1], [i+2, j+1, 0]) != -1){ // right edge, bottom cross
+		placeLine(puzzle, i+1, j+1, i, j+1);
+		placeLine(puzzle, i+1, j+1, i+1, j);
+	}
+	
 	// top left corner
 	if (arrayIndexOf(puzzle.nodes[i][j], [i-1, j, 0]) != -1 &&
 		arrayIndexOf(puzzle.nodes[i][j], [i, j-1, 0]) != -1){
@@ -2151,7 +2178,7 @@ function checkDeadEnds(puzzle) {
 
 export var autoSolver = function(puzzle, steps) {
     let changesMade;
-	let backtracking = false;
+	let backtracking = true;
 	let iterations = 0;
     do {
         changesMade = false;
@@ -2171,18 +2198,18 @@ export var autoSolver = function(puzzle, steps) {
 
                 // Apply corner rules based on the number inside each cell
                 if (puzzle.cells[i][j][0] == 1) {
-                    //handleCellWithOne(puzzle, i, j);
+                    handleCellWithOne(puzzle, i, j);
                 } else if (puzzle.cells[i][j][0] == 2) {
-                    //handleCellWithTwo(puzzle, i, j);
+                    handleCellWithTwo(puzzle, i, j);
                 } else if (puzzle.cells[i][j][0] == 3) {
                     handleCellWithThree(puzzle, i, j);
                 }
 
-                //applyTwoAdjacentRule(puzzle, i, j);
-                //handleRulesForOnes(puzzle, i, j);
+                applyTwoAdjacentRule(puzzle, i, j);
+                handleRulesForOnes(puzzle, i, j);
                 handleRulesForThrees(puzzle, i, j);
-                //handleDiags(puzzle, i, j);
-                //handleSpecialDiags(puzzle, i, j);
+                handleDiags(puzzle, i, j);
+                handleSpecialDiags(puzzle, i, j);
             }
         }
 		crossPrematureLoop(puzzle);
