@@ -111,7 +111,7 @@ async function getMap(query = { author: 'Taylor' }) {
     var params = query; 
 
     try {
-        var url = new URL('http://slithermaze.com/map'), params;
+        var url = new URL('https://slithermaze.com/map'), params;
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
     } catch (error) {
         console.error(error);
@@ -132,7 +132,7 @@ async function getMap(query = { author: 'Taylor' }) {
 // receives map data back
 async function sendScore(id, name) {
     let time = (hour*3600) + (minute*60) + (second-1) // second-1 because internal value different from displayed...
-    let returning = await fetch("http://slithermaze.com/map", {
+    let returning = await fetch("https://slithermaze.com/map", {
     method: "POST",
     body: JSON.stringify({
         id: id,
