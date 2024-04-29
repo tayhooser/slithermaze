@@ -97,6 +97,11 @@ var usingTouchEvents = false;
 var isTouching = false;
 var touchInit = false;
 
+// performance benchmark variables
+var renderCalls = 0;
+var stopWatch;
+var startedTimer = false;
+
 var justPlacedAnX = false;
 
 // SERVER COMMUNICATION FUNCTION ---------------------------------------------------------------------------------------
@@ -290,6 +295,8 @@ var initPuzzleGraphics = function(puzzle) {
 		for (let j = 0; j < curPuzzle.w + 1; j++) {
 			let newMesh = new g.graphicsObj();
 			newMesh.type = 1;			// 1 for dot
+			newMesh.worldCoords = [translateX, translateY];
+			newMesh.inOut = 1.0;
 
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);		// vector to move object by in world space
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);	// applies translation vector to current object's model matrix
@@ -317,6 +324,8 @@ var initPuzzleGraphics = function(puzzle) {
 				newMesh.display = curPuzzle.cells[i][j][0];
 				newMesh.xCoord = xIndex;
 				newMesh.yCoord = yIndex;
+				newMesh.worldCoords = [translateX, translateY];
+				newMesh.inOut = 1.0;
 
 				let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);	
 				glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
@@ -332,6 +341,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.display = 0;				// start toggled off
 			newMesh.color = [0.9, 0.9, 0.9];
 			newMesh.worldCoords = [translateX, translateY];
+			newMesh.inOut = 0.0;
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);				// keep same translation as current cell iteration
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);		
@@ -370,6 +380,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.yCoord = yIndex;
 			newMesh.color = [0.439, 0.329, 0.302];
 			//newMesh.color = [0.592, 0.482, 0.451];
+			newMesh.inOut = 0.0;
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
@@ -410,6 +421,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.yCoord = yIndex;
 			newMesh.color = [0.439, 0.329, 0.302];
 			//newMesh.color = [0.592, 0.482, 0.451];
+			newMesh.inOut = 0.0;
 
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
 			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
@@ -468,7 +480,15 @@ var render = function() {
 		return;
 	}
 
-	var timeStart = Date.now();
+	//							peformance benchmark code
+	if (!startedTimer) {
+		stopWatch = Date.now();
+		startedTimer = true;
+	}
+	
+
+
+	var timeStart = Date.now(); 
 
 	gl.clearColor(R, G, B, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -500,10 +520,11 @@ var render = function() {
 	gl.uniform3fv(colorLoc, cellShadeColor);
 	for (let i = 0; i < cellShades.length; i++) {
 		if (cellShades[i].display == 0) continue;
+		if (!g.checkIfOnScreen(cellShades[i].worldCoords, ortho_size, cameraPosition)) continue;
 		//gl.uniform3fv(colorLoc, cellShades[i].color);
 
-		let mixWeight = g.getMixWeight(cellShades[i].lastClicked, 150);
-		gl.uniform1f(weightLoc, mixWeight);
+		let mixWeight = [g.getMixWeight(cellShades[i].lastClicked, 150), cellShades[i].inOut];
+		gl.uniform2fv(weightLoc, mixWeight);
 
 		glMatrix.mat4.multiply(mvp, vp, cellShades[i].modelMatrix);
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);
@@ -514,13 +535,13 @@ var render = function() {
 
 	// drawing lines and crosses
 	for (let i = 0; i < lineObjects.length; i++) {
-
-		let mixWeight = g.getMixWeight(lineObjects[i].lastClicked, 150);
-		gl.uniform1f(weightLoc, mixWeight);
+		if (!g.checkIfOnScreen(lineObjects[i].worldCoords, ortho_size, cameraPosition)) continue;
+		let mixWeight = [g.getMixWeight(lineObjects[i].lastClicked, 150), lineObjects[i].inOut];
+		gl.uniform2fv(weightLoc, mixWeight);
 
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off										
-			lineObjects[i].display = 0;
-			continue;
+			//lineObjects[i].display = 0;
+			//continue;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
@@ -559,11 +580,11 @@ var render = function() {
 	gl.uniform3fv(colorLoc, puzzleObjectColor);
 
 	for (let i = 0; i < puzzleObjects.length; i++) {
-
+		if (!g.checkIfOnScreen(puzzleObjects[i].worldCoords, ortho_size, cameraPosition)) continue;
 		//gl.uniform3fv(colorLoc, puzzleObjects[i].color);
 		
-		let mixWeight = g.getMixWeight(puzzleObjects[i].lastClicked, 500)
-		gl.uniform1f(weightLoc, mixWeight);
+		let mixWeight = [g.getMixWeight(puzzleObjects[i].lastClicked, 500), puzzleObjects[i].inOut];
+		gl.uniform2fv(weightLoc, mixWeight);
 		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
 
@@ -591,19 +612,15 @@ var render = function() {
 		}
 	}
 
-	//console.log(camAndLook);
-	//console.log(canvas.width, canvas.height);
+	//							peformance benchmark code
+	renderCalls++;
+	if ((Date.now() - stopWatch) >= 1000) {
+		//console.log("fps: ", renderCalls);
+		renderCalls = 0;
+		stopWatch = Date.now();
+	}
+	
 
-	// var fps = 1000 / (Date.now() - timeStart);
-	// console.log("render calls per second", fps);
-
-	var msPassed = Date.now() - timeStart;
-
-	// if (msPassed <= 12) { 			// 0 <= x <= 12
-	// 	setTimeout(render, 12 - msPassed);
-	// } else if (msPassed > 12 ) {						
-	// 	setTimeout(render, 0);
-	// }
 
 	setTimeout(render, 1);
 };
@@ -694,17 +711,25 @@ var click = function(worldCoords, button) {
 		// 0 is left click 2 is right click. If a touch event has been registered then use timer to check
 		// if we are placing a line or cross.
 		lineObjects[keptIndex].lastClicked = Date.now();
-		if (button == 0 || ((usingTouchEvents ) && (touchTimer < touchCrossThreshold)) ) {		//left click or touch was held less than 100 ms
-			if ( gLinesArray[tempYIndex][tempXIndex] == 2 )										// an X is already there
+		if (button == 0 || ( (usingTouchEvents) && (touchTimer < touchCrossThreshold) ) ) {		//left click or touch was held less than 100 ms
+			if ( gLinesArray[tempYIndex][tempXIndex] == 2 )	 {									// an X is already there
 				gLinesArray[tempYIndex][tempXIndex] = 1;
-			else																				// line or no line is there
+				lineObjects[keptIndex].inOut = 1.0;
+			}
+			else {																				// line or no line is there
 				gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];	// toggles between line and no line
+				lineObjects[keptIndex].inOut = 1.0 - lineObjects[keptIndex].inOut;
+			}
 		}
-		else if (button == 2 || ( (usingTouchEvents ) && (touchTimer >= touchCrossThreshold) )) {	// right click or touch was held longer than 100 ms
-			if (gLinesArray[tempYIndex][tempXIndex] == 1)										// a line is already there
+		else if (button == 2 || ( (usingTouchEvents) && (touchTimer >= touchCrossThreshold) )) {	// right click or touch was held longer than 100 ms
+			if (gLinesArray[tempYIndex][tempXIndex] == 1) {										// a line is already there
 				gLinesArray[tempYIndex][tempXIndex] = 2;
-			else
+				lineObjects[keptIndex].inOut = 1.0;
+			}
+			else {
 				gLinesArray[tempYIndex][tempXIndex] = 2 - gLinesArray[tempYIndex][tempXIndex];	// toggles between nothing and a cross
+				lineObjects[keptIndex].inOut = 1.0 - lineObjects[keptIndex].inOut;
+			}
 
 			justPlacedAnX = true;
 		}
@@ -737,6 +762,7 @@ var click = function(worldCoords, button) {
 			if (dist < 2){
 				cellShades[i].display = 1 - cellShades[i].display;
 				cellShades[i].lastClicked = Date.now();
+				cellShades[i].inOut = 1 - cellShades[i].inOut;
 				let x = Math.floor(i/curPuzzle.w);
 				let y = i%curPuzzle.h;
 				if (cellShades[i].display == 1)
