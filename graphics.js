@@ -14,11 +14,11 @@ varying mediump vec3 col;
 void main()
 {
 	vec3 bgColor = vec3(1.0, 1.0, 1.0); 
-	if (weight[1] >= 0.9) {
+	//if (weight[1] >= 0.9) {
 		col = mix(bgColor, color, weight[0]);
-	} else {
-		col = mix(color, bgColor, weight[0]);
-	}
+	//} else {
+	//	col = mix(color, bgColor, weight[0]);
+	//}
 	mediump vec4 fPos = vec4(vertPos, 0.0, 1.0);
 	fPos = mvp * fPos;
 	gl_Position = mvp * vec4(vertPos, 0.0, 1.0);
