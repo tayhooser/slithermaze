@@ -14,11 +14,11 @@ varying mediump vec3 col;
 void main()
 {
 	vec3 bgColor = vec3(1.0, 1.0, 1.0); 
-	//if (weight[1] >= 0.9) {
+	if (weight[1] >= 0.9) {
 		col = mix(bgColor, color, weight[0]);
-	//} else {
-	//	col = mix(color, bgColor, weight[0]);
-	//}
+	} else {
+		col = mix(color, bgColor, weight[0]);
+	}
 	mediump vec4 fPos = vec4(vertPos, 0.0, 1.0);
 	fPos = mvp * fPos;
 	gl_Position = mvp * vec4(vertPos, 0.0, 1.0);
@@ -1057,8 +1057,9 @@ export class graphicsObj {
 	type;				// 1 for dot, 2 for line/cross, 3 for cell number, 4 for shade cell
 	display;			// for lines: 0 for nothing, 1 for line, 2 for X. for cells: do the number. For shade cell: 0 for off, 1 for on
 	inOut;				// used to see if the object should be fading in or out. 0 for fading out, 1 for fading in
-	worldCoords;		// object's position in the world
 	lastClicked;		// timestamp of last time the object was toggled
+	
+	worldCoords;		// object's position in the world
 	xCoord;				//	coords in line array to determine if a 
 	yCoord;				// 	line should be drawn or not
 	constructor() {

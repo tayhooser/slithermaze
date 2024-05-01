@@ -536,11 +536,10 @@ var render = function() {
 	// drawing lines and crosses
 	for (let i = 0; i < lineObjects.length; i++) {
 		if (!g.checkIfOnScreen(lineObjects[i].worldCoords, ortho_size, cameraPosition)) continue;
-		let mixWeight = [g.getMixWeight(lineObjects[i].lastClicked, 150), lineObjects[i].inOut];
-		gl.uniform2fv(weightLoc, mixWeight);
+		
 
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off										
-			lineObjects[i].display = 0;
+			//lineObjects[i].display = 0;
 			//continue;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
@@ -556,7 +555,16 @@ var render = function() {
 			color = [0.831, 0.486, 0.467];
 			lineObjects[i].display = 2;
 		}
-		
+
+		// check if line state has changed and inOut isn't updated
+		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] > 0
+			&& lineObjects[i].inOut == 0) {
+			lineObjects[i].inOut = 1.0 - lineObjects[i].inOut;
+			lineObjects[i].lastClicked = Date.now();
+		}
+
+		let mixWeight = [g.getMixWeight(lineObjects[i].lastClicked, 150), lineObjects[i].inOut];
+		gl.uniform2fv(weightLoc, mixWeight);
 		gl.uniform3fv(colorLoc, color);
 
 		glMatrix.mat4.multiply(mvp, vp, lineObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
