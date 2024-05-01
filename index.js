@@ -524,6 +524,13 @@ var render = function() {
 		if (!g.checkIfOnScreen(cellShades[i].worldCoords, ortho_size, cameraPosition)) continue;
 		//gl.uniform3fv(colorLoc, cellShades[i].color);
 
+		// check if line state has changed and inOut isn't updated
+		if ((cellShades[i].display != 0 && cellShades[i].inOut == 0)
+			|| (cellShades[i].display == 0 && cellShades[i].inOut != 0)) {
+			cellShades[i].inOut = 1.0 - cellShades[i].inOut;
+			cellShades[i].lastClicked = Date.now();
+		}
+
 		let mixWeight = [g.getMixWeight(cellShades[i].lastClicked, 150), cellShades[i].inOut];
 		gl.uniform2fv(weightLoc, mixWeight);
 
