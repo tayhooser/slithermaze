@@ -514,6 +514,7 @@ var render = function() {
 	var weightLoc = gl.getUniformLocation(program, "weight");
 	var crossScale = [3.0, 3.0, 1];
 	var color = [1.0, 1.0, 1.0];
+	var lastUniformColor = [0.0, 0.0, 0.0];
 
 	// draw shaded cells
 	var cellShadeColor = [0.9, 0.9, 0.9];
@@ -565,7 +566,12 @@ var render = function() {
 
 		let mixWeight = [g.getMixWeight(lineObjects[i].lastClicked, 150), lineObjects[i].inOut];
 		gl.uniform2fv(weightLoc, mixWeight);
-		gl.uniform3fv(colorLoc, color);
+
+		// only pass in a new color to the shader program when its different from the last uniform call
+		if (!g.checkSameArray(color, lastUniformColor)) {
+			lastUniformColor = color;
+			gl.uniform3fv(colorLoc, lastUniformColor);
+		}
 
 		glMatrix.mat4.multiply(mvp, vp, lineObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
@@ -584,8 +590,8 @@ var render = function() {
 	// drawing dots and numbers
 
 	// just pass in the puzzle color once since the same color will always be used for these
-	var puzzleObjectColor = [0.439, 0.329, 0.302];
-	gl.uniform3fv(colorLoc, puzzleObjectColor);
+	color = [0.439, 0.329, 0.302];
+	gl.uniform3fv(colorLoc, color);
 
 	for (let i = 0; i < puzzleObjects.length; i++) {
 		if (!g.checkIfOnScreen(puzzleObjects[i].worldCoords, ortho_size, cameraPosition)) continue;
@@ -593,6 +599,12 @@ var render = function() {
 		
 		let mixWeight = [g.getMixWeight(puzzleObjects[i].lastClicked, 500), puzzleObjects[i].inOut];
 		gl.uniform2fv(weightLoc, mixWeight);
+
+		if (!g.checkSameArray(color, lastUniformColor)) {
+			lastUniformColor = color;
+			gl.uniform3fv(colorLoc, lastUniformColor);
+		}
+
 		glMatrix.mat4.multiply(mvp, vp, puzzleObjects[i].modelMatrix);	// apply the current model matrix to the view-projection matrix
 		gl.uniformMatrix4fv(mvpLoc, false, mvp);						// pass the new mvp matrix to the shader program
 
@@ -602,7 +614,7 @@ var render = function() {
 		}
 
 		else if (puzzleObjects[i].type == 3) {
-			gl.uniform3fv(colorLoc, puzzleObjects[i].color);
+			//gl.uniform3fv(colorLoc, puzzleObjects[i].color);
 			if (puzzleObjects[i].display == 0) {
 				gl.bindVertexArray(zero.VAO);
 				gl.drawElements(gl.TRIANGLES, zero.indices.length, gl.UNSIGNED_SHORT, 0);

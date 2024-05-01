@@ -1407,3 +1407,13 @@ export var checkIfOnScreen = function(worldCoords, ortho_size, cameraPosition) {
 	}
 	return true;
 };
+
+// checks if two arrays are equal
+// used to see if a new color needs to be passed to the shader program
+export var checkSameArray = function(firstArray, secondArray) {
+	if (firstArray.length != secondArray.length) return false;
+	for (let i = 0; i < firstArray.length; i++) {
+		if (firstArray[i] != secondArray[i]) return false;
+	}
+	return true;
+}
