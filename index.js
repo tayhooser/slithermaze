@@ -557,8 +557,8 @@ var render = function() {
 		}
 
 		// check if line state has changed and inOut isn't updated
-		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] > 0
-			&& lineObjects[i].inOut == 0) {
+		if ((gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] != 0 && lineObjects[i].inOut == 0)
+			|| (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0 && lineObjects[i].inOut != 0)) {
 			lineObjects[i].inOut = 1.0 - lineObjects[i].inOut;
 			lineObjects[i].lastClicked = Date.now();
 		}
