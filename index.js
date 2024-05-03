@@ -157,6 +157,7 @@ async function sendScore(id, name) {
 window.onload = function(){
 	startEventListeners();
 	gl.enable(gl.CULL_FACE);
+	gl.enable(gl.DEPTH_TEST);
 	clock();
 	spawnSelectionMenus();
 
@@ -298,7 +299,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.worldCoords = [translateX, translateY];
 			newMesh.inOut = 1.0;
 
-			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);		// vector to move object by in world space
+			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 5.0);		// vector to move object by in world space
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);	// applies translation vector to current object's model matrix
 			
 			puzzleObjects.push(newMesh);			// put the new object into list of objects
@@ -327,7 +328,7 @@ var initPuzzleGraphics = function(puzzle) {
 				newMesh.worldCoords = [translateX, translateY];
 				newMesh.inOut = 1.0;
 
-				let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);	
+				let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 5.0);	
 				glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);
 
 				let scaleVec = glMatrix.vec3.fromValues(5, 5, 1);
@@ -343,7 +344,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.worldCoords = [translateX, translateY];
 			newMesh.inOut = 0.0;
 			
-			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);				// keep same translation as current cell iteration
+			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.5);				// keep same translation as current cell iteration
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);		
 
 			let scaleVec = glMatrix.vec3.fromValues(5, 5, 1);
@@ -383,7 +384,8 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.inOut = 0.0;
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
-			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
+			//glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
+			newMesh.translate = translationVec;
 			newMesh.worldCoords = [translateX, translateY];
 
 			let scaleVec = glMatrix.vec3.fromValues(5, 1, 1);
@@ -424,7 +426,8 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.inOut = 0.0;
 
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.0);
-			glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
+			//glMatrix.mat4.translate(newMesh.translate, newMesh.translate, translationVec);
+			newMesh.translate = translationVec;
 			newMesh.worldCoords = [translateX, translateY];
 
 			let rotationMat = glMatrix.mat4.create()
@@ -455,7 +458,7 @@ var initPuzzleGraphics = function(puzzle) {
 
 	MoB = (curPuzzle.h * 10) / 2;
 	camAndLook = [MoB, -MoB];
-	cameraPosition = [camAndLook[0], camAndLook[1], (1)];
+	cameraPosition = [camAndLook[0], camAndLook[1], (100)];
 	lookAt = [camAndLook[0], camAndLook[1], 0.0];
 	vp = glMatrix.mat4.create();
 
@@ -496,14 +499,14 @@ var render = function() {
 	// camera setup
 	view = glMatrix.mat4.create();
 	var up = [0.0, 1.0, 0.0];
-	cameraPosition = [camAndLook[0], camAndLook[1], (1)];
+	cameraPosition = [camAndLook[0], camAndLook[1], (100)];
 	lookAt = [camAndLook[0], camAndLook[1], 0.0];
 	glMatrix.mat4.lookAt(view, cameraPosition, lookAt, up);
 
 	// projection setup
 	ortho_size = (zoomLevel * 2);				// need also consider the initial zoomLevel set in init()
 	projection = glMatrix.mat4.create();
-	projection = glMatrix.mat4.ortho(projection, -ortho_size, ortho_size, -ortho_size, ortho_size, null, 2);
+	projection = glMatrix.mat4.ortho(projection, -ortho_size, ortho_size, -ortho_size, ortho_size, null, 200);
 
 	// vp matrix
 	glMatrix.mat4.multiply(vp, projection, view);		// combine view and projection matrices into new vp matrix
@@ -546,19 +549,21 @@ var render = function() {
 		if (!g.checkIfOnScreen(lineObjects[i].worldCoords, ortho_size, cameraPosition)) continue;
 		
 
-		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off										
+		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off											
 			//lineObjects[i].display = 0;
 			//continue;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
-			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
+			//glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
+			glMatrix.mat4.translate(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].rotate);
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].scale);
 			color = lineObjects[i].color;
 			lineObjects[i].display = 1;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 2)	{	   // cross
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
-			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
+			//glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
+			glMatrix.mat4.translate(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.scale(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, crossScale );
 			color = [0.831, 0.486, 0.467];
 			lineObjects[i].display = 2;
@@ -572,6 +577,10 @@ var render = function() {
 		}
 
 		let mixWeight = [g.getMixWeight(lineObjects[i].lastClicked, 150), lineObjects[i].inOut];
+		//if (lineObjects[i].inOut <= 0.1 && mixWeight[0] == 1) {
+		//	lineObjects[i].display = 0;
+		//	continue;
+		//}
 		gl.uniform2fv(weightLoc, mixWeight);
 
 		// only pass in a new color to the shader program when its different from the last uniform call
@@ -595,7 +604,6 @@ var render = function() {
 	}
 
 	// drawing dots and numbers
-
 	// just pass in the puzzle color once since the same color will always be used for these
 	color = [0.439, 0.329, 0.302];
 	gl.uniform3fv(colorLoc, color);
@@ -607,6 +615,7 @@ var render = function() {
 		let mixWeight = [g.getMixWeight(puzzleObjects[i].lastClicked, 500), puzzleObjects[i].inOut];
 		gl.uniform2fv(weightLoc, mixWeight);
 
+		color = puzzleObjects[i].color;
 		if (!g.checkSameArray(color, lastUniformColor)) {
 			lastUniformColor = color;
 			gl.uniform3fv(colorLoc, lastUniformColor);
@@ -745,6 +754,7 @@ var click = function(worldCoords, button) {
 			}
 			else {																				// line or no line is there
 				gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];	// toggles between line and no line
+				lineObjects[keptIndex].translate[2] = 1 - (lineObjects[keptIndex].translate[2])
 				lineObjects[keptIndex].inOut = 1.0 - lineObjects[keptIndex].inOut;
 			}
 		}
@@ -755,6 +765,7 @@ var click = function(worldCoords, button) {
 			}
 			else {
 				gLinesArray[tempYIndex][tempXIndex] = 2 - gLinesArray[tempYIndex][tempXIndex];	// toggles between nothing and a cross
+				lineObjects[keptIndex].translate[2] = 1 - (lineObjects[keptIndex].translate[2])
 				lineObjects[keptIndex].inOut = 1.0 - lineObjects[keptIndex].inOut;
 			}
 
