@@ -41,6 +41,7 @@ var colorPresets = [
 	[0.831, 0.486, 0.467],				// red
 	[0.0, 1.0, 0.0],					// green
 	[1.0, 1.0, 0.0],					// yellow
+	[0.788, 0.714, 0.698]				// warm grey
 ];
 
 // dot graphic only made once and reused to draw multiple lines

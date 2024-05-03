@@ -37,7 +37,7 @@ const ACinterHTML = document.getElementById('ACinter');
 const ACdeadHTML = document.getElementById('ACdead');
 const ACloopHTML = document.getElementById('ACloop');
 const highlightHTML = document.getElementById('highlight');
-//const hintHTML = document.getElementById('hint');
+const greyHTML = document.getElementById('grey');
 const solutionHTML = document.getElementById('solution');
 const restartHTML = document.getElementById('restart');
 const printHTML = document.getElementById('print');
@@ -61,6 +61,7 @@ var ACinter = ACinterHTML.checked;
 var ACdead = ACdeadHTML.checked;
 var ACloop = ACloopHTML.checked;
 var highlight = highlightHTML.checked;
+var grey = greyHTML.checked;
 var zoomLevel, minZoom, maxZoom;
 
 // webGL globals
@@ -151,7 +152,9 @@ async function sendScore(id, name) {
 	return returning;
 }
 
+
 // GRAPHICS FUNCTIONS ----------------------------------------------------------------------------------------------
+
 
 // initializes openGL, other functions, and initial board
 window.onload = function(){
@@ -273,6 +276,7 @@ window.onload = function(){
 	initPuzzleGraphics(curPuzzle);
 	render();
 };
+
 
 // draws puzzle to screen for first time
 // would move to graphics.js if it didnt modify so many global vars
@@ -471,6 +475,7 @@ var initPuzzleGraphics = function(puzzle) {
 	shouldRender = true;
 };
 
+
 // looping render call to draw stuff to screen
 var render = function() {
 	if (!shouldRender) {
@@ -652,6 +657,7 @@ var render = function() {
 	setTimeout(render, 1);
 };
 
+
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
 var startEventListeners = function(event) {
 	//canvas.addEventListener("mouseenter", mouseEnter, false);
@@ -669,6 +675,7 @@ var startEventListeners = function(event) {
 
 canvas.onselectstart = function () { return false; };
 canvas.oncontextmenu = function(event) { event.preventDefault(); event.stopPropagation(); }
+
 
 // converts canvas coordinates to world coordinates
 var canvasToWorldCoords = function(mouseX, mouseY) {
@@ -695,6 +702,7 @@ var canvasToWorldCoords = function(mouseX, mouseY) {
 
 	return worldCoords;
 };
+
 
 // called when the puzzle state should be changing somehow
 var click = function(worldCoords, button) {
@@ -810,6 +818,7 @@ var click = function(worldCoords, button) {
 
 };
 
+
 var mouseWheel = function(event) {
 	event.preventDefault();
 	var zoomAmt = event.wheelDelta * 0.03;
@@ -833,6 +842,7 @@ var mouseWheel = function(event) {
 // 	//canvas.removeEventListener("mouseenter", mouseEnter, false);
 // };
 
+
 // pointer events work with mouse or touch events but some events should only work on touch screens
 var pointerDown = function(event) {
 	canvas.addEventListener("pointermove", pointerMove, { passive: false });
@@ -847,6 +857,7 @@ var pointerDown = function(event) {
 	justPlacedAnX = false;
 
 };
+
 
 // pointer getting moved after a pointer down has been registered
 var pointerMove = function (event) {
@@ -887,6 +898,7 @@ var pointerMove = function (event) {
 
 };
 
+
 // mouse click release or taking finger off of touch screen
 var pointerUp = function (event) {
 	var canvasRect = canvas.getBoundingClientRect();
@@ -906,6 +918,7 @@ var pointerUp = function (event) {
 	canvas.removeEventListener("pointerup", pointerUp, false);
 };
 
+
 // mouse leaving the canvas
 var mouseLeave = function (event) { 
 	//canvas.removeEventListener("click", click, false);		
@@ -916,6 +929,7 @@ var mouseLeave = function (event) {
 
 	//canvas.addEventListener("mouseenter", mouseEnter, false);
 };
+
 
 // start of a touch event
 var touchStart = function(event) {
@@ -943,10 +957,12 @@ var touchStart = function(event) {
 
 };
 
+
 // helper fuction for tracking touch events
 var copyTouch = function({identifier, clientX, clientY}) {
 	return {identifier, clientX, clientY};
 };
+
 
 // registered touch starts moving after a touchStart was registered
 var touchMove = function(event) {
@@ -992,6 +1008,7 @@ var touchMove = function(event) {
 
 };
 
+
 // end of a touch event
 var touchEnd = function(event) {
 	//event.preventDefault();
@@ -1012,6 +1029,7 @@ var touchEnd = function(event) {
 
 };
 
+
 // helper function to keep track of moving touch events
 var ongoingTouchIndexById = function(idToFind) {
 	for (let i = 0; i < ongoingTouches.length; i++) {
@@ -1022,6 +1040,7 @@ var ongoingTouchIndexById = function(idToFind) {
 	}
 	return -1;
 };
+
 
 // counter to track how long a touch event has been going to see if a cross should be placed
 var incrementCounter = function(worldCoords) {
@@ -1036,6 +1055,7 @@ var incrementCounter = function(worldCoords) {
 		setTimeout(incrementCounter, 5, worldCoords);
 };
 
+
 // checks if user is using mobile layout
 var windowResize = function() {
 	if (window.screen.width <= 900){
@@ -1044,6 +1064,7 @@ var windowResize = function() {
 		mobileLayout = false;
 	}
 };
+
 
 // need to check if the edge of the camera is too far passed the edges of the puzzle after moving or zooming
 var checkCamBoundary = function() {
@@ -1069,6 +1090,7 @@ var checkCamBoundary = function() {
 
 // HTML EVENT-RELATED FUNCTIONS ----------------------------------------------------------------------------------------------
 
+
 // runs the timer
 var clock = function(){
 	//console.log("Timer started.");
@@ -1090,27 +1112,24 @@ var clock = function(){
         if (hour < 10) { 
             hrString = "0" + hrString; 
         } 
-  
         if (minute < 10) { 
             minString = "0" + minString; 
         } 
-  
         if (second < 10) { 
             secString = "0" + secString; 
         } 
-  
 		second++;
   
         document.getElementById('hr').innerHTML = hrString; 
         document.getElementById('min').innerHTML = minString; 
         document.getElementById('sec').innerHTML = secString;
-		
-		//second++;
 	}
 	setTimeout(clock, 1000); // calls Timer() after 1 second
 }
 
+
 // undo/redo/save related -------------------
+
 
 // adds current puzzle state to history
 var updateStateHistory = function(){
@@ -1130,6 +1149,7 @@ var updateStateHistory = function(){
 	lastUndo = puzzleHistory.length - 1;
 	return;
 }
+
 
 // called when user hits undo button, HTML side
 undoHTML.onclick = function(){
@@ -1151,6 +1171,7 @@ undoHTML.onclick = function(){
 		pl.highlightWrongMoves(curPuzzle);
 };
 
+
 // called when user hits redo button, HTML side
 redoHTML.onclick = function(){
 	if (lastUndo < puzzleHistory.length - 1){ // if there are undos to redo
@@ -1170,6 +1191,7 @@ redoHTML.onclick = function(){
 	if (highlight)
 		pl.highlightWrongMoves(curPuzzle);
 };
+
 
 // creates new savestate + button
 saveHTML.onclick = function(){
@@ -1196,6 +1218,7 @@ saveHTML.onclick = function(){
 	localStorage.setItem(key, val);
 };
 
+
 // called when user hits a savestate button, HTML side
 var load = function(state){
 	console.log("Loaded state " + state);
@@ -1219,7 +1242,9 @@ var load = function(state){
 	return;
 };
 
+
 // zoom related -------------------
+
 
 // toggles zoom slider to open/close
 zoomHTML.onclick = function(){
@@ -1243,15 +1268,15 @@ zoomHTML.onclick = function(){
 	return;
 };
 
+
 // updates zoom level with slider value
-// default 50, range 1-100
 zoomSliderHTML.oninput = function(){
 	zoomLevel = this.value;
 	checkCamBoundary();
-	//console.log("Slider value: " + zoomLevel);
 }
 
 // settings/QOL related -------------------
+
 
 // toggles settings menu to open/close
 settingsHTML.onclick = function(){
@@ -1267,12 +1292,13 @@ settingsHTML.onclick = function(){
 		
     } else { // show menu
 		settingsContent.style.display = "block";
-		settingsMenu.style.maxHeight = '300px';
-		settingsMenu.style.marginBottom = '10px';
+		settingsContent.style.opacity = '0';
+		settingsMenu.style.maxHeight = '340px';
 		settingsContent.style.opacity = '1';
 	}
 	return;
 };
+
 
 // performs QOL moves
 var performQOL = function(){
@@ -1292,6 +1318,8 @@ var performQOL = function(){
 					changes = changes || pl.crossCompletedCell(curPuzzle, i, j);
 				if (ACinter)
 					changes = changes || pl.crossIntersection(curPuzzle, i, j);
+				if (grey)
+					pl.greyCompletedNumbers(curPuzzle, i, j);
 			}
 		}
 		changedAtLeastOnce = changedAtLeastOnce || changes;
@@ -1300,12 +1328,14 @@ var performQOL = function(){
 		updateStateHistory();
 }
 
+
 // toggles auto cross completed numbers
 ACnumHTML.oninput = function() {
 	ACnum = ACnumHTML.checked;
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
+
 
 // toggles auto cross intersections
 ACinterHTML.oninput = function() {
@@ -1314,6 +1344,7 @@ ACinterHTML.oninput = function() {
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
 
+
 // toggles auto cross dead ends
 ACdeadHTML.oninput = function() {
 	ACdead = ACdeadHTML.checked;
@@ -1321,12 +1352,14 @@ ACdeadHTML.oninput = function() {
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
 
+
 // toggles auto cross premature loops
 ACloopHTML.oninput = function() {
 	ACloop = ACloopHTML.checked;
 	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
+
 
 // toggles highlight wrong moves
 highlightHTML.oninput = function() {
@@ -1349,18 +1382,22 @@ highlightHTML.oninput = function() {
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 }
 
-// called when user hits hint button, HTML side
-// shows either 1 possible cross or line, depends on current state and puzzle
-/*
-hintHTML.onclick = function(){
-	console.log("Hint pressed.");
-	pl.autoSolver(curPuzzle, 1);
+
+// toggles grey completed numbers
+greyHTML.oninput = function() {
+	grey = greyHTML.checked;
+	if (!grey){
+		// change nums back to brown
+		for (let i = 0; i < curPuzzle.h; i++){
+			for (let j = 0; j < curPuzzle.w; j++){
+				g.changeNumberColor(i, j, 0);
+			}
+		}
+	}
+	performQOL();
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-	updateStateHistory();
-	//pl.logPuzzleState(curPuzzle);
-	return;
-};
-*/
+}
+
 
 // called when user hits solution button, HTML side
 solutionHTML.onclick = function() {
@@ -1369,6 +1406,7 @@ solutionHTML.onclick = function() {
 	updateStateHistory();
 	solverUsed = true;
 };
+
 
 // called when user hits restart button, HTML side
 // wipes all lines and crosses from screen
@@ -1382,7 +1420,6 @@ restartHTML.onclick = function(){
 	localStorage.clear();
 	for (let i = 1; i <= saveCounter; i++){
 		let id = "load" + i;
-		//console.log(i);
 		document.getElementById(id).remove();
 	}
 	saveCounter = 0;
@@ -1408,6 +1445,7 @@ restartHTML.onclick = function(){
 	
 	return;
 };
+
 
 // opens new tab with blank puzzle for printing
 printHTML.onclick = function(){
@@ -1456,10 +1494,12 @@ tutorialHTML.onclick = function(){
 	return;
 };
 
+
 // closes tutorial screen
 tutXHTML.onclick = function(){
 	tutBoxHTML.style.display = "none";
 }
+
 
 // generates easy 5x5 puzzle
 tutPlayHTML.onclick = function(){
@@ -1498,6 +1538,7 @@ tutPlayHTML.onclick = function(){
 	return;
 }
 
+
 // exports current puzzle as json to share with others
 exportHTML.onclick = function(){
 	let name = puzzleTitleHTML.innerHTML;
@@ -1531,6 +1572,7 @@ exportHTML.onclick = function(){
 	anchor.setAttribute("download", filename);
 	anchor.click();
 }
+
 
 // import puzzle from json
 importHTML.onclick = function(){
@@ -1603,6 +1645,7 @@ importHTML.onclick = function(){
 	}
 }
 
+
 // stops timer, checks answer
 submitHTML.onclick = function(){
 	if (timer == false) // already submitted, do nothing
@@ -1640,6 +1683,7 @@ submitHTML.onclick = function(){
 	return;
 };
 
+
 // sends leaderboard score to server
 var submitScore = function(){
 	name = document.getElementById("player-name").value;
@@ -1659,7 +1703,9 @@ var submitScore = function(){
 	}
 }
 
+
 // new puzzle related -------
+
 
 // drops down menu
 newPuzzleHTML.onclick = function(){
@@ -1680,6 +1726,7 @@ newPuzzleHTML.onclick = function(){
 	}
 	return;
 };
+
 
 // below code handles dropdown menus
 // https://www.w3schools.com/howto/howto_custom_select.asp
@@ -1754,6 +1801,7 @@ var spawnSelectionMenus = function() {
 	// close all select boxes if clicked outside
 	document.addEventListener("click", closeAllSelect);
 }
+
 
 // generates puzzles depending on selected parameters
 getNewpHTML.onclick = function() {
@@ -1905,6 +1953,7 @@ getNewpHTML.onclick = function() {
 	}
 	return;
 }
+
 
 var updateLeaderboard = function() {
 	//console.log("leaderboard = " + leaderboard);
