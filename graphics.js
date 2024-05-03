@@ -6,7 +6,7 @@ export var vertexShaderText = `
 
 precision mediump float;
 
-attribute vec2 vertPos;
+attribute vec3 vertPos;
 uniform mat4 mvp;
 uniform vec3 color;
 uniform highp vec2 weight;
@@ -19,9 +19,9 @@ void main()
 	} else {
 		col = mix(color, bgColor, weight[0]);
 	}
-	mediump vec4 fPos = vec4(vertPos, 0.0, 1.0);
-	fPos = mvp * fPos;
-	gl_Position = mvp * vec4(vertPos, 0.0, 1.0);
+	//mediump vec4 fPos = vec4(vertPos, 1.0);
+	//fPos = mvp * fPos;
+	gl_Position = mvp * vec4(vertPos, 1.0);
 }
 `;
 
@@ -1065,7 +1065,7 @@ export class graphicsObj {
 	yCoord;				// 	line should be drawn or not
 	constructor() {
 		this.modelMatrix = glMatrix.mat4.create();
-		this.translate = glMatrix.mat4.create();
+		this.translate = glMatrix.vec3.create();
 		this.rotate = glMatrix.mat4.create();
 		this.scale = glMatrix.mat4.create();
 		this.color = [0.439, 0.329, 0.302];
