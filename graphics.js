@@ -38,7 +38,7 @@ void main()
 var colorPresets = [
 	[0.439, 0.329, 0.302],				// default color
 	[0.0, 0.0, 1.0],					// blue
-	[0.831, 0.486, 0.467],				// red
+	[0.831, 0.486, 0.467],				// redish pink
 	[0.0, 1.0, 0.0],					// green
 	[1.0, 1.0, 0.0],					// yellow
 	[0.788, 0.714, 0.698]				// warm grey
@@ -1389,11 +1389,21 @@ export var changeNumberColor = function(x, y, colorIndex)  {
 	for (let i = 0; i < puzzleObjects.length; i++) {
 		// confusing, but the x/y flip-flip is because our logical coordinate system
 		// designates x as the vertical coordinate and y as the horizontal coordinate
-		if (puzzleObjects[i].type == 1) continue;										// dots are in this list as well so skip those
+		if (puzzleObjects[i].type == 1) continue; // dots are in this list as well so skip those
 		if (puzzleObjects[i].yCoord == x && puzzleObjects[i].xCoord == y) {
-			//console.log("COLORING LINE[" + x + "][" + y + "]");
 			puzzleObjects[i].color = colorPresets[colorIndex];
 			break;
+		}
+	}
+};
+
+export var getNumberColor = function(x, y){
+	for (let i = 0; i < puzzleObjects.length; i++) {
+		// confusing, but the x/y flip-flip is because our logical coordinate system
+		// designates x as the vertical coordinate and y as the horizontal coordinate
+		if (puzzleObjects[i].type == 1) continue; // dots are in this list as well so skip those
+		if (puzzleObjects[i].yCoord == x && puzzleObjects[i].xCoord == y) {
+			return puzzleObjects[i].color
 		}
 	}
 };

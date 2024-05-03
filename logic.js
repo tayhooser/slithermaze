@@ -639,10 +639,14 @@ export var highlightWrongMoves = function(puzzle){
 		}
 	}
 	
-	// color all cells brown
+	// color all pink cells brown
 	for (let i = 0; i < puzzle.h; i++){
 		for (let j = 0; j < puzzle.w; j++){
-			g.changeNumberColor(i, j, brown);
+			let color = g.getNumberColor(i, j);
+			if (color)
+				color = color.toString();
+			if (color == "0.831,0.486,0.467") // only color over pink
+				g.changeNumberColor(i, j, brown);
 		}
 	}
 	
@@ -654,6 +658,7 @@ export var highlightWrongMoves = function(puzzle){
 
 	// highlight all cells in list
 	for (let i = 0; i < wrongNums.length; i++){
+		//console.log("highlighting cell [" + wrongNums[i][0] + ", " +  wrongNums[i][1] + "]");
 		g.changeNumberColor(wrongNums[i][0], wrongNums[i][1], red);
 	}
 	
@@ -672,9 +677,14 @@ export var greyCompletedNumbers = function(puzzle, x, y){
 		return false;
 	
 	// color cell brown
-	g.changeNumberColor(x, y, brown);
-	
-	if (countLines(puzzle, x, y) == puzzle.cells[x][y][0]){
+	let color = g.getNumberColor(x, y);
+	if (color)
+		color = color.toString();
+	if (color == "0.788,0.714,0.698") // only cover over grey
+		g.changeNumberColor(x, y, brown);
+	let tmp = countLines(puzzle, x, y);
+	//debugger
+	if (tmp == puzzle.cells[x][y][0]){
 		g.changeNumberColor(x, y, grey);
 	}
 	return;

@@ -792,8 +792,16 @@ var click = function(worldCoords, button) {
 		// this is to allow user to erase moves without QOL infinitely triggering
 		if (gLinesArray[tempYIndex][tempXIndex] != 0){
 			performQOL();
-		} else if (highlight){
-			pl.highlightWrongMoves(curPuzzle); // only QOL that should trigger
+		} else { // only QOL options that can trigger upon line removal
+			if (highlight)
+				pl.highlightWrongMoves(curPuzzle);
+			if (grey){
+				for (let i = 0; i < curPuzzle.h + 1; i++){
+					for (let j = 0; j < curPuzzle.w + 1; j++) {
+						pl.greyCompletedNumbers(curPuzzle, i, j);
+					}
+				}
+			}
 		}
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 		updateStateHistory(); // update puzzle state history
@@ -1180,6 +1188,14 @@ undoHTML.onclick = function(){
 	}
 	if (highlight)
 		pl.highlightWrongMoves(curPuzzle);
+	if (grey){
+		for (let i = 0; i < curPuzzle.h + 1; i++){
+			for (let j = 0; j < curPuzzle.w + 1; j++) {
+				pl.greyCompletedNumbers(curPuzzle, i, j);
+			}
+		}
+	}
+		
 };
 
 
@@ -1201,6 +1217,13 @@ redoHTML.onclick = function(){
 	}
 	if (highlight)
 		pl.highlightWrongMoves(curPuzzle);
+	if (grey){
+		for (let i = 0; i < curPuzzle.h + 1; i++){
+			for (let j = 0; j < curPuzzle.w + 1; j++) {
+				pl.greyCompletedNumbers(curPuzzle, i, j);
+			}
+		}
+	}
 };
 
 
@@ -1249,6 +1272,13 @@ var load = function(state){
 	}
 	if (highlight)
 		pl.highlightWrongMoves(curPuzzle);
+	if (grey){
+		for (let i = 0; i < curPuzzle.h + 1; i++){
+			for (let j = 0; j < curPuzzle.w + 1; j++) {
+				pl.greyCompletedNumbers(curPuzzle, i, j);
+			}
+		}
+	}
 	
 	return;
 };
@@ -1313,14 +1343,11 @@ settingsHTML.onclick = function(){
 
 // performs QOL moves
 var performQOL = function(){
+	//console.log("performing qol....");
 	let changes = true;
 	let changedAtLeastOnce = false;
 	while (changes){ // iterate over puzzle multiple times until no changes made
 		changes = false;
-		if (highlight)
-			changes = changes || pl.highlightWrongMoves(curPuzzle);
-		if (ACloop)
-			pl.crossPrematureLoop(curPuzzle);
 		for (let i = 0; i < curPuzzle.h + 1; i++){
 			for (let j = 0; j < curPuzzle.w + 1; j++) {
 				if (ACdead)
@@ -1333,6 +1360,10 @@ var performQOL = function(){
 					pl.greyCompletedNumbers(curPuzzle, i, j);
 			}
 		}
+		if (highlight)
+			changes = changes || pl.highlightWrongMoves(curPuzzle);
+		if (ACloop)
+			pl.crossPrematureLoop(curPuzzle);
 		changedAtLeastOnce = changedAtLeastOnce || changes;
 	}
 	if (changedAtLeastOnce)
