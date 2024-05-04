@@ -421,6 +421,8 @@ export var generatePuzzle = function(h, w, d){
 				puzzle.cells[i][j] = [puzzle.cells[i][j][0], false];
 			}
 		}
+	} else {
+		pl.logPuzzleState(puzzle);
 	}
 	
 	// generate new map if easy/med puzzle has no zeros

@@ -70,7 +70,7 @@ body {
 	padding: 10px;
 	width: 40%;
 	height: fit-content;
-	top: 150px;
+	top: 15%;
 	border-radius: 20px;
 	background-color: #D47C77;
 	color: #ffffff;
@@ -81,6 +81,8 @@ body {
 .tutorial img {
 	border-radius: 10px;
 	margin: 10px;
+	width: 150px;
+	height: 150px;
 }
 
 .tutorial button {
@@ -93,6 +95,7 @@ body {
 	border-radius: 5px;
     cursor: pointer;
 	margin: 5px;
+	height:fit-content;
 }
 
 .tutorial button:hover {
@@ -585,7 +588,11 @@ input[type=submit]:hover {
 @media screen and (max-width: 900px) {
 	.tutorial {
 		width: 90%;
-		top: 25%;
+	}
+	
+	.tutorial img {
+		height: 100px;
+		width: 100px;
 	}
 	
 	.l-container {
