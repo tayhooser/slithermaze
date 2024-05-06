@@ -345,7 +345,7 @@ var initPuzzleGraphics = function(puzzle) {
 			let newMesh = new g.graphicsObj();
 			newMesh.type = 4;					// 4 for cell shade
 			newMesh.display = 0;				// start toggled off
-			newMesh.color = [1.0, 1.0, 1.0];
+			newMesh.color = [0.9, 0.9, 0.9];
 			newMesh.worldCoords = [translateX, translateY];
 			newMesh.inOut = 0.0;
 			newMesh.lastClicked = 0;
@@ -945,6 +945,7 @@ var touchStart = function(event) {
 
 
 // helper fuction for tracking touch events
+// https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
 var copyTouch = function({identifier, clientX, clientY}) {
 	return {identifier, clientX, clientY};
 };
@@ -1014,6 +1015,7 @@ var touchEnd = function(event) {
 
 
 // helper function to keep track of moving touch events
+// https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
 var ongoingTouchIndexById = function(idToFind) {
 	for (let i = 0; i < ongoingTouches.length; i++) {
 		var id = ongoingTouches[i].identifier;
