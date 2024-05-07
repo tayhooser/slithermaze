@@ -728,6 +728,27 @@ export var crossCompletedCell = function(puzzle, x, y){
 }
 
 
+// RULE: if number of crosses around a cell == 4 - cell number, then remaining edges should be lines
+function completeCell(puzzle, i, j) {
+    let cellNumber = puzzle.cells[i][j][0];
+    let numCrosses = countCrosses(puzzle, i, j);
+
+    if (numCrosses == (4 - cellNumber)) {
+		// top line
+		if (arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) == -1) // if no cross
+			placeLine(puzzle, i, j, i, j+1);
+		// right line
+		if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) == -1)
+			placeLine(puzzle, i, j+1, i+1, j+1);
+		// bottom line
+		if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j, 0]) == -1)
+			placeLine(puzzle, i+1, j+1, i+1, j);
+		// left line
+		if (arrayIndexOf(puzzle.nodes[i+1][j], [i, j, 0]) == -1)
+			placeLine(puzzle, i+1, j, i, j);
+    }
+}
+
 // RULE: if a node has 2 lines, remaining connections should be crosses
 // RULE: nodes should only ever have 0 or 2 lines
 // returns true if change was made
@@ -1059,6 +1080,7 @@ export var crossPrematureLoop = function(puzzle){
 	return changes;
 }
 
+
 // RULE: if a node has 1 line and 1 remaining connection, that connection should be a line
 // RULE: nodes should only ever have 0 or 2 lines
 // returns true if change was made
@@ -1118,9 +1140,8 @@ function handleNodeRules(puzzle, i, j) {
 }
 
 
-// Function to handle cell with one
-// Function to handle cell with ones in a corner
-function handleCellWithOne(puzzle, i, j) {
+// 1 in a corner
+function cornerWithOne(puzzle, i, j) {
 	if (puzzle.cells[i][j][0] == 1) {
 		if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
 			if (i === 0) {
@@ -1139,29 +1160,8 @@ function handleCellWithOne(puzzle, i, j) {
 }
 
 
-// Function to handle cell with three in a corner
-function handleCellWithThree(puzzle, i, j) {
-	if (puzzle.cells[i][j][0] != 3)
-		return false;
-	
-	if (i == 0 && j == 0){ // top left
-		placeLine(puzzle, i, j, i, j+1);
-		placeLine(puzzle, i, j, i+1, j);
-	} else if (i == 0 && j == puzzle.w-1){ // top right
-		placeLine(puzzle, i, j+1, i, j);
-		placeLine(puzzle, i, j+1, i+1, j+1);
-	} else if (i == puzzle.h-1 && j == puzzle.w-1){ // bottom right
-		placeLine(puzzle, i+1, j+1, i, j+1);
-		placeLine(puzzle, i+1, j+1, i+1, j);
-	} else if (i == puzzle.h-1 && j == 0){ // bottom left
-		placeLine(puzzle, i+1, j, i, j);
-		placeLine(puzzle, i+1, j, i+1, j+1);
-	}
-}
-
-
-// Function to handle cell with two in a corner
-function handleCellWithTwo(puzzle, i, j) {
+// 2 in a corner
+function cornerWithTwo(puzzle, i, j) {
     if (puzzle.cells[i][j][0] == 2) {
         // Check if it's any of the four corners
         if ((i == 0 && j == 0) || (i == 0 && j == puzzle.w - 1) || (i == puzzle.h - 1 && j == 0) || (i == puzzle.h - 1 && j == puzzle.w - 1)) {
@@ -1191,30 +1191,29 @@ function handleCellWithTwo(puzzle, i, j) {
 }
 
 
-// RULE: if number of crosses around a cell == 4 - cell number, then remaining edges should be lines
-function handleCellWithInverseNumber(puzzle, i, j) {
-    let cellNumber = puzzle.cells[i][j][0];
-    let numCrosses = countCrosses(puzzle, i, j);
-
-    if (numCrosses == (4 - cellNumber)) {
-		// top line
-		if (arrayIndexOf(puzzle.nodes[i][j], [i, j+1, 0]) == -1) // if no cross
-			placeLine(puzzle, i, j, i, j+1);
-		// right line
-		if (arrayIndexOf(puzzle.nodes[i][j+1], [i+1, j+1, 0]) == -1)
-			placeLine(puzzle, i, j+1, i+1, j+1);
-		// bottom line
-		if (arrayIndexOf(puzzle.nodes[i+1][j+1], [i+1, j, 0]) == -1)
-			placeLine(puzzle, i+1, j+1, i+1, j);
-		// left line
-		if (arrayIndexOf(puzzle.nodes[i+1][j], [i, j, 0]) == -1)
-			placeLine(puzzle, i+1, j, i, j);
-    }
+// 3 in a corner
+function cornerWithThree(puzzle, i, j) {
+	if (puzzle.cells[i][j][0] != 3)
+		return false;
+	
+	if (i == 0 && j == 0){ // top left
+		placeLine(puzzle, i, j, i, j+1);
+		placeLine(puzzle, i, j, i+1, j);
+	} else if (i == 0 && j == puzzle.w-1){ // top right
+		placeLine(puzzle, i, j+1, i, j);
+		placeLine(puzzle, i, j+1, i+1, j+1);
+	} else if (i == puzzle.h-1 && j == puzzle.w-1){ // bottom right
+		placeLine(puzzle, i+1, j+1, i, j+1);
+		placeLine(puzzle, i+1, j+1, i+1, j);
+	} else if (i == puzzle.h-1 && j == 0){ // bottom left
+		placeLine(puzzle, i+1, j, i, j);
+		placeLine(puzzle, i+1, j, i+1, j+1);
+	}
 }
 
 
-// If a 2 has any surrounding line X’d, then a line coming into either of the two corners not adjacent to the X’d out line cannot immediately exit at right angles away from the 2, as then two lines around the 2 would be impossible, and can therefore be X’d. This means that the incoming line must continue on one side of the 2 or the other. This in turn means that the 
-//second line of the 2 must be on the only remaining free side, adjacent to the originally X’d line, so that can be filled in.
+// RULE: line coming into a 2-cell with a cross
+// see https://en.wikipedia.org/wiki/Slitherlink#A_rule_for_squares_with_2 for image
 function applyTwoAdjacentRule(puzzle, i, j) {
 	if (puzzle.cells[i][j][0] != 2)
 		return false;
@@ -1255,7 +1254,45 @@ function applyTwoAdjacentRule(puzzle, i, j) {
 }
 
 
-// if a line comes into a node of a cell with a one, and that node posseses a cross next to it as well, we cross ourt the inner edges of the one. 
+//RULE: 2 crosses on outside corner of a 1-cell --> cross insides of same corner
+function RuleOneForOnes (puzzle,i,j) {
+	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
+		if (puzzle.cells[i][j][0] == 1) {
+			if (i >= 0 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
+				if (j >= 0 && i-1 >=0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
+					//console.log("two crosses detected, both at top left node");
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j,i+1,j);
+				} 
+			}
+			if (i-1 >= 0 && j+1<puzzle.w && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
+				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
+					//console.log("two crosses detected, both at top right node");
+					placeCross(puzzle,i,j,i,j+1);
+					placeCross(puzzle,i,j+1,i+1,j+1);
+				}
+			}
+			if (i+2 < puzzle.h+1 && j < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 0]) != -1) {
+				if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
+					//console.log("two crosses detected, both at bottom right corner");
+					placeCross(puzzle,i,j+1,i+1,j+1);
+					placeCross(puzzle, i+1,j,i+1,j+1);
+				}
+			}
+			if (i+1 <= puzzle.h+1 && j-1 >-0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
+				if (j >= 0 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 0]) != -1) {
+					//console.log("two crosses detected, both at bottom left corner");
+					placeCross(puzzle,i,j,i+1,j);
+					placeCross(puzzle,i+1,j,i+1,j+1);
+				}
+			}
+		}
+	}
+}
+
+
+// RULE: node corner of 1-cell has a line and a cross on the outer edge of the cell
+// see https://en.wikipedia.org/wiki/Slitherlink#Rules_for_squares_with_1 for image
 function RuleTwoforOnes(puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		if (puzzle.cells[i][j][0] == 1) {
@@ -1331,47 +1368,7 @@ function RuleTwoforOnes(puzzle,i,j) {
 }	
 
 
-
-//if two crosses exist on the outside of the nodes for a cell with a one, cross our the other two directions
-function RuleOneForOnes (puzzle,i,j) {
-	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
-		if (puzzle.cells[i][j][0] == 1) {
-			if (i >= 0 && j-1 >= 0 && arrayIndexOf(puzzle.nodes[i][j-1], [i, j, 0]) != -1) {
-				//console.log("yes")
-				if (j >= 0 && i-1 >=0 && arrayIndexOf(puzzle.nodes[i-1][j], [i,j,0]) != -1) {
-					//console.log("two crosses detected, both at top left node");
-					placeCross(puzzle,i,j,i,j+1);
-					placeCross(puzzle,i,j,i+1,j);
-				} 
-			}
-			if (i-1 >= 0 && j+1<puzzle.w && arrayIndexOf(puzzle.nodes[i-1][j+1], [i, j+1, 0]) != -1) {
-				if (j >= 0 && arrayIndexOf(puzzle.nodes[i][j+1], [i, j+2, 0]) != -1) {
-					//console.log("two crosses detected, both at top right node");
-					placeCross(puzzle,i,j,i,j+1);
-					placeCross(puzzle,i,j+1,i+1,j+1);
-				}
-			}
-			if (i+2 < puzzle.h+1 && j < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1], [i+1, j+1, 0]) != -1) {
-				if (j >= 0 && i+1 < puzzle.h && arrayIndexOf(puzzle.nodes[i+1][j+2], [i+1, j+1, 0]) != -1) {
-					//console.log("two crosses detected, both at bottom right corner");
-					placeCross(puzzle,i,j+1,i+1,j+1);
-					placeCross(puzzle, i+1,j,i+1,j+1);
-				}
-			}
-			if (i+1 <= puzzle.h+1 && j-1 >-0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 0]) != -1) {
-				if (j >= 0 && i+2 < puzzle.h && arrayIndexOf(puzzle.nodes[i+2][j], [i+1, j, 0]) != -1) {
-					//console.log("two crosses detected, both at bottom left corner");
-					placeCross(puzzle,i,j,i+1,j);
-					placeCross(puzzle,i+1,j,i+1,j+1);
-				}
-			}
-		}
-	}
-}
-
-
-
-// if a line is coming into a cell with a one, and the two inner edges of a one are crossed off, place a cross on outside of the node with the line connected to it.
+// RULE: inverse of rule2; line incoming to 1-cell with inside corncer crossed offscreenBuffering
 function RuleThreeForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		if (puzzle.cells[i][j][0]== 1) {
@@ -1452,7 +1449,7 @@ function RuleThreeForOnes (puzzle,i,j) {
 }
 	
 
-// function that will place a cross between two sets of ones.
+// RULE: adjacent 1-cells with 3 crosses on either outside edge
 function RuleFourForOnes (puzzle,i,j) { 
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w) {
 		if (i < puzzle.h-1 && puzzle.cells[i][j][0] == 1 && puzzle.cells[i+1][j][0] == 1) {
@@ -1504,8 +1501,7 @@ function RuleFourForOnes (puzzle,i,j) {
 }
 
 
-//f two 1s are diagonally adjacent, then of the eight segments around those two cells, either the "inner" set of four segments sharing a 
-//common endpoint (the point shared by the 1s) or the other "outer" set of four segments must all be X'd out. Thus if any two inner or outer segments in one 1 are X'd, the respective inner or outer segments of the other 1 must also be X'd.
+// RULE: two diagonal 1-cells
 function RuleFiveForOnes (puzzle,i,j) {
 	if (i >= 0 && i < puzzle.h && j >= 0 && j < puzzle.w - 1) {
 		if (puzzle.cells[i][j][0] == 1 && i<puzzle.h-1 && j< puzzle.w-1 && puzzle.cells[i+1][j+1][0]==1) {
@@ -1549,8 +1545,7 @@ function RuleFiveForOnes (puzzle,i,j) {
 }
 
 
-// If a 3 is adjacent to a 0, either horizontally or vertically, then all edges of that 3 
-//can be filled except for the one touching the 0. In addition, the two lines perpendicular to the adjacent boxes can be filled.
+// UNUSED
 function RuleOneforThrees (puzzle,i,j) {
 	// checks top row and cell below, to ensure we dont go out of bounds
 	// if there is a zero below and our current cell is a 3 then place lines
@@ -1650,30 +1645,6 @@ function RuleTwoForThrees (puzzle,i,j) {
 		placeCross(puzzle, i, j+1, i-1, j+1); // top cross
 		placeCross(puzzle, i+1, j+1, i+2, j+1); // bottom cross
 	}
-	
-	/*
-		if (j+1 < puzzle.w && puzzle.cells[i][j][0] == 3 && puzzle.cells[i][j+1][0] == 3) {
-			if (j+2 < puzzle.w && puzzle.cells[i][j+2][0]!=0) {
-				//console.log("passed");
-				placeLine(puzzle,i,j,i+1,j);
-				placeLine(puzzle,i,j+1,i+1,j+1);
-				placeLine(puzzle,i,j+2,i+1,j+2);
-				placeCross(puzzle,i-1,j+1,i,j+1);
-				placeCross(puzzle,i+1,j+1,i+2,j+1);
-			}
-		}
-
-		//perm
-	if (i+2 < puzzle.h && puzzle.cells[i][j][0] == 3 && puzzle.cells[i+1][j][0] == 3) {
-		if ( i+2 <puzzle.h && puzzle.cells[i+2][j][0] != 0 ) {
-			placeLine(puzzle,i,j,i,j+1);
-			placeLine(puzzle,i+1,j,i+1,j+1);
-			placeLine(puzzle,i+2,j,i+2,j+1);
-			placeCross(puzzle,i+1,j+1,i+1,j+2);
-			placeCross(puzzle,i+1,j,i+1,j-1);
-		}
-	}
-	*/
 }
 	
 	
@@ -1775,41 +1746,10 @@ function RuleFourforThrees(puzzle,i,j) {
 		placeCross(puzzle, i+1, j, i+2, j);
 	}
 	return;
-	
-	/*
-	if (puzzle.cells[i][j][0] == 3) {				
-		// Check for a line below the bottom-left corner of the '3' cell
-		if (i+1 < puzzle.h && j >= 0 && arrayIndexOf(puzzle.nodes[i+1][j-1], [i+1, j, 1]) != -1) {
-			// Place lines
-			//console.log("rule four");
-			placeLine(puzzle, i, j, i, j + 1);
-			placeLine(puzzle,i,j+1,i+1,j+1);
-			placeCross(puzzle,i+1,j,i+2,j);
-		}
-		//perm 1
-		if (i+1 < puzzle.h && i+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+1][j+1],[i+1,j+2,1])!= -1) {
-			placeLine(puzzle,i,j,i,j+1);
-			placeLine(puzzle,i,j,i+1,j);
-			placeCross(puzzle,i+1,j+1,i+2,j+1);
-		}
-		//perm 2
-		if (i-1 >= 0 && arrayIndexOf(puzzle.nodes[i-1][j],[i,j,1])!= -1) {
-			placeLine(puzzle,i,j+1,i+1,j+1);
-			placeLine(puzzle,i+1,j,i+1,j+1);
-			placeCross(puzzle,i,j-1,i,j);
-		}
-		//perm 3
-		if (i+2 < puzzle.h && j+1 < puzzle.w && arrayIndexOf(puzzle.nodes[i+2][j+1],[i+1,j+1,1])!= -1) {
-			placeLine(puzzle,i,j,i,j+1);
-			placeLine(puzzle,i,j,i+1,j);
-			placeCross(puzzle,i+1,j+1,i+1,j+2);
-		}
-	}
-	*/
 }
 
 
-// If two 3s are adjacent diagonally, the edges which do not run into the common point must be filled in.
+// RULE: diagonal 3s
 function DiagThrees(puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
 		if (j+1 < puzzle.w && i+1 < puzzle.h && puzzle.cells[i+1][j+1][0] == 3) {
@@ -1827,7 +1767,8 @@ function DiagThrees(puzzle,i,j) {
 	}
 }
 
-//Similarly, if two 3s are in the same diagonal, but separated by any number of 2s (and only 2s) the outside edges of the 3s must be filled in, just as if they were adjacent diagonally.
+
+// RULE: diagonal 3s, but with 2s in the middle
 function DiagThrees2 (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
 		if (j+1 < puzzle.w && i+1 < puzzle.h && puzzle.cells[i+1][j+1][0] == 2) {
@@ -1853,7 +1794,8 @@ function DiagThrees2 (puzzle,i,j) {
 }
 
 
-//if there is a series of 2s in a diagonal line and an angled line meets the corner of the 2 at one end of the series, a matching angled line can be drawn all the way up the series.
+// RULE: diagonal 2's
+// rule covered by intersection + complete cell rules
 function DiagTwos (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 2) {
 		// perm 1
@@ -1907,8 +1849,7 @@ function DiagTwos (puzzle,i,j) {
 }
 
 
-// if a line reaches the starting point (A) of a diagonal that contains one or more 2s and ends with a 3, both sides 
-//of the far corner (farthest from A on the diagonal) of the 3 must be filled. If this were not true, it would imply that both sides of the near corner of the 3 must be filled, which would imply that the near corners of all the 2s must be filled, including the 2 at the start of the diagonal, which is impossible because it conflicts with the line that has reached the starting point (A).
+// RULE: line approaching a row of diagonal 2's, ending with a 3
 function Diag2sand3s(puzzle,i,j) {
 	// perm 1
 	if (puzzle.cells[i][j][0] == 2) {
@@ -1951,7 +1892,7 @@ function Diag2sand3s(puzzle,i,j) {
 }
 
 
-// If a 1 and a 3 are adjacent diagonally and the outer two sides of the 1 are X'd out, then the outer two sides of the 3 must be filled in.
+// RULE: diagonal 3 and 1, where 1's inner corner farthest from 3 is crossed
 function Diag3sand1s (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 1) {
 		//perm 1
@@ -1994,7 +1935,7 @@ function Diag3sand1s (puzzle,i,j) {
 }
 
 
-// The opposite is the same: if the outer two corners of the 3 are filled in, then the outer two corners of the 1 must be X'd out.
+// RULE: inverse of above; cross inner edge of diag 1 next to 3
 function InverseDiag3sand1s (puzzle,i,j) {
 	if (puzzle.cells[i][j][0] == 3) {
 		//perm 1
@@ -2038,129 +1979,45 @@ function InverseDiag3sand1s (puzzle,i,j) {
 }
 
 
-function handleRulesForOnes (puzzle,i,j) {
-	RuleOneForOnes(puzzle,i,j);
-	RuleTwoforOnes(puzzle,i,j);
-	RuleThreeForOnes(puzzle,i,j);
-	RuleFourForOnes (puzzle,i,j);
-	RuleFiveForOnes(puzzle,i,j);
+// calls all functions related to 1-cells
+function handleRulesForOnes (puzzle, i, j) {
+	cornerWithOne(puzzle, i, j);
+	RuleOneForOnes(puzzle, i, j);
+	RuleTwoforOnes(puzzle, i, j);
+	RuleThreeForOnes(puzzle, i, j);
+	RuleFourForOnes (puzzle, i, j);
+	RuleFiveForOnes(puzzle, i, j);
 }
 
 
-function handleRulesForThrees (puzzle,i,j) {
-	//RuleOneforThrees(puzzle,i,j);
-	RuleTwoForThrees(puzzle,i,j); // adjacent 3s
-	RuleThreeForThrees(puzzle,i,j); // 3 in a corner, generalized
-	RuleFourforThrees(puzzle,i,j); // line "coming into" a cell
+function handleRulesForTwos (puzzle, i, j){
+	cornerWithTwo(puzzle, i, j);
+	applyTwoAdjacentRule(puzzle, i, j);
 }
 
 
+// calls all functions related to 3-cells
+function handleRulesForThrees (puzzle, i, j) {
+	cornerWithThree(puzzle, i, j);
+	RuleTwoForThrees(puzzle, i, j); // adjacent 3s
+	RuleThreeForThrees(puzzle, i, j); // 3 in a corner, generalized
+	RuleFourforThrees(puzzle, i, j); // line "coming into" a cell
+}
+
+
+// calls all functions related to diagonals
 function handleDiags (puzzle,i,j) {
-	DiagThrees(puzzle,i,j);
-	DiagThrees2(puzzle,i,j);
-	DiagTwos(puzzle,i,j);
+	DiagThrees(puzzle, i, j);
+	DiagThrees2(puzzle, i, j);
+	DiagTwos(puzzle, i, j);
+	Diag2sand3s(puzzle, i, j);
+	Diag3sand1s(puzzle, i, j);
+	InverseDiag3sand1s(puzzle,i,j);
 }
-
-
-function handleSpecialDiags (puzzle,i,j) {
-	Diag2sand3s(puzzle,i,j);
-	Diag3sand1s(puzzle,i,j);
-	InverseDiag3sand1s (puzzle,i,j);
-}
-
-
-function lineOrCrossExists(puzzle, x1, y1, x2, y2) {
-    const nodeConnections = puzzle.nodes[x1][y1];
-    if (!nodeConnections)
-		return false; // No connections from this node
-    const lineIndex = arrayIndexOf(nodeConnections, [x2, y2, 1]); // Check for line
-    const crossIndex = arrayIndexOf(nodeConnections, [x2, y2, 0]); // Check for cross
-    return lineIndex == -1 || crossIndex !== -1;
-}
-
-
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
-
-
-function getAvailableNeighbors(puzzle, x, y) {
-    let neighbors = [];
-    if (x >= 0 && !lineOrCrossExists(puzzle, x, y, x - 1, y)) neighbors.push([x - 1, y]);
-    if (x < puzzle.h && !lineOrCrossExists(puzzle, x, y, x + 1, y)) neighbors.push([x + 1, y]);
-    if (y >= 0 && !lineOrCrossExists(puzzle, x, y, x, y - 1)) neighbors.push([x, y - 1]);
-    if (y < puzzle.w && !lineOrCrossExists(puzzle, x, y, x, y + 1)) neighbors.push([x, y + 1]);
-
-    // Shuffle neighbors to try them in a random order
-    shuffleArray(neighbors);
-    return neighbors;
-}
-
-
-export var solveSlitherlink = function(puzzle) {
-    const saveKey = "loadsolvernodes";
-	
-    function saveState() {
-        localStorage.setItem(saveKey, JSON.stringify(puzzle.nodes));
-    }
-
-    function loadState() {
-        const savedNodes = localStorage.getItem(saveKey);
-        if (savedNodes) {
-            puzzle.nodes = JSON.parse(savedNodes);
-        }
-    }
-
-    function deleteState() {
-        localStorage.removeItem(saveKey);
-    }
-
-    function backtrack(x, y) {
-		if (verifySolution(puzzle)) {
-			//console.log("Puzzle solved correctly!");
-			deleteState();
-			return true;
-		}
-	
-		// Define potential neighboring positions (top, bottom, left, right), checking bounds
-		let neighbors = getAvailableNeighbors(puzzle,x,y)
-	
-		for (let neighbor of neighbors) {
-			saveState();
-			if (placeLine(puzzle, x, y, neighbor[0], neighbor[1])) {
-				if (checkDeadEnds(puzzle) || checkIntersections(puzzle)) {
-					loadState(); // Restore the state if an error is detected
-					//placeCross(puzzle, x, y, neighbor[0], neighbor[1]); // Place a cross to avoid repeating the mistake
-					saveState();
-					continue; // Move to the next neighbor
-				}
-				if (backtrack(neighbor[0], neighbor[1])) {
-					return true;
-				}
-				loadState(); // Restore the previous state if backtracking
-			}
-		}
-		return false;
-    }
-
-    for (let x = 0; x < puzzle.h-1; x++) {
-        for (let y = 0; y < puzzle.w-1; y++) {
-            if (backtrack(x, y)) {
-                return true;
-            }
-        }
-    }
-
-    //console.log("No solution found.");
-    return false;
-};
 
 
 // returns true if in-progress solution is ok
-function progressCheck(puzzle){
+export var progressCheck = function(puzzle){
 	// iterate thru each node
     for (let i = 0; i < puzzle.h+1; i++) {
         for (let j = 0; j < puzzle.w+1; j++) {
@@ -2171,10 +2028,14 @@ function progressCheck(puzzle){
                         lines++;
                     }
                 }
-                if (lines > 2) // Intersection
+                if (lines > 2){ // Intersection
+					console.log("PC: intersection around [" + i + ", " + j + "]");
                     return false;
-				if (isDeadEnd(puzzle, i, j))
+				}
+				if (lines == 1 && isDeadEnd(puzzle, i, j)){
+					console.log("PC: dead end around [" + i + ", " + j + "]");
 					return false;
+				}
             }
         }
     }
@@ -2182,18 +2043,22 @@ function progressCheck(puzzle){
 	// iterate thru each cell
 	for (let i = 0; i < puzzle.h; i++){
 		for (let j = 0; j < puzzle.w; j++){
-			if (puzzle.cells[i][j][0] > countLines(puzzle, i, j)){ // too many lines
+			if (puzzle.cells[i][j][0] == -1)
+				continue;
+			if (countLines(puzzle, i, j) > puzzle.cells[i][j][0]){ // too many lines
+				console.log("PC: too many lines around cell [" + i + ", " + j + "]");
 				return false;
-			} else if (4 - puzzle.cells[i][j][0] > countCrosses(puzzle, i, j)) { // too many crosses
+			} else if (countCrosses(puzzle, i, j) > 4 - puzzle.cells[i][j][0]) { // too many crosses
+				console.log("PC: too many crosses around cell [" + i + ", " + j + "]");
 				return false;
 			}
 		}
 	}
-	
-    return true; // everything ok
+    return true;
 }
 
 
+// returns true if an intersection is found in the given puzzle
 function checkIntersections(puzzle) {
 	// iterate thru each node
     for (let i = 0; i < puzzle.h+1; i++) {
@@ -2215,6 +2080,7 @@ function checkIntersections(puzzle) {
 }
 
 
+// returns true if a dead end is found in the given puzzle
 function checkDeadEnds(puzzle) {
 	// iterate thru each node
     for (let i = 0; i < puzzle.h; i++) {
@@ -2238,22 +2104,24 @@ function checkDeadEnds(puzzle) {
 
 
 //still has issues with backtracking. seems to handle most of the 5x5 puzzles well though.
-export var autoSolver = function(puzzle, steps) {
+export var autoSolver = function(puzzle) {
     let changesMade;
-	let backtracking = false;
-	let iterations = 0;
+	let backtracking = true;
+	let backtrackIterations = 0;
+	let maxBacktrackIterations = 20;
+	let bk = false;
 	let checkedCells = [];
+	
     do {
         changesMade = false;
-		if (steps > 0 && iterations == steps)
-			break;
         var snapshotBefore = JSON.stringify(puzzle);
+
 
         // Apply all heuristics, iterating through each cell
         for (let i = 0; i < puzzle.h; i++) {
             for (let j = 0; j < puzzle.w; j++) {
                 crossCompletedCell(puzzle, i, j); // cross the edges of completed cells
-				handleCellWithInverseNumber(puzzle, i, j); // add lines if enough crosses around cell
+				completeCell(puzzle, i, j); // add lines if enough crosses around cell
                 handleNodeRules(puzzle, i, j); // cross possible intersections/dead ends and continue line path
                 if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
                 if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
@@ -2261,136 +2129,132 @@ export var autoSolver = function(puzzle, steps) {
 
                 // Apply corner rules based on the number inside each cell
                 if (puzzle.cells[i][j][0] == 1) {
-                    handleCellWithOne(puzzle, i, j);
+                    handleRulesForOnes(puzzle, i, j);
                 } else if (puzzle.cells[i][j][0] == 2) {
-                    handleCellWithTwo(puzzle, i, j);
+                    handleRulesForTwos(puzzle, i, j);
                 } else if (puzzle.cells[i][j][0] == 3) {
-                    handleCellWithThree(puzzle, i, j);
+                    handleRulesForThrees(puzzle, i, j);
                 }
-
-                applyTwoAdjacentRule(puzzle, i, j);
-                handleRulesForOnes(puzzle, i, j);
-                handleRulesForThrees(puzzle, i, j);
                 handleDiags(puzzle, i, j);
-                handleSpecialDiags(puzzle, i, j);
             }
         }
 		crossPrematureLoop(puzzle);
+		
+		
+		// check if any changes were made
         var snapshotAfter = JSON.stringify(puzzle);
         changesMade = snapshotBefore !== snapshotAfter;
+        if (changesMade)
+			continue;
+		
 
-        if (!changesMade) {  // If no changes, then backtracking is needed
-            if (verifySolution(puzzle)) {
-                console.log("Autosolver SUCCESS");
-                return;
-            } else {
-                console.log("NEED BACKTRACKING....");
-				if (backtracking){
-					// find a cell to concentrate on
-					let emptyConnections;
-					loopConcentrate:
+        if (verifySolution(puzzle)) {
+            console.log("Autosolver SUCCESS");
+            return;
+        }
+		
+		// If no changes were made in last iteration and puzzle is not completed, backtracking is needed
+        //console.log("NEED BACKTRACKING....");
+		if (backtracking && backtrackIterations < maxBacktrackIterations){
+			backtrackIterations++;
+			console.log("Backtrack iteration: " + backtrackIterations);
+			let emptyConnections;
+			loopConcentrate: // find a cell to concentrate on
+			for (let i = 0; i < puzzle.h; i++) {
+				for (let j = 0; j < puzzle.w; j++) {
+					if (arrayIndexOf(checkedCells, [i, j]) == -1 && puzzle.cells[i][j][0] != countLines(puzzle, i, j)){ // lines can possibly be placed around this cell!
+						emptyConnections = getEmptyConnections(puzzle, i, j);
+						if (emptyConnections && emptyConnections.length > 0){
+							checkedCells.push([i, j]);
+							//console.log("Checking cells[" + i + "][" + j + "]");
+							break loopConcentrate;
+						} else {
+							continue;
+						}
+					}
+				}	
+			}
+					
+			if (!emptyConnections){ // did not find a suitable cell
+				console.log("Something wrong with backtracking...");
+				return;
+			}
+					
+			// try each line around cell
+			//console.log("Empty connections around cell: " + emptyConnections);
+			for (let connection of emptyConnections) {
+				debugger
+				//console.log("Current connection to try: " + connection);
+				let saveState = JSON.stringify(puzzle.nodes);  // Make savestate
+				debugger
+				placeLine(puzzle, connection[0], connection[1], connection[2], connection[3]);  // Place line in current connection
+
+				// Apply heuristics repeatedly for a specified # of iterations
+				for (let iteration = 0; iteration < 15; iteration++) {
 					for (let i = 0; i < puzzle.h; i++) {
 						for (let j = 0; j < puzzle.w; j++) {
-							if (arrayIndexOf(checkedCells, [i, j]) == -1 && puzzle.cells[i][j][0] != countLines(puzzle, i, j)){ // lines can possibly be placed around this cell!
-								emptyConnections = getEmptyConnections(puzzle, i, j);
-								if (emptyConnections){
-									checkedCells.push([i, j]);
-									console.log("Checking cells[" + i + "][" + j + "]");
-									break loopConcentrate;
-								} else {
-									continue;
-								}
+							crossCompletedCell(puzzle, i, j); // cross the edges of completed cells
+							completeCell(puzzle, i, j); // add lines if enough crosses around cell
+							handleNodeRules(puzzle, i, j); // cross possible intersections/dead ends and continue line path
+							if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);  // Check right edge nodes
+							if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);  // Check bottom edge nodes
+							if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);  // Check bottom-right corner node
+
+							// Apply corner rules based on the number inside each cell
+							if (puzzle.cells[i][j][0] == 1) {
+								handleRulesForOnes(puzzle, i, j);
+							} else if (puzzle.cells[i][j][0] == 2) {
+								handleRulesForTwos(puzzle, i, j);
+							} else if (puzzle.cells[i][j][0] == 3) {
+								handleRulesForThrees(puzzle, i, j);
 							}
-						}	
-					}
-					
-					if (!emptyConnections){ // did not find a suitable cell
-						console.log("Something wrong with backtracking...");
-						break;
-					}
-					
-					// try each line around cell
-					for (let connection of emptyConnections) {
-						let saveState = JSON.stringify(puzzle);  // Make savestate
-						placeLine(puzzle, connection[0], connection[1], connection[2], connection[3]);  // Place line in current connection
-
-						// Apply heuristics repeatedly for a specified # of iterations
-						for (let iteration = 0; iteration < 15; iteration++) {
-							for (let i = 0; i < puzzle.h; i++) {
-								for (let j = 0; j < puzzle.w; j++) {
-									crossCompletedCell(puzzle, i, j);
-									handleNodeRules(puzzle, i, j);
-									if (j == puzzle.w - 1) handleNodeRules(puzzle, i, puzzle.w);
-									if (i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, j);
-									if (j == puzzle.w - 1 && i == puzzle.h - 1) handleNodeRules(puzzle, puzzle.h, puzzle.w);
-
-									if (puzzle.cells[i][j][0] == 1) {
-										handleCellWithOne(puzzle, i, j);
-									} else if (puzzle.cells[i][j][0] == 2) {
-										handleCellWithTwo(puzzle, i, j);
-									} else if (puzzle.cells[i][j][0] == 3) {
-										handleCellWithThree(puzzle, i, j);
-									}
-
-									applyTwoAdjacentRule(puzzle, i, j);
-									handleRulesForOnes(puzzle, i, j);
-									handleRulesForThrees(puzzle, i, j);
-									handleDiags(puzzle, i, j);
-									handleSpecialDiags(puzzle, i, j);
-									handleCellWithInverseNumber(puzzle, i, j);
-								}
-							}
-						}
-
-						// Check conditions after heuristic/pattern passes.
-						if (progressCheck(puzzle)) {
-							console.log("Valid move found, reloading save");
-							puzzle = JSON.parse(saveState);
-							changesMade = true;
-						} else {
-							console.log("Invalid move detected, reloading save and adding cross");
-							puzzle = JSON.parse(saveState);  // Reload the saved state to revert
-							placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
-							changesMade = true;
+							handleDiags(puzzle, i, j);
 						}
 					}
-					changesMade = true; // needed to loop entire autosolver again after trying backtracking
+					crossPrematureLoop(puzzle);
 				}
-            }
-        }
-		iterations++;
-    } while (changesMade);
 
-    if (verifySolution(puzzle)) {
-        //console.log("Autosolver completed puzzle successfully.");
-    } else {
-        console.log("Autosolver FAILED.");
-    }
+				debugger
+				// Check conditions after heuristic/pattern passes.
+				if (progressCheck(puzzle)) {
+					console.log("Valid move found, reloading save");
+					puzzle.nodes = JSON.parse(saveState);
+					changesMade = true;
+				} else {
+					console.log("Invalid move detected, reloading save and adding cross");
+					puzzle.nodes = JSON.parse(saveState);  // Reload the saved state to revert
+					placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
+					changesMade = true;
+					checkedCells = [];
+					//return;
+				}
+			}
+			changesMade = true; // needed to loop entire autosolver again after trying backtracking
+		}
+    } while (changesMade);
+    console.log("Autosolver FAILED.");
 };
 
-
+// get empty connections around a given cells
 function getEmptyConnections(puzzle, x, y) {
     let connections = [];
     const directions = [
-        [x, y, x, y + 1],      // Top left to top right
-        [x, y, x + 1, y],      // Top left to bottom left
-        [x + 1, y, x + 1, y + 1],  // Bottom left to bottom right
-        [x, y + 1, x + 1, y + 1] // Top right to bottom right
+        [x, y, x, y + 1],     	 	// top line
+        [x, y, x + 1, y],     	 	// left line
+        [x + 1, y, x + 1, y + 1],  	// bottom line
+        [x, y + 1, x + 1, y + 1] 	// right line
     ];
 
     // Checking each direction for empty connections
     for (let dir of directions) {
         let [startX, startY, endX, endY] = dir;
-        if (
-            startX >= 0 && startX < puzzle.h && startY >= 0 && startY < puzzle.w &&
-            endX >= 0 && endX < puzzle.h && endY >= 0 && endY < puzzle.w &&
-            arrayIndexOf(puzzle.nodes[startX][startY], [endX, endY, 0]) === -1 && // No cross
-            arrayIndexOf(puzzle.nodes[startX][startY], [endX, endY, 1]) === -1    // No line
-        ) {
+        if (arrayIndexOf(puzzle.nodes[startX][startY], [endX, endY, 0]) == -1 &&  // No cross
+            arrayIndexOf(puzzle.nodes[startX][startY], [endX, endY, 1]) == -1){   // No line
             connections.push(dir);
         }
     }
-
+	
+	//console.log("empty connections of cell [" + x + ", " + y + "]: " + connections);
     return connections;
 }
 

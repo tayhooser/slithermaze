@@ -1443,7 +1443,7 @@ greyHTML.oninput = function() {
 
 // called when user hits solution button, HTML side
 solutionHTML.onclick = function() {
-    pl.autoSolver(curPuzzle, 0);
+    pl.autoSolver(curPuzzle);
 	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
 	updateStateHistory();
 	solverUsed = true;
@@ -1534,6 +1534,7 @@ tutorialHTML.onclick = function(){
 		tutBoxHTML.style.display = 'block';
 	}
 	return;
+	//console.log("Progress check: " + pl.progressCheck(curPuzzle));
 };
 
 
