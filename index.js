@@ -81,6 +81,7 @@ export var lineObjects = [];	// list of lines that will be interacted with and c
 var cellShades = [];
 var gLinesArray;		// 2D Array that indicates which lines are on/off
 var dot, line, cross, zero, one, two, three, box;	// instance of graphic templates
+var lastUniformColor = [0.0, 0.0, 1.0];
 
 var shouldRender = false;
 var ortho_size, view, projection, vp;
@@ -347,6 +348,7 @@ var initPuzzleGraphics = function(puzzle) {
 			newMesh.color = [0.9, 0.9, 0.9];
 			newMesh.worldCoords = [translateX, translateY];
 			newMesh.inOut = 0.0;
+			newMesh.lastClicked = 0;
 			
 			let translationVec = glMatrix.vec3.fromValues(translateX, translateY, 0.5);				// keep same translation as current cell iteration
 			glMatrix.mat4.translate(newMesh.modelMatrix, newMesh.modelMatrix, translationVec);		
@@ -481,9 +483,8 @@ var initPuzzleGraphics = function(puzzle) {
 
 // looping render call to draw stuff to screen
 var render = function() {
+	// if the puzzle hasn't finished initializing, don't start rendering yet
 	if (!shouldRender) {
-		//clearTimeout(render);
-		//return;
 		setTimeout(render, 100);
 		return;
 	}
@@ -494,8 +495,6 @@ var render = function() {
 		startedTimer = true;
 	}
 	
-
-
 	var timeStart = Date.now(); 
 
 	gl.clearColor(R, G, B, 1.0);
@@ -521,14 +520,15 @@ var render = function() {
 	var colorLoc = gl.getUniformLocation(program, "color");
 	var weightLoc = gl.getUniformLocation(program, "weight");
 	var crossScale = [3.0, 3.0, 1];
-	var color = [1.0, 1.0, 1.0];
-	var lastUniformColor = [0.0, 0.0, 0.0];
+	var color = [0.0, 1.0, 0.0];
+	
 
 	// draw shaded cells
-	var cellShadeColor = [0.9, 0.9, 0.9];
-	gl.uniform3fv(colorLoc, cellShadeColor);
+	color = [0.9, 0.9, 0.9];
+	lastUniformColor = color;
+	gl.uniform3fv(colorLoc, color);
 	for (let i = 0; i < cellShades.length; i++) {
-		if (cellShades[i].display == 0) continue;
+		//if (cellShades[i].display == 0) continue;
 		if (!g.checkIfOnScreen(cellShades[i].worldCoords, ortho_size, cameraPosition)) continue;
 		//gl.uniform3fv(colorLoc, cellShades[i].color);
 
@@ -557,20 +557,22 @@ var render = function() {
 		if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0) {				// line off											
 			//lineObjects[i].display = 0;
 			//continue;
+			color = lineObjects[i].color;
+			lineObjects[i].translate[2] = 0;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 1)	{	   // line on
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
-			//glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.translate(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].rotate);
 			glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].scale);
 			color = lineObjects[i].color;
+			lineObjects[i].translate[2] = 1;
 			lineObjects[i].display = 1;
 		} else if (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 2)	{	   // cross
 			lineObjects[i].modelMatrix = glMatrix.mat4.create();
-			//glMatrix.mat4.multiply(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.translate(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, lineObjects[i].translate);
 			glMatrix.mat4.scale(lineObjects[i].modelMatrix, lineObjects[i].modelMatrix, crossScale );
 			color = [0.831, 0.486, 0.467];
+			lineObjects[i].translate[2] = 1;
 			lineObjects[i].display = 2;
 		}
 
@@ -582,14 +584,16 @@ var render = function() {
 		}
 
 		let mixWeight = [g.getMixWeight(lineObjects[i].lastClicked, 150), lineObjects[i].inOut];
-		//if (lineObjects[i].inOut <= 0.1 && mixWeight[0] == 1) {
-		//	lineObjects[i].display = 0;
-		//	continue;
-		//}
+		
+		// If the line/cross is finished fading out. Don't neet to render this line anymore
+		if ((mixWeight[0] >= 1.0) && (gLinesArray[lineObjects[i].yCoord][lineObjects[i].xCoord] == 0)) {
+			lineObjects[i].display = 0;
+			continue;
+		}
 		gl.uniform2fv(weightLoc, mixWeight);
 
 		// only pass in a new color to the shader program when its different from the last uniform call
-		if (!g.checkSameArray(color, lastUniformColor)) {
+		if (!(g.checkSameArray(color, lastUniformColor))) {
 			lastUniformColor = color;
 			gl.uniform3fv(colorLoc, lastUniformColor);
 		}
@@ -611,6 +615,7 @@ var render = function() {
 	// drawing dots and numbers
 	// just pass in the puzzle color once since the same color will always be used for these
 	color = [0.439, 0.329, 0.302];
+	lastUniformColor = color;
 	gl.uniform3fv(colorLoc, color);
 
 	for (let i = 0; i < puzzleObjects.length; i++) {
@@ -661,17 +666,13 @@ var render = function() {
 		stopWatch = Date.now();
 	}
 	
-
-
 	setTimeout(render, 1);
 };
 
 
 // CANVAS EVENT-RELATED FUNCTIONS ---------------------------------------------------------------------------------------------
 var startEventListeners = function(event) {
-	//canvas.addEventListener("mouseenter", mouseEnter, false);
 	window.addEventListener("resize", windowResize, false);
-	//canvas.addEventListener("click", click, true);
 	canvas.addEventListener("pointerdown", pointerDown, false);
 	canvas.addEventListener("wheel", mouseWheel, { passive: false });
 
@@ -762,7 +763,6 @@ var click = function(worldCoords, button) {
 			}
 			else {																				// line or no line is there
 				gLinesArray[tempYIndex][tempXIndex] = 1 - gLinesArray[tempYIndex][tempXIndex];	// toggles between line and no line
-				lineObjects[keptIndex].translate[2] = 1 - (lineObjects[keptIndex].translate[2])
 				lineObjects[keptIndex].inOut = 1.0 - lineObjects[keptIndex].inOut;
 			}
 		}
@@ -773,17 +773,11 @@ var click = function(worldCoords, button) {
 			}
 			else {
 				gLinesArray[tempYIndex][tempXIndex] = 2 - gLinesArray[tempYIndex][tempXIndex];	// toggles between nothing and a cross
-				lineObjects[keptIndex].translate[2] = 1 - (lineObjects[keptIndex].translate[2])
 				lineObjects[keptIndex].inOut = 1.0 - lineObjects[keptIndex].inOut;
 			}
 
 			justPlacedAnX = true;
 		}
-		if (isTouching) {
-			console.log("touchTimer after click(): ", touchTimer);
-		}
-		
-
 
 		//gLinesArray[tempYIndex][tempXIndex] = (gLinesArray[tempYIndex][tempXIndex] + 1) % 3; // place line graphically
 		g.updateLogicConnection(curPuzzle, gLinesArray, tempYIndex, tempXIndex); 			 // place line logically
@@ -832,8 +826,6 @@ var click = function(worldCoords, button) {
 			}
 		}
 	}
-	var msPassed = Date.now() - timeStart;
-	//console.log("click() took ", msPassed, "ms");
 
 };
 
@@ -852,14 +844,6 @@ var mouseWheel = function(event) {
 	zoomSliderHTML.value = zoomLevel;
 	checkCamBoundary();
 };
-
-// var mouseEnter = function (event) {
-// 	canvas.addEventListener("click", click, false);		
-// 	canvas.addEventListener("mousedown", pointerDown, false);		
-// 	canvas.addEventListener("wheel", mouseWheel, false);
-// 	//canvas.addEventListener("mouseleave", mouseLeave, false);
-// 	//canvas.removeEventListener("mouseenter", mouseEnter, false);
-// };
 
 
 // pointer events work with mouse or touch events but some events should only work on touch screens
@@ -893,13 +877,9 @@ var pointerMove = function (event) {
 
 	camAndLook[0] -= deltaX * (0.1 * zoomLevel);
 	camAndLook[1] += deltaY * (0.1* zoomLevel);
-	
-	//camWasMoved = true;
 
 	startPos[0] = event.layerX;
 	startPos[1] = event.layerY;
-
-	
 
 	if (camAndLook[0] < 0 )
 		camAndLook[0] = 0;
@@ -925,11 +905,6 @@ var pointerUp = function (event) {
 	var mouseY = event.clientY - canvasRect.top;
 	var worldCoords = canvasToWorldCoords(mouseX, mouseY);
 
-	//console.log(" POINTER UP ", event);
-
-	// var camDistanceMoved = Math.sqrt((camTotalMoved[0] * camTotalMoved[0]) + (camTotalMoved[1] * camTotalMoved[1]))
-	// if ((camDistanceMoved > 2) || (justPlacedAnX))
-	// 	camWasMoved = true;
 	if ((!camWasMoved) && (!justPlacedAnX))
 		click(worldCoords, event.button);
 
@@ -940,20 +915,13 @@ var pointerUp = function (event) {
 
 // mouse leaving the canvas
 var mouseLeave = function (event) { 
-	//canvas.removeEventListener("click", click, false);		
-	//canvas.removeEventListener("wheel", mouseWheel, false);
-	//canvas.removeEventListener("mousedown", pointerDown, false);
 	canvas.removeEventListener("pointermove", pointerMove, false);
-	//canvas.removeEventListener("mouseleave", mouseLeave, false);
-
-	//canvas.addEventListener("mouseenter", mouseEnter, false);
 };
 
 
 // start of a touch event
 var touchStart = function(event) {
 	//event.preventDefault();
-	//console.log(event.changedTouches);
 	usingTouchEvents = true;
 	isTouching = true;
 	justPlacedAnX = false;
@@ -961,7 +929,6 @@ var touchStart = function(event) {
 	var mouseX = event.targetTouches[0].clientX - canvasRect.left;
 	var mouseY = event.targetTouches[0].clientY - canvasRect.top;
 	var worldCoords = canvasToWorldCoords(mouseX, mouseY);
-	//console.log(mouseX, mouseY);
 
 	// track touch duration to see if a line or cross should be placed
 	touchTimerStart = Date.now();
@@ -978,6 +945,7 @@ var touchStart = function(event) {
 
 
 // helper fuction for tracking touch events
+// https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
 var copyTouch = function({identifier, clientX, clientY}) {
 	return {identifier, clientX, clientY};
 };
@@ -992,9 +960,7 @@ var touchMove = function(event) {
 		for (let i = 0; i < touches.length; i++) {
 			var index = ongoingTouchIndexById(touches[i].identifier);
 
-
 			if (index >= 0) {
-				//console.log("two touches found!");
 				//event.preventDefault();
 				canvas.removeEventListener("pointermove", pointerMove, { passive: false });
 				canvas.removeEventListener("pointerup", pointerUp, false);
@@ -1027,7 +993,6 @@ var touchMove = function(event) {
 
 };
 
-
 // end of a touch event
 var touchEnd = function(event) {
 	//event.preventDefault();
@@ -1050,6 +1015,7 @@ var touchEnd = function(event) {
 
 
 // helper function to keep track of moving touch events
+// https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
 var ongoingTouchIndexById = function(idToFind) {
 	for (let i = 0; i < ongoingTouches.length; i++) {
 		var id = ongoingTouches[i].identifier;
@@ -1065,7 +1031,6 @@ var ongoingTouchIndexById = function(idToFind) {
 var incrementCounter = function(worldCoords) {
 	//touchTimer++;
 	touchTimer = Date.now() - touchTimerStart;
-	//console.log(touchTimer);
 	if ((touchTimer >= touchCrossThreshold) && (!camWasMoved)) {
 		click(worldCoords, -1);
 		//touchTimer = 0;
