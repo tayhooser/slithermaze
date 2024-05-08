@@ -1408,9 +1408,23 @@ greyHTML.oninput = function() {
 
 // called when user hits solution button, HTML side
 solutionHTML.onclick = function() {
-    pl.autoSolver(curPuzzle);
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
-	updateStateHistory();
+	if (curPuzzle.h > 15){
+		solutionHTML.innerHTML = "Unavailable";
+		setTimeout(function() {
+			solutionHTML.innerHTML = "SOLUTION";
+		}, 5000);
+		return;
+	}
+	
+	solutionHTML.innerHTML = "Please wait...";
+	setTimeout(function() {
+		let startTime = performance.now();
+		pl.autoSolver(curPuzzle);
+		console.log("Autosolver finished in " + (performance.now() - startTime) + " ms.");
+		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+		updateStateHistory();
+		solutionHTML.innerHTML = "SOLUTION";
+	}, 200);
 	solverUsed = true;
 };
 
