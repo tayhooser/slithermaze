@@ -438,13 +438,15 @@ export var generatePuzzle = function(h, w, d){
 
 // returns true if puzzle was solved correctly
 export var verifySolution = function(puzzle){
+	let debug = false;
 	// check that all cells surrounded by correct num lines
 	for (let i = 0; i < puzzle.h; i++){
 		for (let j = 0; j < puzzle.w; j++) {
 			if (puzzle.cells[i][j][0] == -1) // unnumbered cell, skip
 				continue;
 			if (countLines(puzzle, i, j) != puzzle.cells[i][j][0]){ // wrong num lines
-				console.log("INCORRECT SOLUTION: wrong num lines around cell (" + i + ", " + j + ")");
+				if (debug)
+					console.log("INCORRECT SOLUTION: wrong num lines around cell (" + i + ", " + j + ")");
 				return false;
 			}
 		}
@@ -471,7 +473,8 @@ export var verifySolution = function(puzzle){
 	//console.log("start = " + start);
 	// no starting nodes found. redundant but added just in case
 	if (!start){
-		console.log("INCORRECT SOLUTION: no lines placed");
+		if (debug)
+			console.log("INCORRECT SOLUTION: no lines placed");
 		return false;
 	}
 	
@@ -489,7 +492,8 @@ export var verifySolution = function(puzzle){
 		//console.log("linesConns: " + lineConns.length);
 		// each node should only have 2 lines
 		if (lineConns.length != 2){
-			console.log("INCORRECT SOLUTION: dead end or intersection found at nodes[" + cur[0] + "][" + cur[1] + "]");
+			if (debug)
+				console.log("INCORRECT SOLUTION: dead end or intersection found at nodes[" + cur[0] + "][" + cur[1] + "]");
 			return false;
 		}
 		visited.push([...cur]);
@@ -520,13 +524,15 @@ export var verifySolution = function(puzzle){
 			// check for any line connections
 			for (let k = 0; k < puzzle.nodes[i][j].length; k++){
 				if (puzzle.nodes[i][j][k][2] == 1){
-					console.log("INCORRECT SOLUTION: multiple loops/segments detected!");
+					if (debug)
+						console.log("INCORRECT SOLUTION: multiple loops/segments detected!");
 					return false; // part of another line segment/subloop
 				}
 			}
 		}
 	}
-	console.log("CORRECT SOLUTION");
+	if (debug)
+		console.log("CORRECT SOLUTION");
 	return true;
 }
 
@@ -2029,11 +2035,11 @@ export var progressCheck = function(puzzle){
                     }
                 }
                 if (lines > 2){ // Intersection
-					console.log("PC: intersection around [" + i + ", " + j + "]");
+					//console.log("PC: intersection around [" + i + ", " + j + "]");
                     return false;
 				}
 				if (lines == 1 && isDeadEnd(puzzle, i, j)){
-					console.log("PC: dead end around [" + i + ", " + j + "]");
+					//console.log("PC: dead end around [" + i + ", " + j + "]");
 					return false;
 				}
             }
@@ -2046,10 +2052,10 @@ export var progressCheck = function(puzzle){
 			if (puzzle.cells[i][j][0] == -1)
 				continue;
 			if (countLines(puzzle, i, j) > puzzle.cells[i][j][0]){ // too many lines
-				console.log("PC: too many lines around cell [" + i + ", " + j + "]");
+				//console.log("PC: too many lines around cell [" + i + ", " + j + "]");
 				return false;
 			} else if (countCrosses(puzzle, i, j) > 4 - puzzle.cells[i][j][0]) { // too many crosses
-				console.log("PC: too many crosses around cell [" + i + ", " + j + "]");
+				//console.log("PC: too many crosses around cell [" + i + ", " + j + "]");
 				return false;
 			}
 		}
@@ -2108,8 +2114,8 @@ export var autoSolver = function(puzzle) {
     let changesMade;
 	let backtracking = true;
 	let backtrackIterations = 0;
-	let maxBacktrackIterations = 20;
-	let bk = false;
+	let maxBacktrackIterations = puzzle.w * puzzle.h;
+	let checkedNodes = [];
 	let checkedCells = [];
 	
     do {
@@ -2155,32 +2161,54 @@ export var autoSolver = function(puzzle) {
 		
 		// If no changes were made in last iteration and puzzle is not completed, backtracking is needed
         //console.log("NEED BACKTRACKING....");
+		let previ = 0;
+		let prevj = 0;
 		if (backtracking && backtrackIterations < maxBacktrackIterations){
 			backtrackIterations++;
 			console.log("Backtrack iteration: " + backtrackIterations);
 			let emptyConnections;
-			loopConcentrate: // find a cell to concentrate on
-			for (let i = 0; i < puzzle.h; i++) {
-				for (let j = 0; j < puzzle.w; j++) {
-					if (arrayIndexOf(checkedCells, [i, j]) == -1 && puzzle.cells[i][j][0] != countLines(puzzle, i, j)){ // lines can possibly be placed around this cell!
-						emptyConnections = getEmptyConnections(puzzle, i, j);
-						if (emptyConnections && emptyConnections.length > 0){
-							checkedCells.push([i, j]);
-							//console.log("Checking cells[" + i + "][" + j + "]");
-							break loopConcentrate;
-						} else {
-							continue;
+			
+			// find a node to concentrate on
+			let selectedNode = selectNodeToTest(puzzle, checkedNodes);
+			let selectedCell;
+			if (!selectedNode){ // no suitable node found with previous method, try old method
+				//console.log("Using old method...");
+				if (previ == puzzle.h)
+					previ = 0;
+				if (prevj == puzzle.w)
+					prevj = 0;
+				loopConcentrate: // find a cell to concentrate on
+				for (let i = previ; i < puzzle.h; i++) {
+					for (let j = prevj; j < puzzle.w; j++) {
+						if (arrayIndexOf(checkedCells, [i, j]) == -1 && puzzle.cells[i][j][0] != countLines(puzzle, i, j)){ // lines can possibly be placed around this cell!
+							emptyConnections = getEmptyCellConns(puzzle, i, j);
+							if (emptyConnections && emptyConnections.length > 0){
+								selectedCell = [i, j]; 
+								checkedCells.push([i, j]);
+								previ = i;
+								prevj = j;
+								break loopConcentrate;
+							} else {
+								continue;
+							}
 						}
-					}
-				}	
+					}	
+				}
+				console.log("\tSELECTED CELL: " + selectedCell);
+			} else {
+				console.log("\tSELECTED NODE: " + selectedNode);
+				checkedNodes.push(selectedNode);
+				emptyConnections = getEmptyNodeConns(puzzle, selectedNode[0], selectedNode[1]);
 			}
-					
-			if (!emptyConnections){ // did not find a suitable cell
-				console.log("Something wrong with backtracking...");
+			
+			if (!selectedCell && !selectedNode){
+				console.log("Something went wrong...");
 				return;
 			}
+			
+			//console.log("\t\tConnections: " + emptyConnections);
 					
-			// try each line around cell
+			// try each line around node
 			//console.log("Empty connections around cell: " + emptyConnections);
 			for (let connection of emptyConnections) {
 				debugger
@@ -2190,7 +2218,7 @@ export var autoSolver = function(puzzle) {
 				placeLine(puzzle, connection[0], connection[1], connection[2], connection[3]);  // Place line in current connection
 
 				// Apply heuristics repeatedly for a specified # of iterations
-				for (let iteration = 0; iteration < 15; iteration++) {
+				for (let iteration = 0; iteration < 10; iteration++) {
 					for (let i = 0; i < puzzle.h; i++) {
 						for (let j = 0; j < puzzle.w; j++) {
 							crossCompletedCell(puzzle, i, j); // cross the edges of completed cells
@@ -2217,15 +2245,22 @@ export var autoSolver = function(puzzle) {
 				debugger
 				// Check conditions after heuristic/pattern passes.
 				if (progressCheck(puzzle)) {
-					console.log("Valid move found, reloading save");
+					//console.log("Valid move found, checking if puzzle is solved...");
+					if (verifySolution(puzzle)) {
+						console.log("Autosolver SUCCESS");
+						return;
+					}
+					//console.log("Nope, reloading state...");
 					puzzle.nodes = JSON.parse(saveState);
 					changesMade = true;
 				} else {
-					console.log("Invalid move detected, reloading save and adding cross");
+					console.log("Adding cross: [" + connection[0] + ", " + connection[1] + "] x [" + connection[2] + ", " + connection[3] + "]");
 					puzzle.nodes = JSON.parse(saveState);  // Reload the saved state to revert
 					placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
 					changesMade = true;
+					backtrackIterations = 0;
 					checkedCells = [];
+					checkedNodes = [];
 					//return;
 				}
 			}
@@ -2235,9 +2270,208 @@ export var autoSolver = function(puzzle) {
     console.log("Autosolver FAILED.");
 };
 
+
+// selects a cell to try in the backtracking section of the autosolver
+// finds the longest line segment, and selects the node at the end
+// a selected node is guaranteed to have 2 or 3 paths to try
+export var selectNodeToTest = function(puzzle, alreadyChecked){
+	var start, end, prev, cur;
+	var x, y, lineConns;
+	var starts = []; // list of tail ends of each line segment
+	var ends = []; // list of other tail ends of each line segment
+	var segmentLengths = []; // lengths of line segments
+	var visited = []; // list of all visited nodes
+	var changes = false;
+	
+	// get collection of start, end coordinates for each line segment
+	let lineFound = true;
+	while (lineFound){
+		// find a segment of lines
+		lineFound = false;
+		find_line:
+		for (let i = 0; i < puzzle.h + 1; i++){
+			for (let j = 0; j < puzzle.w + 1; j++) {
+				if (!puzzle.nodes[i][j] || puzzle.nodes[i][j].length == 0) // if no connection data, skip
+					continue;
+				if (arrayIndexOf(visited, [i, j]) != -1) // part of another line already explored, skip
+					continue;
+				for (let k = 0; k < puzzle.nodes[i][j].length; k++){
+					if (puzzle.nodes[i][j][k][2] == 1){ // line connection data exists
+						prev = [i, j];
+						cur = [puzzle.nodes[i][j][k][0], puzzle.nodes[i][j][k][1]]; // store coords of 1st connection
+						visited.push(prev);
+						lineFound = true;
+						break find_line;
+					}
+				}
+			}
+		}
+		let initialLine = prev; // used to prevent infinite loops later
+		
+		if (!lineFound) // no more line segments to explore, stop
+			break;
+		
+		// follow segment until start is found
+		do { // while current node has 2 line connections
+			lineConns = [];
+			for (let i = 0; i < puzzle.nodes[cur[0]][cur[1]].length; i++){
+				if (puzzle.nodes[cur[0]][cur[1]][i][2] == 1)
+					lineConns.push(puzzle.nodes[cur[0]][cur[1]][i]);
+			}
+			
+			if (lineConns.length == 1){ // found tail end
+				start = cur;
+				visited.push([...cur]);
+				break;
+			} else if (lineConns.length > 2){ // stop computation if intersection exists; results in complex code and infinite loops
+				return changes;
+			}
+			
+			//console.log(cur + " === " + initialLine + "?");
+			if (cur[0] == initialLine[0] && cur[1] == initialLine[1]){ // made a full loop, stop
+				//console.log("Loop found, stopping...");
+				return changes;
+			}
+			
+			visited.push([...cur]);
+			
+			// visit next node
+			// if first connection in list = prev, use second in list
+			if ((lineConns[0][0] == prev[0]) && (lineConns[0][1] == prev[1])){
+				prev = [...cur];
+				x = lineConns[1][0];
+				y = lineConns[1][1];
+				cur[0] = x;
+				cur[1] = y;
+			} else {
+				prev = [...cur];
+				x = lineConns[0][0];
+				y = lineConns[0][1];
+				cur[0] = x;
+				cur[1] = y;
+			}
+		} while (lineConns.length == 2);
+		
+		// advance to next node
+		for (let k = 0; k < puzzle.nodes[start[0]][start[1]].length; k++){
+			if (puzzle.nodes[start[0]][start[1]][k][2] == 1){ // line connection data exists
+				prev = start;
+				cur = [puzzle.nodes[start[0]][start[1]][k][0], puzzle.nodes[start[0]][start[1]][k][1]]; // store coords of 1st connection
+				visited.push(prev);
+				break;
+			}
+		}
+		let lineLength = 1;
+		
+		// follow line segment until other end is found
+		do { // while current node has 2 line connections
+			lineConns = [];
+			for (let i = 0; i < puzzle.nodes[cur[0]][cur[1]].length; i++){
+				if (puzzle.nodes[cur[0]][cur[1]][i][2] == 1)
+					lineConns.push(puzzle.nodes[cur[0]][cur[1]][i]);
+			}
+			
+			if (lineConns.length == 1){ // found other end
+				end = cur;
+				visited.push([...cur]);
+				break;
+			} else if (lineConns.length > 2){ // stop computation if intersection exists; results in complex code and infinite loops
+				return changes;
+			}
+			visited.push([...cur]);
+			
+			// visit next node
+			// if first connection in list = prev, use second in list
+			if ((lineConns[0][0] == prev[0]) && (lineConns[0][1] == prev[1])){
+				prev = [...cur];
+				x = lineConns[1][0];
+				y = lineConns[1][1];
+				cur[0] = x;
+				cur[1] = y;
+			} else {
+				prev = [...cur];
+				x = lineConns[0][0];
+				y = lineConns[0][1];
+				cur[0] = x;
+				cur[1] = y;
+			}
+			lineLength++;
+		} while (lineConns.length == 2);
+		
+		//console.log("Segment: " + start + " --- " + end);
+		starts.push(start);
+		ends.push(end);
+		segmentLengths.push(lineLength);
+	}
+	
+	// find applicable line
+	let max = Number(segmentLengths[0]);
+	let maxi = 0;
+	let selectedNode;
+	do {
+		max = Number(segmentLengths[0]);
+		maxi = 0;
+		for (let i = 1; i < segmentLengths.length; i++){
+			if (Number(segmentLengths[i]) > max){
+				//console.log("max=" + segmentLengths[i]);
+				max = segmentLengths[i];
+				maxi = i;
+			}
+		}
+		selectedNode = ends[maxi];
+
+		if (arrayIndexOf(alreadyChecked, selectedNode) != -1) // checked already?
+			selectedNode = starts[maxi]; // use other end
+		if (arrayIndexOf(alreadyChecked, selectedNode) != -1){ // checked already?
+			// remove from arrays
+			starts.splice(maxi, 1);
+			ends.splice(maxi, 1);
+			segmentLengths.splice(maxi, 1);
+		} else {
+			return selectedNode;
+		}
+	} while (segmentLengths.length > 0)
+		
+	return;
+};
+
+
 // get empty connections around a given cells
-function getEmptyConnections(puzzle, x, y) {
-    let connections = [];
+function getEmptyNodeConns(puzzle, x, y) {
+	let neighbors = [];
+	let visited = [];
+	let missing = [];
+	
+	// get node neighbors
+	if (x == 0 && y == 0){ // top left corner
+		neighbors = [[x+1, y], [x, y+1]];
+	} else if (x == 0 && y == puzzle.w) { // top right corner
+		neighbors = [[x+1, y], [x, y-1]];
+	} else if (x == puzzle.h && y == 0) { // bottom left corner
+		neighbors = [[x-1, y], [x, y+1]];
+	} else if (x == puzzle.h && y == puzzle.w) { // bottom right corner
+		neighbors = [[x, y-1], [x-1, y]];
+	} else if (x == 0) { // top edge
+		neighbors = [[x, y-1], [x, y+1], [x+1, y]];
+	} else if (x == puzzle.h){ // bototm edge
+		neighbors = [[x, y-1], [x, y+1], [x-1, y]];
+	} else if (y == 0){ // left edge
+		neighbors = [[x-1, y], [x+1, y], [x, y+1]];
+	} else if (y == puzzle.w){ // right edge
+		neighbors = [[x-1, y], [x+1, y], [x, y-1]];
+	} else { // general case
+		neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
+	}
+	
+	for (let i = 0; i < puzzle.nodes[x][y].length; i++) {
+		visited.push([puzzle.nodes[x][y][i][0], puzzle.nodes[x][y][i][1]]);
+	}
+	missing = nodeSetDifference(neighbors, visited);
+	return missing;
+}
+
+function getEmptyCellConns(puzzle, x, y) {
+	let connections = [];
     const directions = [
         [x, y, x, y + 1],     	 	// top line
         [x, y, x + 1, y],     	 	// left line

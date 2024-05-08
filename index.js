@@ -1499,7 +1499,7 @@ tutorialHTML.onclick = function(){
 		tutBoxHTML.style.display = 'block';
 	}
 	return;
-	//console.log("Progress check: " + pl.progressCheck(curPuzzle));
+	//console.log("Node to try: " + pl.selectNodeToTest(curPuzzle, []));
 };
 
 
