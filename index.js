@@ -1470,10 +1470,11 @@ restartHTML.onclick = function(){
 
 // opens new tab with blank puzzle for printing
 printHTML.onclick = function(){
-	console.log("Print pressed.");
+	//console.log("Print pressed.");
+	let puzzleCopy = JSON.parse(JSON.stringify(curPuzzle));
 	
-	pl.clearPuzzle(curPuzzle);
-	g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	pl.clearPuzzle(puzzleCopy);
+	g.updateGraphicPuzzleState(puzzleCopy, gLinesArray, cellShades);
 	
 	// zoom out + center camera
 	zoomLevel = maxZoom;
@@ -1498,7 +1499,8 @@ printHTML.onclick = function(){
 		printWin.focus();
 		printWin.print();
 		printWin.close();
-	}, 100);
+		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+	}, 200);
 	return;
 };
 
@@ -1981,10 +1983,10 @@ var updateLeaderboard = function() {
 	//console.log("leaderboard = " + leaderboard);
 	let leaderboardHTML = document.getElementById("leaderboard");
 	if (leaderboard == false){ // disables leaderboard, either bc random puzzle or autosolver used
-		leaderboardHTML.innerHTML = "<center><span style=\"color: #C36D68\"><b><u>LEADERBOARD</u></b></span></center>" +
+		leaderboardHTML.innerHTML = "<center><span style=\"color: #C36D68\"><b>LEADERBOARD</b></span></center>" +
 									"<br>Unavailable for random puzzles or puzzles from a previous session. "
 	} else { // get leaderboard info for puzzle
-		let HTML = "<center><span style=\"color: #C36D68\"><b><u>LEADERBOARD</u></b></span></center>" +
+		let HTML = "<center><span style=\"color: #C36D68\"><b>LEADERBOARD</b></span></center>" +
 				"<table>" +
 					"<tr>" +
 					  "<th class=\"numCol\">#</th>" +
