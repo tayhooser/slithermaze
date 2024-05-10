@@ -111,7 +111,6 @@ var justPlacedAnX = false;
 //example use: { name: 'Mayflower', author: 'Taylor' }
 async function getMap(query = { author: 'Taylor' }) {
     var params = query; 
-
     try {
         var url = new URL('https://slithermaze.com/map'), params;
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
@@ -182,7 +181,7 @@ window.onload = function(){
 				break;
 			}
 		}
-		//console.log("maxSave = " + maxSave);
+		puzzleTitleHTML.innerHTML = "Saved Puzzle";
 		
 		// load puzzle on screen
 		let n = JSON.parse(localStorage.getItem("load" + maxSave + "cells")).length;
@@ -201,10 +200,29 @@ window.onload = function(){
 			document.getElementById(id).addEventListener("click", load.bind(null, saveCounter));
 		}
 		saveCounter--; // for loop adds extra saveState
-	} else { // load random easy 5x5
-		curPuzzle = pl.generatePuzzle(5, 5, 1);
-		puzzleTitleHTML.innerHTML = "Random Easy 5x5";
-		updateStateHistory();
+	} else { // load daily puzzle
+		let now = new Date();
+		now = now.toString().slice(4,15);
+		getMap({ name: now }).then(
+			(map) => {
+				try {
+					curPuzzle = pl.convertPuzzle(map); // set current puzzle logically
+					initPuzzleGraphics(curPuzzle); // draw board to screen
+					g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades); // update graphic state
+					puzzleTitleHTML.innerHTML = "Special Daily Puzzle"; // set title
+					
+					curPuzzleLeaderboard = map.board; // get leaderboard info
+					curPuzzleID = map._id;
+					leaderboard = true;
+					updateLeaderboard(); // update leaderboard html
+					updateStateHistory();
+				} catch (err) {
+					console.log("Error fetching daily puzzle: " + err);
+				}
+			},
+			(issue) => { // any issues with a failed fetch is resolved later
+				console.log(issue);
+			});
 	}
 
 	// some browsers do not natively support webgl, try experimental ver
@@ -275,8 +293,19 @@ window.onload = function(){
 	//shouldRender = true;
 	//render();
 
-	initPuzzleGraphics(curPuzzle);
-	render();
+	setTimeout(function(){
+		try{ // if something goes wrong getting the special daily puzzle, load a random puzzle
+			initPuzzleGraphics(curPuzzle);
+			render();
+		} catch (err) {
+			console.log("Could not get daily puzzle.");
+			curPuzzle = pl.generatePuzzle(5, 5, 1);
+			puzzleTitleHTML.innerHTML = "Random Easy 5x5";
+			updateStateHistory();
+			initPuzzleGraphics(curPuzzle);
+			render();
+		}
+	}, 500);
 };
 
 
@@ -1331,8 +1360,8 @@ var performQOL = function(){
 			pl.crossPrematureLoop(curPuzzle);
 		changedAtLeastOnce = changedAtLeastOnce || changes;
 	}
-	if (changedAtLeastOnce)
-		updateStateHistory();
+	//if (changedAtLeastOnce)
+		//updateStateHistory();
 }
 
 
