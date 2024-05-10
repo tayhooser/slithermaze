@@ -29,9 +29,13 @@ var second = 0;
 const puzzleTitleHTML = document.getElementById("title");
 const undoHTML = document.getElementById("undo");
 const redoHTML = document.getElementById("redo");
-const zoomHTML = document.getElementById("zoom"); // zoom button
-const zoomSliderHTML = document.getElementById("zoomSlider"); // the actual zoom slider
+const zoomHTML = document.getElementById("zoom");
+const zoomSliderHTML = document.getElementById("zoomSlider");
+const zoomSliderBox = document.getElementById('zoom-slider-box');
+const zoomContent = document.getElementById('zoom-content');
 const settingsHTML = document.getElementById("settings");
+const settingsMenu = document.getElementById('settings-menu');
+const settingsContent = document.getElementById('settings-content');
 const ACnumHTML = document.getElementById('ACnum');
 const ACinterHTML = document.getElementById('ACinter');
 const ACdeadHTML = document.getElementById('ACdead');
@@ -1283,9 +1287,6 @@ var load = function(state){
 
 // toggles zoom slider to open/close
 zoomHTML.onclick = function(){
-	var zoomSliderBox = document.getElementById('zoom-slider-box');
-	var zoomContent = document.getElementById('zoom-content');
-	
     if (zoomSliderBox.style.maxHeight > '0px'){ // hide menu
         zoomSliderBox.style.maxHeight = '0px';
 		zoomSliderBox.style.marginTop = '0px';
@@ -1293,12 +1294,20 @@ zoomHTML.onclick = function(){
 		setTimeout(function(){ // 
 			zoomContent.style.display = "none";
 		}, 1000);
-    } else { // always falls back to this else block on first click..... dont know why
+    } else { // show menu
 		zoomContent.style.display = "flex";
         zoomSliderBox.style.maxHeight = '50px';
 		zoomSliderBox.style.marginTop = '10px';
 		zoomSliderBox.style.marginBottom = '10px';
 		zoomContent.style.opacity = '1';
+		
+		// hide settings
+		settingsMenu.style.maxHeight = '0px';
+		settingsMenu.style.marginBottom = '0px';
+		settingsContent.style.opacity = '0';
+		setTimeout(function(){
+			settingsContent.style.display = "none";
+		}, 1000);
 	}
 	return;
 };
@@ -1315,8 +1324,6 @@ zoomSliderHTML.oninput = function(){
 
 // toggles settings menu to open/close
 settingsHTML.onclick = function(){
-	var settingsMenu = document.getElementById('settings-menu');
-	var settingsContent = document.getElementById('settings-content');
     if (settingsMenu.style.maxHeight > '0px'){ // hide menu
         settingsMenu.style.maxHeight = '0px';
 		settingsMenu.style.marginBottom = '0px';
@@ -1330,6 +1337,14 @@ settingsHTML.onclick = function(){
 		settingsContent.style.opacity = '0';
 		settingsMenu.style.maxHeight = '340px';
 		settingsContent.style.opacity = '1';
+		
+		// hide zoom
+		zoomSliderBox.style.maxHeight = '0px';
+		zoomSliderBox.style.marginTop = '0px';
+		zoomContent.style.opacity = '0';
+		setTimeout(function(){ // 
+			zoomContent.style.display = "none";
+		}, 1000);
 	}
 	return;
 };
