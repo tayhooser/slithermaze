@@ -401,10 +401,10 @@ export var generatePuzzle = function(h, w, d){
 			if (count == 0){ // always show 0s, since generation algo rarely creates them
 				puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
 				num0s++;
-			} else if (p == 1 && (count == 1 || count == 3)){ // easier difficulty = more 1s and 3s
+			} else if (d == 1 && count == 3){ // easier difficulty = more 3s
 				if (Math.random() < p + .1)
 					puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
-			} else if (p == 2 && (count == 1 || count == 3)){
+			} else if (d == 2 && count == 3){ // med difficulty = more 3s
 				if (Math.random() < p + .05)
 					puzzle.cells[i][j] = [count, puzzle.cells[i][j][1]];
 			} else {
@@ -422,7 +422,7 @@ export var generatePuzzle = function(h, w, d){
 			}
 		}
 	} else {
-		pl.logPuzzleState(puzzle);
+		logPuzzleState(puzzle);
 	}
 	
 	// generate new map if easy/med puzzle has no zeros
@@ -2165,7 +2165,7 @@ export var autoSolver = function(puzzle) {
 		let prevj = 0;
 		if (backtracking && backtrackIterations < maxBacktrackIterations){
 			backtrackIterations++;
-			console.log("Backtrack iteration: " + backtrackIterations);
+			//console.log("Backtrack iteration: " + backtrackIterations);
 			let emptyConnections;
 			
 			// find a node to concentrate on
@@ -2194,9 +2194,9 @@ export var autoSolver = function(puzzle) {
 						}
 					}	
 				}
-				console.log("\tSELECTED CELL: " + selectedCell);
+				//console.log("\tSELECTED CELL: " + selectedCell);
 			} else {
-				console.log("\tSELECTED NODE: " + selectedNode);
+				//console.log("\tSELECTED NODE: " + selectedNode);
 				checkedNodes.push(selectedNode);
 				emptyConnections = getEmptyNodeConns(puzzle, selectedNode[0], selectedNode[1]);
 			}
@@ -2254,7 +2254,7 @@ export var autoSolver = function(puzzle) {
 					puzzle.nodes = JSON.parse(saveState);
 					changesMade = true;
 				} else {
-					console.log("Adding cross: [" + connection[0] + ", " + connection[1] + "] x [" + connection[2] + ", " + connection[3] + "]");
+					//console.log("Adding cross: [" + connection[0] + ", " + connection[1] + "] x [" + connection[2] + ", " + connection[3] + "]");
 					puzzle.nodes = JSON.parse(saveState);  // Reload the saved state to revert
 					placeCross(puzzle, connection[0], connection[1], connection[2], connection[3]);
 					changesMade = true;
