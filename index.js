@@ -1519,6 +1519,18 @@ printHTML.onclick = function(){
 	
 	pl.clearPuzzle(puzzleCopy);
 	g.updateGraphicPuzzleState(puzzleCopy, gLinesArray, cellShades);
+	// change lines back to brown
+	for (let i = 0; i < 2*curPuzzle.h+1; i++){
+		for (let j = 0; j < curPuzzle.w+1; j++) {
+			g.changeLineColor(i, j, 0);
+		}
+	}
+	// change nums back to brown
+	for (let i = 0; i < curPuzzle.h; i++){
+		for (let j = 0; j < curPuzzle.w; j++){
+			g.changeNumberColor(i, j, 0);
+		}
+	}
 	
 	// zoom out + center camera
 	zoomLevel = maxZoom;
@@ -1543,7 +1555,17 @@ printHTML.onclick = function(){
 		printWin.focus();
 		printWin.print();
 		printWin.close();
+		// change to original puzzle
 		g.updateGraphicPuzzleState(curPuzzle, gLinesArray, cellShades);
+		// reapply highlight + grey
+		if (highlight)
+			pl.highlightWrongMoves(curPuzzle);
+		if (grey)
+			for (let i = 0; i < curPuzzle.h + 1; i++){
+				for (let j = 0; j < curPuzzle.w + 1; j++) {
+					pl.greyCompletedNumbers(curPuzzle, i, j);
+				}
+			}
 	}, 200);
 	return;
 };
