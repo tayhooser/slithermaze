@@ -12,29 +12,22 @@ The goal of the game is to create a single loop around a grid of dots by placing
 ## Features
 
 ### Key functionality
-- 8 handmade puzzles
+- 6 handmade puzzles
 	- Variety of sizes and difficulties
 	- Form fun shapes
 - Infinite generation of puzzles
 	- Configurable size and difficulty
-	- IDs/seeds for sharing puzzles
+	- Import/export functionality
 - Automatic puzzle solving
 	- From an empty slate or partially-completed puzzles
-	- Hint system
 - Validation of solutions
-- Tutorial mode
-	- Written instructions
-	- Tips and common patterns
-- Leaderboard system
+- Instructions on how to play
+- Leaderboard
 - Print to paper
 
 ### Quality of Life
-- Colored line segments
-	- Helps user to differentiate different line segments
-	- Colors can be altered via settings
 - Shade cells
 	- Helps user keep track of inside and outside of loop
-	- Colors can be altered via settings
 - Auto-crossing
 	- Toggleable
 	- Sides of completed numbers
@@ -52,7 +45,7 @@ The goal of the game is to create a single loop around a grid of dots by placing
 
 ## How To Run
 
-Open slithermaze.html in your browser of choice.
+Open slithermaze.html in your browser of choice, or visit https://slithermaze.com/ !
 
 ## Credits
 Taylor Hooser<br>
