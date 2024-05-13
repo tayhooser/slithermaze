@@ -1,0 +1,644 @@
+/* 
+BROWN:		#674D46
+TAN:		#EAD6C6
+PINK:		#D47C77
+DARK PINK:	#B64E49
+*/
+
+body {
+    color: #674D46;
+	background-color: #EAD6C6;
+	margin: 0;
+}
+
+.body2 {
+	margin: 10;
+	justify-content: center;
+}
+
+/* TITLE BAR --------------------------------------------------------*/
+.title-container {
+	color: white;
+	background-color: #674D46;
+	display: flex;
+    align-items: flex;
+	margin: 0px;
+	padding: 10px;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 30px;
+	font-family: Arial;
+}
+
+/* MAIN AREA --------------------------------------------------------*/
+.main-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 15px;
+    align-items: flex;
+	justify-content: center;
+	max-width: 1100px;
+}
+
+/* title above canvas */
+.puzzle-title {
+	display: flex;
+    align-items: flex;
+	margin: 15px;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 20px;
+	font-family: Arial;
+}
+
+/*holds canvas, only used for making canvas have round corners */
+.canvas-container {
+	order: 2;
+	border: 1px solid #fff;
+	border-radius: 15px;
+	overflow: hidden;
+	aspect-ratio: 1 / 1;
+	touch-action: none;
+	z-index: 2;
+}
+
+/* tutorial screen */
+.tutorial {
+	z-index: 3;
+	position: fixed;
+	display: none;
+	padding: 10px;
+	width: 40%;
+	height: fit-content;
+	top: 15%;
+	border-radius: 20px;
+	background-color: #D47C77;
+	color: #ffffff;
+	font-size: 15px;
+	font-family: Arial;
+}
+
+.tutorial img {
+	border-radius: 10px;
+	margin: 10px;
+	width: 150px;
+	height: 150px;
+}
+
+.tutorial button {
+	background-color: #ffffff;
+	color: #D47C77;
+	font-weight: bold;
+	font-size: 20px;
+	font-family: Arial;
+    border: none;
+	border-radius: 5px;
+    cursor: pointer;
+	margin: 5px;
+	height:fit-content;
+}
+
+.tutorial button:hover {
+	background-color: #B64E49;
+	color: #ffffff;
+}
+
+.import-err {
+	display: none;
+	font-size: 16px;
+	font-weight: normal;
+	font-family: Arial;
+	border: none;
+	width: 100%;
+	color: #B64E49;
+	margin-bottom: 5px;
+}
+
+/* LEFT AREA --------------------------------------------------------*/
+.l-container{
+	order: 1;
+	max-width: 150px;
+	gap: 10px;
+}
+ /*undo, redo, zoom, wrench */
+.l-container button {
+	background-color: #674D46;
+	color: white;
+	font-weight: bold;
+	font-size: 30px;
+	font-family: Arial;
+    border: none;
+	border-radius: 5px;
+	display: inline;
+    cursor: pointer;
+	margin: 5px;
+	width: 43%;
+	aspect-ratio: 1 / 1;
+}
+  
+.l-container button:hover {
+	background-color: #D47C77;
+}
+
+/*container for zoom slider */
+/* drop down animation*/
+.zoom {
+	display: block;
+	background-color: #ffffff;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	border-radius: 5px;
+	height: fit-content;
+	max-height: 0px;
+	margin-top: 10px;
+	transition: all 1s ease;
+}
+
+/*actual content within the zoom container */
+/* fade in animation*/
+.zoom-content {
+	display: none;
+	padding: 10px;
+	opacity: 0;
+	transition: opacity 1s ease;
+}
+
+/*zoom slider*/
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 15px;
+  border-radius: 5px;  
+  background: #EAD6C6;
+  outline: none;
+}
+
+/*chrome, opera, safari, edge */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%; 
+  background: #674D46;
+  cursor: pointer;
+}
+
+/* firefox */
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #674D46;
+  cursor: pointer;
+}
+
+ /* container for settings */
+ /* drop down animation*/
+.settings {
+	display: block;
+	background-color: #ffffff;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	border-radius: 5px;
+	height: fit-content;
+	max-height: 0px;
+	margin-top: 0px;
+	transition: max-height 1s ease;
+}
+
+/*actual content within the settings container */
+/* fade in animation*/
+.settings-content {
+	display: none;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	padding: 10px;
+	opacity: 0;
+	transition: opacity .5s ease;
+}
+
+/* fancy checkbox for settings menu*/
+.checkContainer {
+	display: flex;
+}
+
+.checkReplacer {
+    appearance: none;
+    background-color: #EAD6C6;
+    border-radius: 72px;
+    border-style: none;
+    flex-shrink: 0;
+    height: 20px;
+    margin: 0;
+    position: relative;
+    width: 30px;
+}
+
+.checkReplacer::before {
+    bottom: -6px;
+    left: -6px;
+    position: absolute;
+    right: -6px;
+    top: -6px;
+}
+
+.checkReplacer, .checkReplacer::after {
+  transition: all 100ms ease-out;
+}
+
+.checkReplacer::after {
+    background-color: #fff;
+    border-radius: 50%;
+    content: "";
+    height: 14px;
+    left: 3px;
+    position: absolute;
+    top: 3px;
+    width: 14px;
+}
+
+input[type=checkbox] {
+    cursor: default;
+}
+
+.checkReplacer:hover {
+    cursor: pointer;
+}
+
+.checkReplacer:checked {
+    background-color: #674D46;
+}
+
+.checkReplacer:checked::after {
+    background-color: #fff;
+    left: 13px;
+}
+
+/* shift label up to line up with checkbox */
+label {
+	display: block;
+	position: relative;
+	margin-left: 10px;
+	margin-bottom: 10px;
+}
+
+/* RIGHT AREA --------------------------------------------------------*/
+.r-container {
+	order: 4;
+	width: 150px;
+}
+
+/*hint solution ... tutorial buttons */
+.r-container button {
+	background-color: #674D46;
+	color: white;
+	font-weight: bold;
+	font-size: 16px;
+	font-family: Arial;
+	border: none;
+	border-radius: 5px;
+	padding: 10px;
+	cursor: pointer;
+	margin-bottom: 10px;
+	width: 100%;
+}
+  
+.r-container button:hover {
+	background-color: #D47C77;
+}
+
+/*timer under tutorial buttons */
+.timer {
+	font-weight: bold;
+	font-size: 30px;
+	font-family: Arial;
+	margin-bottom: 10px;
+	display: flex;
+    align-items: flex;
+	justify-content: center;
+}
+
+/* win/try again message */
+.win {
+	display: none;
+	font-size: 16px;
+	font-family: Arial;
+	border: none;
+	border-radius: 5px;
+	padding: 10px;
+	margin-bottom: 10px;
+	color: #ffffff;
+	background-color: #D47C77;
+}
+
+/* input form for leaderboard */
+input[type=text] {
+  width: 100%;
+  padding: 5px 20px;
+  margin-top: 5px;
+  display: inline-block;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: #674D46;
+  font-size: 16px;
+  font-family: Arial;
+}
+
+input[type=submit] {
+  width: 100%;
+  background-color: #B64E49;
+  color: white;
+  padding: 5px 20px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: Arial;
+}
+
+input[type=submit]:hover {
+	background-color: #674D46;
+}
+
+/* leaderboard under timer */
+.leaderboard {
+	display: block;
+	background-color: #ffffff;
+	font-size: 13px;
+	font-family: Arial;
+	padding: 7px;
+	border-radius: 5px;
+	height: 150px;
+	overflow: auto;
+}
+
+.leaderboard table {
+	width: 100%;
+	table-layout: fixed;
+}
+
+.numCol {
+	width: 15px;
+	text-align: left;
+}
+
+.nameCol {
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.timeCol {
+	text-align: right;
+	overflow: hidden;
+	width: 50px;
+}
+
+/* BELOW AREA --------------------*/  
+.b-container {
+	order: 4;
+	position: relative;
+	margin: auto;
+	width: 500px;
+	align-items: flex;
+	justify-content: center;
+}
+
+/* submit and new puzzle buttons */
+.lb-button {
+	background-color: #674D46;
+	color: white;
+	font-weight: bold;
+	font-size: 16px;
+	font-family: Arial;
+	border: none;
+	border-radius: 5px;
+	padding: 10px;
+	cursor: pointer;
+	margin-top: 10px;
+	width: 100%;
+}
+
+ /* container for new puzzle */
+ /* drop down animation*/
+.new-puzzle {
+	display: block;
+	background-color: #ffffff;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	border-radius: 5px;
+	height: fit-content;
+	max-height: 0px;
+	margin-top: 10px;
+	transition: all 1s ease;
+}
+
+/* drop down menu holding new puzzle options */
+.new-puzzle-content {
+	display: none;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 14px;
+	font-family: Arial;
+	padding: 10px;
+	opacity: 0;
+	transition: opacity .5s ease;
+}
+
+/* dropdown selection box for difficulty and size */
+.custom-select {
+  position: relative;
+  font-family: Arial;
+}
+
+.custom-select select {
+  display: none;
+}
+
+/* selected item, appears next to arrow at top */
+.select-selected {
+  background-color: #D47C77;
+}
+
+/* arrow (down) */
+.select-selected:after {
+  position: absolute;
+  content: "";
+  top: 14px;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-color: #fff transparent transparent transparent;
+}
+
+/* arrow (up) */
+.select-selected.select-arrow-active:after {
+  border-color: transparent transparent #fff transparent;
+  top: 7px;
+}
+
+/* options */
+.select-items div,.select-selected {
+  color: #ffffff;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-color: transparent transparent #B64E49 transparent;
+  cursor: pointer;
+}
+
+/* items that can be selected */
+.select-items {
+  position: absolute;
+  background-color: #D47C77;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+
+/* hide options when closed */
+.select-hide {
+  display: none;
+}
+
+.select-items div:hover, .same-as-selected {
+  background-color: #B64E49;
+} 
+
+/* button to submit newp options and actually get a new puzzle */
+.newp-button {
+	background-color: #674D46;
+	color: white;
+	font-weight: bold;
+	font-size: 16px;
+	font-family: Arial;
+	border: none;
+	border-radius: 5px;
+	padding: 10px;
+	cursor: pointer;
+	margin-top: 10px;
+	width: 93%;
+}
+
+/* holds error msg for newp menu */
+/* win/try again message */
+.newp-err {
+	display: none;
+	font-size: 16px;
+	font-weight: normal;
+	font-family: Arial;
+	border: none;
+	width: 93%;
+	margin-bottom: -10px;
+	margin-top: -5px;
+	color: #D47C77;
+}
+
+/*  holds save/load buttons */
+.save-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+ /* save/load buttons */
+.save-button {
+	background-color: #674D46;
+	color: white;
+	font-weight: bold;
+	font-size: 30px;
+	font-family: Arial;
+	border: none;
+	border-radius: 5px;
+	display: inline;
+	cursor: pointer;
+	width: 66px;
+	aspect-ratio: 1 / 1;
+}
+  
+.b-container button:hover {
+	background-color: #D47C77;
+}
+
+/* FOOTER --------------------*/  
+
+/*credit with everyones names in corner */
+.about {     
+	position: inherit;
+	display: block;
+	margin: 10px;
+	bottom: 0px;
+	right: 0px;
+	text-align: center;
+	color: #B64E49;
+	font-family: Arial;
+	font-size: 15px;
+}
+
+/*CSS for smaller screens, such as mobile */
+@media screen and (max-width: 900px) {
+	.tutorial {
+		width: 90%;
+	}
+	
+	.tutorial img {
+		height: 100px;
+		width: 100px;
+	}
+	
+	.l-container {
+		width: 100%;
+		max-width: 550px;
+		margin-bottom: -15px;
+	}
+	
+	.l-container button {
+		height: 50px;
+	}
+	
+	.zoom {
+		margin-left: 15px;
+		margin-right: 15px;
+	}
+	
+	.settings {
+		margin-left: 15px;
+		margin-right: 15px;
+	}
+	
+	.r-container {
+		order: 4;
+		width: 95%;
+		max-width: 500px;
+		max-height: 700px;
+	}
+	
+	.leaderboard {
+		font-size: 14px;
+		padding: 10px;
+		max-height: 700px;
+		height: fit-content;
+	}
+	
+	.b-container{
+		order: 3;
+		width: 95%;
+		max-width: 500px;
+	}
+	
+	.about {
+		position: inherit;
+		bottom: 0px;
+		right: 0px;
+	}
+	
+}
